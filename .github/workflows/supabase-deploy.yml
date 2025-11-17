@@ -108,7 +108,12 @@ jobs:
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Deploy migrations
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          fi
           supabase db push
       
       - name: Verify deployment
@@ -163,7 +168,12 @@ jobs:
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Deploy migrations
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          fi
           supabase db push
       
       - name: Verify deployment

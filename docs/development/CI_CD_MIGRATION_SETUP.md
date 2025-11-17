@@ -11,9 +11,18 @@ You need to set up GitHub Secrets in your repository:
    - Or: Repository → Settings → Secrets and variables → Actions
 
 2. **Add Required Secrets**:
-   - **`SUPABASE_ACCESS_TOKEN`**: Your Supabase access token
+   - **`SUPABASE_ACCESS_TOKEN`**: Your Supabase Personal Access Token
+     - **IMPORTANT**: Must be a Personal Access Token (starts with `sbp_`)
      - Get it from: https://supabase.com/dashboard/account/tokens
-     - Or run: `supabase login` locally and check `~/.supabase/access-token`
+     - Click "Generate new token" → Name it (e.g., "CI/CD Pipeline") → Copy the token
+     - Format: `sbp_0102030405060708091011121314151617181920`
+     - **NOT** the anon key (starts with `eyJ...`) - that's for client-side API access
+     - **NOT** a JWT token - that's for authentication
+   - **`SUPABASE_DB_PASSWORD`**: Your database password (REQUIRED for migrations)
+     - Get it from: https://supabase.com/dashboard/project/YOUR_PROJECT_REF/settings/database
+     - This is the password you set when creating the project
+     - If you don't remember it, you can reset it in the dashboard
+     - Used by CLI to connect directly to PostgreSQL for migrations
    - **`SUPABASE_PROJECT_REF`**: Your project reference ID
      - Value: `mvuzvoyvijsdqsfqjgpd`
      - This is used if staging/prod refs aren't set
@@ -114,9 +123,11 @@ Your current migration file:
 - Ensure `SUPABASE_PROJECT_REF` secret is set
 - Or provide it via workflow_dispatch input
 
-**"Authentication failed"**:
-- Verify `SUPABASE_ACCESS_TOKEN` is correct
-- Token may have expired - generate a new one
+**"Authentication failed"** or **"Invalid access token format"**:
+- Verify `SUPABASE_ACCESS_TOKEN` is a Personal Access Token (starts with `sbp_`)
+- **NOT** the anon key (starts with `eyJ...`) - that's for client-side API access
+- Token may have expired - generate a new one from https://supabase.com/dashboard/account/tokens
+- Wait a few seconds after updating the secret for GitHub to propagate it
 
 **"Migration already applied"**:
 - This is fine! Supabase tracks applied migrations
