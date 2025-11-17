@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme for Compose apps -->
+    <style name="Theme.ElectricSheep" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/purple_500</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
+
