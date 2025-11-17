@@ -72,6 +72,12 @@ jobs:
       run: ./gradlew lint --stacktrace --info
       working-directory: ${{ github.workspace }}
       continue-on-error: false
+    
+    - name: Accessibility lint check
+      id: accessibility-lint
+      run: ./gradlew lint --stacktrace --info -Pandroid.lint.checkAccessibility=true
+      working-directory: ${{ github.workspace }}
+      continue-on-error: false
 
     - name: Run unit tests
       id: test

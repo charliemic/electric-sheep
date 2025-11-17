@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-11-17T17:31:13Z",
+  "sourceFiles": 35,
+  "testFiles": 13,
+  "mainLinesOfCode": 2942,
+  "testLinesOfCode": 2223,
+  "totalLinesOfCode": 5165,
+  "classCount": 25,
+  "functionCount": 6,
+  "testToSourceRatio": 0.37
+}

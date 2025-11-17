@@ -1,69 +1,172 @@
-# electric-sheep
-An android assistant app to hold other apps
+# Electric Sheep
+
+Android app for personal utilities, starting with mood management.
 
 ## Development Setup
 
 ### Prerequisites
-- JDK 17 or higher
+- **JDK 17** (recommended) or JDK 11 (minimum)
+  - ⚠️ **Important**: Java 18+ may cause compatibility issues with Android build tools
+  - See [KSP Migration Guide](docs/development/KSP_MIGRATION.md) for Java version details
 - Android SDK (API level 34)
 - Gradle (via wrapper)
 - GitHub CLI (optional, for debugging CI failures)
 
-### Installing GitHub CLI
+### Installation
 
-GitHub CLI (`gh`) is useful for debugging CI/CD pipeline failures and accessing build logs from the command line.
+1. Clone the repository
+2. Install Android SDK (see [Android SDK Setup](#android-sdk-setup))
+3. Run `./gradlew build` to verify setup
 
-**macOS:**
+### Android SDK Setup
+
+**macOS (using Homebrew):**
 ```bash
-brew install gh
-gh auth login
+brew install --cask android-commandlinetools
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 ```
 
-**Other platforms:**
-See [GitHub CLI installation guide](https://cli.github.com/manual/installation)
-
-### Viewing CI Build Logs
-
-If a build fails, you can view the logs using:
-
-**Using GitHub CLI:**
-```bash
-# List recent workflow runs
-gh run list --branch <your-branch-name>
-
-# View logs for a specific run
-gh run view <run-id> --log
-
-# View logs for the latest failed run
-gh run list --status failure --limit 1 | head -1 | awk '{print $7}' | xargs gh run view --log
+Create `local.properties` in project root:
+```properties
+sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
 ```
 
-**Using GitHub Web Interface:**
-1. Navigate to the [Actions tab](https://github.com/charliemic/electric-sheep/actions)
-2. Click on the failed workflow run
-3. Click on the `build` job
-4. Expand each step to see detailed logs
-5. Check the "Debug environment" step for environment variable information
+## Development Workflow
 
-### Building Locally
+For faster iteration during development:
+
+**Option 1: Quick Reload Script**
+```bash
+# Rebuild, install, and launch app
+./scripts/dev-reload.sh
+
+# With clean build
+./scripts/dev-reload.sh --clean
+
+# With fresh database (clears app data)
+./scripts/dev-reload.sh --fresh
+```
+
+**Option 2: Continuous Build (Gradle Watch Mode)**
+```bash
+# Automatically rebuilds on file changes
+./scripts/continuous-build.sh
+
+# Or run in background (survives shell disconnection)
+./scripts/run-background-reload.sh
+# Stop with: pkill -f continuous-build.sh
+# View logs: tail -f .build-watch.log
+```
+
+**Option 3: File Watcher (requires fswatch)**
+```bash
+# Watch for changes and auto-reload
+./scripts/watch-and-reload.sh
+```
+
+**Option 4: Android Studio Apply Changes**
+- Use Android Studio's built-in "Apply Changes" feature
+- Make code changes and click the lightning bolt icon (⚡)
+- Changes are applied without full rebuild (faster for UI changes)
+
+**Note**: Database migrations run automatically on app startup when the database version changes. To test migrations with fresh data, use `./scripts/dev-reload.sh --fresh` to clear app data.
+
+## Running on Android Emulator
+
+1. Start an emulator:
+   ```bash
+   emulator -avd YOUR_AVD_NAME
+   ```
+   Or use Android Studio's AVD Manager.
+
+2. Build and install:
+   ```bash
+   ./gradlew installDebug
+   ```
+
+3. Or use the quick reload script:
+   ```bash
+   ./scripts/dev-reload.sh
+   ```
+
+## Development Metrics
+
+We track development metrics over time to analyze trends and patterns. See [Development Metrics Guide](development-metrics/README.md) for details.
+
+**Quick Start:**
+- Capture all metrics: `./scripts/metrics/capture-all-metrics.sh`
+- Capture after tests: `./scripts/gradle-wrapper-test.sh` (automatically captures test metrics)
+- Capture after builds: `./scripts/gradle-wrapper-build.sh` (automatically captures build metrics)
+- Store a prompt: `./scripts/metrics/capture-prompt.sh "your prompt text"`
+
+Metrics are stored in `development-metrics/` with timestamps for historical analysis.
+
+## Accessing the Database
+
+To inspect the Room database on the emulator, see [Database Access Guide](docs/testing/DATABASE_ACCESS.md).
+
+**Quick method using Android Studio:**
+1. Run the app on the emulator
+2. Open `View` → `Tool Windows` → `App Inspection`
+3. Select your app and browse the `moods` table
+
+**Quick method using ADB:**
+```bash
+adb shell
+run-as com.electricsheep.app
+cd /data/data/com.electricsheep.app/databases
+sqlite3 app_database
+SELECT * FROM moods;
+```
+
+## Building
 
 ```bash
-# Build the project
-./gradlew build
+# Debug build
+./gradlew assembleDebug
+
+# Release build
+./gradlew assembleRelease
 
 # Run tests
 ./gradlew test
 
-# Run lint checks
+# Run lint
 ./gradlew lint
+```
 
-# Build debug APK
-./gradlew assembleDebug
+## CI/CD
 
-# Build release AAB
-./gradlew bundleRelease
+The project uses GitHub Actions for CI/CD. See `.github/workflows/ci.yml` for configuration.
+
+**Viewing CI Build Logs:**
+```bash
+# List recent runs
+gh run list
+
+# Watch a specific run
+gh run watch <run-id>
+
+# View logs
+gh run view <run-id> --log
+```
+
+## Project Structure
+
+```
+app/
+├── src/
+│   ├── main/          # Production code
+│   │   ├── java/      # Kotlin source files
+│   │   └── res/       # Resources
+│   └── test/          # Unit tests
+docs/                   # Documentation
+scripts/                # Development scripts
+development-metrics/    # Development metrics tracking
 ```
 
 ## Contributing
 
-See [AI_AGENT_GUIDELINES.md](./AI_AGENT_GUIDELINES.md) for detailed development guidelines and best practices.
+See [AI Agent Guidelines](AI_AGENT_GUIDELINES.md) for development best practices and coding standards.

@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-11-17T17:34:58Z",
+  "success": true,
+  "executionTimeSeconds": 4,
+  "totalTests": estimated,
+  "passedTests": estimated,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "coveragePercentage": null,
+  "testFailures": [],
+  "exitCode": 0
+}

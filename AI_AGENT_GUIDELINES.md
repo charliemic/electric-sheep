@@ -21,11 +21,19 @@ This document provides guidance for AI agents working on this codebase. Follow t
 - **Readability**: Write code that is self-documenting and easy to understand
 - **DRY (Don't Repeat Yourself)**: Avoid duplication; extract common functionality
 - **SOLID Principles**: Apply object-oriented design principles where applicable
+- **UK English**: Use UK English spellings throughout the codebase
+  - Use "analyse" not "analyze"
+  - Use "colour" in user-facing text (though "color" is acceptable in technical contexts like variable names)
+  - Use "organise" not "organize"
+  - Use "centre" in user-facing text (though "center" is acceptable in technical contexts like Compose alignment)
+  - Use "recognise" not "recognize"
+  - Use "optimise" not "optimize"
+  - Use "realise" not "realize"
 - **Language-Specific**: Adhere to Kotlin Multiplatform style guides and best practices
   - Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
   - Use `expect`/`actual` declarations for platform-specific implementations
   - Keep shared code platform-agnostic when possible
-  - Organize code by source sets (commonMain, androidMain, iosMain, etc.)
+  - Organise code by source sets (commonMain, androidMain, iosMain, etc.)
   - Prefer common code over platform-specific implementations
 
 ### Before Making Changes
@@ -38,7 +46,50 @@ This document provides guidance for AI agents working on this codebase. Follow t
 - **Start Small**: Implement minimal viable functionality first, then iterate
 - **Preserve Functionality**: Ensure existing features continue to work
 - **Add Tests**: Write tests alongside implementation, not after
+- **Keep Tests Passing**: **CRITICAL** - Always ensure all tests pass before moving on to the next change
+  - Run tests frequently during development (`./gradlew test`)
+  - Fix failing tests immediately - do not accumulate test failures
+  - If a change breaks existing tests, fix the tests as part of the same change
+  - Never leave tests in a failing state - this creates technical debt and makes refactoring harder later
+  - If you must temporarily break tests, document why and create a follow-up task to fix them immediately
+- **Add Logging**: Implement appropriate logging for each feature with correct log levels
 - **Update Documentation**: Keep documentation in sync with code changes
+- **Consider Accessibility**: Always implement accessibility features alongside UI components
+  - Add content descriptions to all interactive elements
+  - Provide semantic roles for custom components
+  - Announce state changes (loading, errors, success) to screen readers
+  - Ensure touch targets meet minimum 48dp size
+  - Test with TalkBack screen reader
+  - See [Accessibility](#accessibility) section for detailed guidelines
+- **Use ViewModel Pattern**: For any screen with business logic, use ViewModel
+  - Extract state management, user actions, and repository interactions to ViewModel
+  - UI should only observe ViewModel state and send events
+  - Makes UI testable and follows Android architecture best practices
+  - See [ViewModel Best Practices](#viewmodel-best-practices) for details
+- **Consider Authentication**: Always consider user authentication and data scoping when implementing new features
+  - Check if feature needs user authentication (use `UserManager.requireUserId()` or `getUserIdOrNull()`)
+  - Scope data to current user (add `userId` to data models, filter queries by `userId`)
+  - Verify user ownership before allowing data access/modification
+  - Handle unauthenticated states gracefully (show sign-in UI or disable features)
+  - See [Authentication Architecture](../docs/architecture/AUTHENTICATION.md) for details
+- **Consider Database Migrations**: When implementing features that change data models or schema
+  - Add a migration if adding/modifying/removing database columns or tables
+  - Update database version in `AppDatabase.kt`
+  - Add migration to `DatabaseMigrations.getMigrations()`
+  - Test migration on both fresh and existing databases
+  - Follow Room migration best practices (no raw Cursor, trust Room's migration system)
+  - See [Data Layer Architecture](../docs/architecture/DATA_LAYER_ARCHITECTURE.md) for migration details
+- **Use Library Functionality First**: Before implementing custom functionality, check if the library/tool provides it
+  - Review library documentation and APIs before writing custom code
+  - Prefer using built-in features over implementing your own version
+  - Examples: Room migrations (don't use raw Cursor), WorkManager constraints (don't implement custom scheduling), etc.
+  - Only implement custom solutions when library doesn't provide the needed functionality
+  - Document why custom implementation was chosen if library functionality exists
+- **Track Development Metrics**: Update development metrics after significant changes
+  - Run `./scripts/metrics/capture-all-metrics.sh` to capture complexity, accessibility, and other metrics
+  - Store user prompts in `development-metrics/prompts/` using `./scripts/metrics/capture-prompt.sh "prompt text"`
+  - Build and test metrics are automatically captured when running `./gradlew build` or `./gradlew test` via wrapper scripts
+  - See [Development Metrics](#development-metrics) section for details
 - **Push and Verify**: After making changes, push to a feature branch, create a PR, and verify CI pipeline passes (see [Git Workflow](#workflow-push-changes-and-create-pr))
 
 ## Code Quality
@@ -52,11 +103,21 @@ This document provides guidance for AI agents working on this codebase. Follow t
 - [ ] Functions are focused and do one thing well
 - [ ] No magic numbers or strings
 - [ ] Proper use of design patterns where appropriate
+- [ ] Database migrations added for schema changes
+- [ ] Library functionality used instead of custom implementations where available
 
 ### Refactoring Guidelines
 - **Test Coverage**: Ensure adequate test coverage before refactoring
+- **All Tests Passing**: **REQUIRED** - All tests must pass before starting refactoring
+  - If tests are failing, fix them first before refactoring
+  - Refactoring with failing tests makes it impossible to verify behavior is preserved
+  - Running tests after refactoring should show no new failures (green tests before and after)
 - **Incremental Changes**: Make small, incremental refactoring changes
+  - Run tests after each small refactoring step
+  - Keep tests green throughout the refactoring process
 - **Preserve Behavior**: Maintain existing functionality during refactoring
+  - Tests should pass with the same assertions before and after refactoring
+  - If tests need to change, it means behavior changed (which may be intentional, but should be explicit)
 - **Document Intent**: Explain why refactoring is necessary
 
 ## Testing
@@ -78,6 +139,7 @@ This pattern provides fast feedback through extensive unit tests while ensuring 
 - **Tight Scoping**: Test individual functions, classes, or small components in isolation
 - **Mock External Dependencies**: Mock APIs, databases, file systems, and other external services
 - **Test Coverage**: Aim for >80% code coverage through unit tests
+- **Test Logging**: Write unit tests for logging utilities to verify API structure and method signatures
 
 #### Integration Tests (Narrow Middle)
 - **Minimal Use**: Use sparingly for testing component interactions that can't be tested at unit or stack level
@@ -100,6 +162,33 @@ This pattern provides fast feedback through extensive unit tests while ensuring 
 - **Deterministic**: Tests should produce consistent results
 - **Test Naming**: Use descriptive test names that explain what is being tested
 - **Test Organization**: Group related tests logically (by feature or component)
+
+### Keeping Tests Passing (CRITICAL)
+- **Run Tests Frequently**: Execute tests after every significant change (`./gradlew test`)
+  - Don't wait until the end of a feature to run tests
+  - Catch test failures early when the cause is still fresh in mind
+  - Fast feedback loop prevents accumulation of test debt
+- **Fix Tests Immediately**: When a change breaks tests, fix them as part of the same change
+  - Do not defer test fixes - they become harder to fix later
+  - If tests fail due to a change, update the tests to match the new behavior
+  - If tests fail due to a bug, fix the bug, not the test
+- **Never Commit Failing Tests**: All tests must pass before committing changes
+  - Failing tests in the repository create confusion and technical debt
+  - Other developers may assume tests are reliable and waste time debugging
+  - CI/CD will catch failures, but it's better to catch them locally first
+- **Update Tests with Code Changes**: When modifying code behavior, update tests accordingly
+  - If you change a function signature, update all tests that use it
+  - If you change validation logic, update tests to reflect new validation rules
+  - If you refactor code, ensure tests still accurately test the behavior
+- **Test-Driven Development**: Consider writing tests first (TDD) for complex logic
+  - Write a failing test that describes desired behavior
+  - Implement code to make the test pass
+  - Refactor while keeping tests green
+- **Evaluate Test Suite Regularly**: Periodically review and improve the test suite
+  - Remove obsolete tests
+  - Consolidate duplicate tests
+  - Improve test clarity and maintainability
+  - But always ensure tests pass before and after evaluation
 
 ### Test Examples
 
@@ -267,7 +356,14 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 ### Security Principles
 - **Input Validation**: Always validate and sanitize user input
 - **Authentication**: Implement proper authentication mechanisms
+  - Always verify user is authenticated before accessing user-scoped data
+  - Use `UserManager.requireUserId()` or check `UserManager.isAuthenticated` before operations
+  - Handle unauthenticated states gracefully (show sign-in UI, disable features)
+  - Never trust client-provided user IDs; always use current authenticated user's ID
 - **Authorization**: Verify user permissions before sensitive operations
+  - Verify data ownership before allowing access/modification (check `userId` matches current user)
+  - Filter all queries by `userId` to prevent cross-user data access
+  - Validate `userId` in repository methods before database operations
 - **Secrets Management**: Never commit secrets, API keys, or credentials
 - **Dependency Updates**: Keep dependencies updated to patch vulnerabilities
 
@@ -281,6 +377,10 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 ### Security Checklist
 - [ ] No hardcoded secrets or credentials
 - [ ] Input validation implemented
+- [ ] User authentication verified before accessing user-scoped data
+- [ ] Data ownership verified (userId matches current user) before operations
+- [ ] All queries filter by userId to prevent cross-user data access
+- [ ] Unauthenticated states handled gracefully
 - [ ] Output sanitization applied
 - [ ] Dependencies are up-to-date
 - [ ] Security headers configured
@@ -358,7 +458,13 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
      - How to test the changes
      - Any breaking changes
 
-5. **Verify CI Pipeline**
+5. **Verify Tests Pass Locally**
+   - **CRITICAL**: Run tests locally before pushing (`./gradlew test`)
+   - Fix any failing tests immediately
+   - Do not push code with failing tests - this wastes CI resources and creates confusion
+   - All tests must pass locally before creating a PR
+
+6. **Verify CI Pipeline**
    - The CI pipeline automatically runs on:
      - Every push to any branch
      - Every PR creation and update
@@ -369,7 +475,7 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
      - ✅ Build (debug APK)
      - ✅ Build (release AAB)
    - **PRs are blocked from merging** if any CI checks fail (enforced by branch protection)
-   - Fix any failures and push additional commits to the same branch
+   - If CI fails, fix issues locally, run tests again, then push fixes
    - CI will automatically re-run on each push
 
 ### Debugging CI Failures
@@ -460,10 +566,72 @@ try {
 ```
 
 ### Logging Best Practices
-- **Log Levels**: Use appropriate log levels (DEBUG, INFO, WARN, ERROR)
-- **Structured Logging**: Use structured logging when possible
-- **Sensitive Data**: Never log passwords, tokens, or sensitive user data
-- **Context**: Include relevant context in log messages
+
+#### Logging Requirements
+- **Implement with Features**: Add logging when implementing new features, not as an afterthought
+- **Test Logging**: Write tests to verify logging works correctly (see [Testing](#testing))
+- **Appropriate Levels**: Choose the correct log level for each situation (see below)
+- **Use Logger Utility**: Always use the centralised `Logger` utility (`com.electricsheep.app.util.Logger`)
+
+#### Log Level Guidelines
+
+**VERBOSE** - Very detailed diagnostic information
+- Use for: Detailed tracing of execution flow, variable values during development
+- Example: `Logger.verbose("ComponentName", "Processing item: $itemId")`
+- Typically disabled in production builds
+
+**DEBUG** - Development debugging information
+- Use for: Diagnostic information helpful during development, UI state changes, component lifecycle
+- Example: `Logger.debug("ScreenName", "Screen displayed")`, `Logger.debug("ViewModel", "State updated: $state")`
+- Typically disabled in production builds
+
+**INFO** - General informational messages
+- Use for: Important application flow events, user actions, successful operations, navigation events
+- Example: `Logger.info("ScreenName", "User navigated to settings")`, `Logger.info("Repository", "Data loaded successfully")`
+- Should be enabled in production for monitoring
+
+**WARN** - Warning messages for potential issues
+- Use for: Recoverable errors, deprecated API usage, unusual but non-fatal conditions, fallback scenarios
+- Example: `Logger.warn("NetworkService", "API call failed, using cached data")`, `Logger.warn("Validation", "Invalid input format, using default")`
+- Should be enabled in production
+
+**ERROR** - Error messages for actual problems
+- Use for: Exceptions, failures, errors that need attention, unrecoverable conditions
+- Example: `Logger.error("DatabaseService", "Failed to save data", exception)`, `Logger.error("ApiClient", "Network request failed", networkException)`
+- Always enabled in production
+
+#### Logging Implementation Checklist
+- [ ] Log important user actions (INFO level)
+- [ ] Log screen/component lifecycle events (DEBUG level)
+- [ ] Log errors and exceptions (ERROR level with throwable)
+- [ ] Log warnings for unusual conditions (WARN level)
+- [ ] Use descriptive tags (component/class name)
+- [ ] Include relevant context in messages
+- [ ] Never log sensitive data (passwords, tokens, PII)
+- [ ] Write tests for logging functionality (unit tests for Logger API, instrumented tests for actual logging)
+- [ ] Consider log volume (avoid excessive logging in loops)
+- [ ] Review log levels - ensure appropriate level chosen for each log statement
+
+#### Example Logging Implementation
+```kotlin
+// Good: Appropriate log levels with context
+class UserRepository {
+    fun loadUser(userId: String): User? {
+        Logger.debug("UserRepository", "Loading user: $userId")
+        return try {
+            val user = apiService.getUser(userId)
+            Logger.info("UserRepository", "User loaded successfully: $userId")
+            user
+        } catch (e: NetworkException) {
+            Logger.warn("UserRepository", "Network error loading user, using cache", e)
+            cache.getUser(userId)
+        } catch (e: Exception) {
+            Logger.error("UserRepository", "Failed to load user: $userId", e)
+            null
+        }
+    }
+}
+```
 
 ## Performance
 
@@ -485,20 +653,60 @@ try {
 ## Accessibility
 
 ### Accessibility Guidelines
-- **Semantic HTML**: Use semantic HTML elements
-- **ARIA Labels**: Add ARIA labels for screen readers
-- **Keyboard Navigation**: Ensure keyboard accessibility
-- **Color Contrast**: Maintain sufficient color contrast ratios
-- **Focus Indicators**: Provide visible focus indicators
-- **Alt Text**: Include alt text for images
+
+**Android/Jetpack Compose Specific:**
+- **Content Descriptions**: All interactive elements (buttons, icons, images) must have descriptive `contentDescription` or semantic descriptions
+- **Semantic Roles**: Use `semantics` modifier to provide semantic roles (`Role.Button`, `Role.Checkbox`, etc.)
+- **State Descriptions**: Provide state descriptions for dynamic content (loading, error, success states)
+- **Error Announcements**: Use `semantics { error() }` to announce errors to screen readers
+- **Touch Target Size**: Ensure all interactive elements meet minimum 48dp touch target size
+- **Color Contrast**: Maintain WCAG AA contrast ratios (4.5:1 for text, 3:1 for UI components)
+- **Text Field Labels**: Always provide labels for text fields using `label` parameter
+- **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
+- **Screen Reader Testing**: Test with TalkBack enabled to verify screen reader compatibility
+
+**Implementation Examples:**
+```kotlin
+// Icon with content description
+Icon(
+    imageVector = Icons.Default.ArrowBack,
+    contentDescription = "Navigate back"
+)
+
+// Button with semantic description
+Button(
+    onClick = { },
+    modifier = Modifier.semantics {
+        contentDescription = "Save mood entry"
+        stateDescription = if (isLoading) "Saving" else null
+    }
+) { Text("Save") }
+
+// Text field with error announcement
+OutlinedTextField(
+    value = text,
+    onValueChange = { },
+    label = { Text("Email") },
+    modifier = Modifier.semantics {
+        if (errorMessage != null) {
+            error(errorMessage)
+        }
+    },
+    isError = errorMessage != null
+)
+```
 
 ### Accessibility Checklist
-- [ ] All interactive elements are keyboard accessible
-- [ ] Screen reader compatible
-- [ ] Sufficient color contrast
-- [ ] Focus indicators visible
-- [ ] Images have alt text
-- [ ] Forms have proper labels
+- [ ] All interactive elements have content descriptions
+- [ ] Semantic roles are defined for custom interactive components
+- [ ] Error states are announced to screen readers
+- [ ] Loading states are communicated to screen readers
+- [ ] Touch targets meet minimum 48dp size
+- [ ] Color contrast meets WCAG AA standards
+- [ ] Text fields have proper labels
+- [ ] Tested with TalkBack screen reader
+- [ ] Keyboard navigation works for all interactive elements
+- [ ] Dynamic content changes are announced
 
 ## Android-Specific Guidelines
 
@@ -511,22 +719,130 @@ try {
 
 ### Android Architecture
 - **MVVM/MVI**: Follow established architecture patterns
+  - **Always use ViewModel for UI screens**: Extract business logic from Composables into ViewModels
+  - ViewModels manage state, handle user actions, and interact with repositories
+  - UI (Composables) should only observe ViewModel state and send events
+  - This enables testability and proper separation of concerns
+  - See [ViewModel Best Practices](#viewmodel-best-practices) for details
 - **Repository Pattern**: Use repository pattern for data access
-- **Dependency Injection**: Use DI framework (Dagger/Hilt, Koin)
+- **Dependency Injection**: Use DI framework (Dagger/Hilt, Koin) or manual DI with factories
 - **Reactive Programming**: Use coroutines/Flow for asynchronous operations
 
 ## Questions to Ask Before Implementing
 
 1. **Does this change break existing functionality?**
 2. **Are there tests for this change?**
-3. **Is this the simplest solution?**
-4. **Does this follow existing patterns in the codebase?**
-5. **Is error handling appropriate?**
-6. **Is this secure?**
-7. **Is documentation needed/updated?**
-8. **Will this impact performance?**
-9. **Is this accessible?**
-10. **Does this align with project goals?**
+3. **Will all tests pass after this change?** (Run `./gradlew test` to verify)
+4. **Is this the simplest solution?**
+5. **Does this follow existing patterns in the codebase?**
+6. **Is error handling appropriate?**
+7. **Is this secure?**
+8. **Is documentation needed/updated?**
+9. **Will this impact performance?**
+10. **Is this accessible?**
+11. **Does this align with project goals?**
+
+## ViewModel Best Practices
+
+### When to Use ViewModels
+- **Always use ViewModels for screens with business logic**: Any screen that needs to:
+  - Manage state (loading, errors, user input)
+  - Interact with repositories or data sources
+  - Handle user actions (sign in, save data, etc.)
+  - Perform validation or transformation
+
+### ViewModel Structure
+- **State Management**: Use `StateFlow` or `MutableStateFlow` for reactive state
+- **Dependency Injection**: Accept dependencies via constructor (UserManager, Repository, etc.)
+- **ViewModelFactory**: Create a factory for dependency injection when using `viewModel()` in Compose
+- **Error Handling**: Handle errors gracefully and expose error state to UI
+- **Lifecycle Awareness**: Use `viewModelScope` for coroutines (automatically cancelled when ViewModel is cleared)
+
+### ViewModel Testing
+- **Set up test dispatcher**: Use `Dispatchers.setMain(testDispatcher)` in `@Before` and `Dispatchers.resetMain()` in `@After`
+- **Test state changes**: Verify StateFlow values change correctly
+- **Test error handling**: Verify error states are set appropriately
+- **Mock dependencies**: Mock repositories, managers, etc.
+
+### Example ViewModel Pattern
+```kotlin
+class MyScreenViewModel(
+    private val repository: MyRepository,
+    private val userManager: UserManager
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(MyUiState())
+    val uiState: StateFlow<MyUiState> = _uiState.asStateFlow()
+    
+    fun performAction() {
+        viewModelScope.launch {
+            repository.doSomething()
+                .onSuccess { /* update state */ }
+                .onFailure { /* set error state */ }
+        }
+    }
+}
+```
+
+### Avoiding Unnecessary Abstractions
+- **Don't create wrapper classes that only add logging**: If a class only wraps another and adds logging, consider removing it
+- **Evaluate abstraction value**: Before creating an abstraction layer, ask:
+  - Does it add meaningful functionality beyond what the underlying class provides?
+  - Will it support future extensibility that's actually planned?
+  - Is the added complexity justified?
+- **Simplify when possible**: Remove unnecessary layers that don't provide clear value
+
+### Application Initialization
+- **Extract initialization methods**: Break complex `onCreate()` into focused methods:
+  - `initializeAuth()` - Authentication setup
+  - `initializeDataLayer()` - Database and repositories
+  - `initializeSync()` - Background sync setup
+- **Clear error handling**: Each initialization step should handle its own errors gracefully
+- **Graceful degradation**: App should continue functioning even if some components fail to initialize
+
+### Defensive Coding Guidelines
+- **Avoid impossible exception handling**: Don't catch exceptions that can't actually occur
+  - Example: `NoSuchFieldError` for BuildConfig fields (generated at compile time, always exists)
+  - Only catch exceptions that could realistically occur at runtime
+- **Trust library guarantees**: If a library guarantees something (e.g., Room migrations run in order), trust it
+- **Simplify error handling**: Remove unnecessary try-catch blocks that add no value
+
+## Development Metrics
+
+### Overview
+We track development metrics over time to analyze trends and identify patterns that affect codebase health.
+
+### Metrics Collected
+- **Prompts**: Every user request/prompt is stored with timestamp
+- **Build Metrics**: Execution time, success/failure, warnings, errors
+- **Test Metrics**: Test counts, execution time, failures, coverage
+- **Complexity Metrics**: Lines of code, class/function counts, file counts
+- **Accessibility Metrics**: Violation counts, error/warning breakdowns
+- **Coverage**: Code coverage percentages and trends
+
+### When to Capture Metrics
+- **After builds**: Automatically captured via wrapper scripts
+- **After tests**: Automatically captured via wrapper scripts
+- **After significant changes**: Run `./scripts/metrics/capture-all-metrics.sh`
+- **For each prompt**: Store using `./scripts/metrics/capture-prompt.sh "prompt text"`
+
+### Metric Storage
+- Metrics are stored in `development-metrics/` directory
+- Each metric type has its own subdirectory
+- Files are timestamped for historical tracking
+- JSON format for easy analysis
+
+### Analysis
+- Periodically review metrics to identify:
+  - Performance regressions (build/test time increases)
+  - Quality trends (complexity, coverage changes)
+  - Accessibility improvements
+  - Patterns in development workflow
+  - Correlation between prompts and code changes
+
+### Automatic Collection
+- Build metrics: Captured automatically when using `./gradlew build` wrapper
+- Test metrics: Captured automatically when using `./gradlew test` wrapper
+- Complexity/Accessibility: Run `./scripts/metrics/capture-all-metrics.sh` manually or in CI
 
 ## When in Doubt
 
@@ -535,6 +851,7 @@ try {
 - **Prioritize Correctness**: Correct code is more important than clever code
 - **Test Thoroughly**: When uncertain, add more tests
 - **Document Decisions**: Document non-obvious decisions and trade-offs
+- **Question Abstractions**: If an abstraction layer seems unnecessary, evaluate whether it should be removed
 
 ---
 
