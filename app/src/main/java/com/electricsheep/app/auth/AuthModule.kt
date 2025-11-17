@@ -1,6 +1,9 @@
 package com.electricsheep.app.auth
 
+import android.content.Context
+import com.electricsheep.app.data.DataModule
 import com.electricsheep.app.util.Logger
+import io.github.jan.supabase.SupabaseClient
 
 /**
  * Authentication module for dependency injection and setup.
@@ -10,17 +13,20 @@ object AuthModule {
     
     /**
      * Create authentication provider.
-     * Currently returns PlaceholderAuthProvider for development.
+     * Uses Supabase Auth if available, otherwise falls back to placeholder.
      * 
-     * TODO: Replace with real authentication provider when implementing auth:
-     * - Supabase Auth
-     * - Auth0
-     * - Firebase Auth
-     * - Custom OAuth provider
+     * @param context Android context (required for OAuth redirect handling)
+     * @param supabaseClient Supabase client (can be null if offline-only)
+     * @return AuthProvider instance
      */
-    fun createAuthProvider(): AuthProvider {
-        Logger.info("AuthModule", "Creating authentication provider (placeholder)")
-        return PlaceholderAuthProvider()
+    fun createAuthProvider(context: Context, supabaseClient: SupabaseClient?): AuthProvider {
+        return if (supabaseClient != null) {
+            Logger.info("AuthModule", "Creating Supabase authentication provider")
+            SupabaseAuthProvider(supabaseClient, context)
+        } else {
+            Logger.info("AuthModule", "Creating placeholder authentication provider (offline-only mode)")
+            PlaceholderAuthProvider()
+        }
     }
     
     /**

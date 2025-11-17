@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
@@ -24,6 +25,7 @@ import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
 import com.electricsheep.app.util.DateFormatter
 import com.electricsheep.app.util.Logger
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -36,14 +38,32 @@ fun MoodManagementScreen(
     // Observe ViewModel state
     val currentUser by viewModel.currentUser.collectAsState()
     val emailText by viewModel.emailText.collectAsState()
+    val passwordText by viewModel.passwordText.collectAsState()
+    val isSignUpMode by viewModel.isSignUpMode.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val moodScoreText by viewModel.moodScoreText.collectAsState()
     val isSavingMood by viewModel.isSavingMood.collectAsState()
     val moodErrorMessage by viewModel.moodErrorMessage.collectAsState()
     val moods by viewModel.moods.collectAsState()
+    val googleOAuthUrl by viewModel.googleOAuthUrl.collectAsState()
     
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Handle Google OAuth URL - open in browser when available
+    LaunchedEffect(googleOAuthUrl) {
+        googleOAuthUrl?.let { url ->
+            try {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                context.startActivity(intent)
+                Logger.info("MoodManagementScreen", "Opened Google OAuth URL in browser")
+            } catch (e: Exception) {
+                Logger.error("MoodManagementScreen", "Failed to open OAuth URL", e)
+            }
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -103,20 +123,60 @@ fun MoodManagementScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "Sign In",
+                            text = if (isSignUpMode) "Create Account" else "Sign In",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        Text(
-                            text = "Enter an email address to sign in (development only)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Google SSO button
+                        OutlinedButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.signInWithGoogle()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = if (isLoading) {
+                                        "Starting Google sign-in, please wait"
+                                    } else {
+                                        "Sign in with Google"
+                                    }
+                                    if (isLoading) {
+                                        stateDescription = "Loading"
+                                    }
+                                },
+                            enabled = !isLoading
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .semantics { contentDescription = "Loading Google sign-in" },
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Text("Sign in with Google")
+                            }
+                        }
                         
-                        Spacer(modifier = Modifier.height(16.dp))
+                        // Divider
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Divider(modifier = Modifier.weight(1f))
+                            Text(
+                                text = "OR",
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Divider(modifier = Modifier.weight(1f))
+                        }
                         
                         // Email input
                         OutlinedTextField(
@@ -127,13 +187,33 @@ fun MoodManagementScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .semantics {
-                                    contentDescription = "Email address input field for signing in"
+                                    contentDescription = "Email address input field"
                                 },
                             enabled = !isLoading,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
                                 imeAction = ImeAction.Next
+                            )
+                        )
+                        
+                        // Password input
+                        OutlinedTextField(
+                            value = passwordText,
+                            onValueChange = { viewModel.updatePasswordText(it) },
+                            label = { Text("Password") },
+                            placeholder = { Text("Enter password") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = "Password input field"
+                                },
+                            enabled = !isLoading,
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
                             )
                         )
                         
@@ -146,33 +226,77 @@ fun MoodManagementScreen(
                             )
                         }
                         
-                        // Sign in button
+                        // Sign in/Sign up button
                         Button(
-                            onClick = { viewModel.signIn() },
+                            onClick = {
+                                if (isSignUpMode) {
+                                    viewModel.signUp()
+                                } else {
+                                    viewModel.signIn()
+                                }
+                                keyboardController?.hide()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .semantics {
                                     contentDescription = if (isLoading) {
-                                        "Signing in, please wait"
+                                        if (isSignUpMode) {
+                                            "Creating account, please wait"
+                                        } else {
+                                            "Signing in, please wait"
+                                        }
                                     } else {
-                                        "Sign in with email address"
+                                        if (isSignUpMode) {
+                                            "Create account with email and password"
+                                        } else {
+                                            "Sign in with email and password"
+                                        }
                                     }
                                     if (isLoading) {
                                         stateDescription = "Loading"
                                     }
                                 },
-                            enabled = !isLoading && emailText.isNotBlank()
+                            enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
                         ) {
                             if (isLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .size(16.dp)
-                                        .semantics { contentDescription = "Signing in progress" },
+                                        .semantics { 
+                                            contentDescription = if (isSignUpMode) {
+                                                "Creating account progress"
+                                            } else {
+                                                "Signing in progress"
+                                            }
+                                        },
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                             } else {
-                                Text("Sign In")
+                                Text(if (isSignUpMode) "Create Account" else "Sign In")
                             }
+                        }
+                        
+                        // Toggle between sign in and sign up
+                        TextButton(
+                            onClick = { viewModel.toggleSignUpMode() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = if (isSignUpMode) {
+                                        "Switch to sign in"
+                                    } else {
+                                        "Switch to create account"
+                                    }
+                                }
+                        ) {
+                            Text(
+                                text = if (isSignUpMode) {
+                                    "Already have an account? Sign in"
+                                } else {
+                                    "Don't have an account? Create one"
+                                },
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 }

@@ -20,6 +20,26 @@ android {
         
         // Feature flags - can be overridden per build type
         buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+        
+        // Supabase configuration - read from local.properties
+        val localPropertiesFile = rootProject.file("local.properties")
+        fun readProperty(key: String, defaultValue: String): String {
+            if (!localPropertiesFile.exists()) return defaultValue
+            return localPropertiesFile.readLines()
+                .find { it.startsWith("$key=") }
+                ?.substringAfter("=")
+                ?.trim()
+                ?: defaultValue
+        }
+        
+        val supabaseUrl = readProperty("supabase.url", "https://your-project.supabase.co")
+        val supabaseAnonKey = readProperty("supabase.anon.key", "your-anon-key")
+        
+        // Supabase URL - default to placeholder, override in local.properties
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        
+        // Supabase anon key - default to placeholder, override in local.properties
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     buildTypes {
@@ -95,6 +115,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:realtime-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:functions-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt") // Auth support
     // HTTP client engine for Supabase (required)
     implementation("io.ktor:ktor-client-android:2.3.5")
     

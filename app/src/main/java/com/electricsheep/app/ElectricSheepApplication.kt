@@ -10,6 +10,7 @@ import com.electricsheep.app.data.sync.SyncManager
 import com.electricsheep.app.data.sync.MoodSyncWorkerFactory
 import com.electricsheep.app.util.Logger
 import androidx.work.Configuration
+import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,9 +35,10 @@ class ElectricSheepApplication : Application() {
         try {
             Logger.info("ElectricSheepApplication", "Application onCreate")
             
-            userManager = initializeAuth()
             val featureFlagManager = initializeFeatureFlags()
-            moodRepository = initializeDataLayer(featureFlagManager, userManager)
+            val supabaseClient = DataModule.createSupabaseClient(featureFlagManager)
+            userManager = initializeAuth(supabaseClient)
+            moodRepository = initializeDataLayer(featureFlagManager, userManager, supabaseClient)
             initializeSync(featureFlagManager)
             
             Logger.info("ElectricSheepApplication", "Application initialised successfully")
@@ -63,9 +65,9 @@ class ElectricSheepApplication : Application() {
     /**
      * Initialise authentication components.
      */
-    private fun initializeAuth(): UserManager {
+    private fun initializeAuth(supabaseClient: SupabaseClient?): UserManager {
         Logger.debug("ElectricSheepApplication", "Initialising authentication")
-        val authProvider = AuthModule.createAuthProvider()
+        val authProvider = AuthModule.createAuthProvider(this, supabaseClient)
         val userManager = AuthModule.createUserManager(authProvider)
         
         // Initialise user manager (loads current user if authenticated)
@@ -93,7 +95,8 @@ class ElectricSheepApplication : Application() {
      */
     private fun initializeDataLayer(
         featureFlagManager: FeatureFlagManager,
-        userManager: UserManager
+        userManager: UserManager,
+        supabaseClient: SupabaseClient?
     ): MoodRepository? {
         return try {
             Logger.debug("ElectricSheepApplication", "Initialising data layer")
@@ -101,8 +104,6 @@ class ElectricSheepApplication : Application() {
             val database = DataModule.createDatabase(this)
             val moodDao = database.moodDao()
             
-            // Only create Supabase client if not in offline-only mode
-            val supabaseClient = DataModule.createSupabaseClient(featureFlagManager)
             val remoteDataSource = DataModule.createRemoteDataSource(supabaseClient)
             
             val repository = DataModule.createMoodRepository(

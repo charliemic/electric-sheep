@@ -1,0 +1,183 @@
+name: Supabase Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-deploy.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'supabase/**'
+  workflow_dispatch: # Allow manual triggering
+    inputs:
+      project_ref:
+        description: 'Supabase Project Reference ID (leave empty to use SUPABASE_PROJECT_REF)'
+        required: false
+        type: string
+
+jobs:
+  validate-migrations:
+    name: Validate Migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Validate migrations
+        run: |
+          # Check migration files are valid SQL
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              # Basic SQL syntax check (can be enhanced)
+              if ! grep -q "CREATE\|ALTER\|DROP" "$file"; then
+                echo "Warning: $file may not contain valid migration statements"
+              fi
+            fi
+          done
+      
+      - name: Check migration naming
+        run: |
+          # Ensure migrations follow naming convention: YYYYMMDDHHMMSS_description.sql
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if ! echo "$filename" | grep -qE '^[0-9]{14}_'; then
+                echo "Error: Migration $filename does not follow naming convention: YYYYMMDDHHMMSS_description.sql"
+                exit 1
+              fi
+            fi
+          done
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
+    needs: validate-migrations
+    environment:
+      name: staging
+      url: https://${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Login to Supabase
+        run: |
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | supabase login --token -
+      
+      - name: Link to staging project
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            exit 1
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Deploy migrations
+        run: |
+          supabase db push
+      
+      - name: Verify deployment
+        run: |
+          # Verify migrations were applied
+          supabase migration list
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: validate-migrations
+    environment:
+      name: production
+      url: https://${{ secrets.SUPABASE_PROJECT_REF_PROD }}.supabase.co
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Login to Supabase
+        run: |
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | supabase login --token -
+      
+      - name: Link to production project
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            exit 1
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Deploy migrations
+        run: |
+          supabase db push
+      
+      - name: Verify deployment
+        run: |
+          # Verify migrations were applied
+          supabase migration list
+      
+      - name: Run smoke tests
+        run: |
+          # Optional: Run smoke tests against production
+          # This could verify RLS policies, basic queries, etc.
+          echo "Smoke tests would run here"
+
+  preview-migrations:
+    name: Preview Migrations (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: validate-migrations
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Start local Supabase
+        run: |
+          supabase start
+      
+      - name: Apply migrations
+        run: |
+          # Apply all migrations to local instance
+          supabase db reset
+      
+      - name: Generate migration diff
+        run: |
+          # Show what would change
+          supabase db diff --schema public
+      
+      - name: Stop local Supabase
+        if: always()
+        run: |
+          supabase stop
+

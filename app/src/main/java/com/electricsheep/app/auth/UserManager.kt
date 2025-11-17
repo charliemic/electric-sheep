@@ -1,5 +1,6 @@
 package com.electricsheep.app.auth
 
+import android.net.Uri
 import com.electricsheep.app.util.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,6 +121,44 @@ class UserManager(
      */
     fun getUserIdOrNull(): String? {
         return _currentUser.value?.id
+    }
+    
+    /**
+     * Get Google OAuth URL for sign-in.
+     * Only works if using SupabaseAuthProvider.
+     * 
+     * @return Result containing the OAuth URL or error
+     */
+    suspend fun getGoogleOAuthUrl(): Result<String> {
+        Logger.info("UserManager", "Getting Google OAuth URL")
+        return if (authProvider is SupabaseAuthProvider) {
+            authProvider.getGoogleOAuthUrl()
+        } else {
+            Result.failure(Exception("Google OAuth not supported with current auth provider"))
+        }
+    }
+    
+    /**
+     * Handle OAuth callback from deep link.
+     * Only works if using SupabaseAuthProvider.
+     * 
+     * @param callbackUri The callback URI from the OAuth provider
+     * @return Result containing the authenticated user or error
+     */
+    suspend fun handleOAuthCallback(callbackUri: android.net.Uri): Result<User> {
+        Logger.info("UserManager", "Handling OAuth callback")
+        return if (authProvider is SupabaseAuthProvider) {
+            authProvider.handleOAuthCallback(callbackUri).also { result ->
+                result.onSuccess { user ->
+                    _currentUser.value = user
+                    Logger.info("UserManager", "User authenticated via OAuth: ${user.id}")
+                }.onFailure { error ->
+                    Logger.error("UserManager", "OAuth callback failed", error)
+                }
+            }
+        } else {
+            Result.failure(Exception("OAuth callback not supported with current auth provider"))
+        }
     }
 }
 

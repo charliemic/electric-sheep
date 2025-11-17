@@ -33,11 +33,20 @@ class MoodManagementViewModel(
     private val _emailText = MutableStateFlow("")
     val emailText: StateFlow<String> = _emailText.asStateFlow()
     
+    private val _passwordText = MutableStateFlow("")
+    val passwordText: StateFlow<String> = _passwordText.asStateFlow()
+    
+    private val _isSignUpMode = MutableStateFlow(false)
+    val isSignUpMode: StateFlow<Boolean> = _isSignUpMode.asStateFlow()
+    
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    
+    private val _googleOAuthUrl = MutableStateFlow<String?>(null)
+    val googleOAuthUrl: StateFlow<String?> = _googleOAuthUrl.asStateFlow()
     
     // Mood input state
     private val _moodScoreText = MutableStateFlow("")
@@ -73,12 +82,35 @@ class MoodManagementViewModel(
     }
     
     /**
-     * Sign in with email
+     * Update password input text
+     */
+    fun updatePasswordText(text: String) {
+        _passwordText.value = text
+        _errorMessage.value = null
+    }
+    
+    /**
+     * Toggle between sign in and sign up mode
+     */
+    fun toggleSignUpMode() {
+        _isSignUpMode.value = !_isSignUpMode.value
+        _errorMessage.value = null
+    }
+    
+    /**
+     * Sign in with email and password
      */
     fun signIn() {
         val email = _emailText.value.trim()
+        val password = _passwordText.value
+        
         if (email.isBlank()) {
             _errorMessage.value = "Please enter an email address"
+            return
+        }
+        
+        if (password.isBlank()) {
+            _errorMessage.value = "Please enter a password"
             return
         }
         
@@ -87,15 +119,83 @@ class MoodManagementViewModel(
         Logger.info("MoodManagementViewModel", "Sign in attempt for: $email")
         
         viewModelScope.launch {
-            userManager.signIn(email, "fake_password")
+            userManager.signIn(email, password)
                 .onSuccess {
                     Logger.info("MoodManagementViewModel", "Sign in successful: ${it.id}")
                     _isLoading.value = false
                     _emailText.value = ""
+                    _passwordText.value = ""
                 }
                 .onFailure { error ->
                     Logger.error("MoodManagementViewModel", "Sign in failed", error)
                     _errorMessage.value = "Sign in failed: ${error.message}"
+                    _isLoading.value = false
+                }
+        }
+    }
+    
+    /**
+     * Sign up with email and password
+     */
+    fun signUp() {
+        val email = _emailText.value.trim()
+        val password = _passwordText.value
+        
+        if (email.isBlank()) {
+            _errorMessage.value = "Please enter an email address"
+            return
+        }
+        
+        if (password.isBlank()) {
+            _errorMessage.value = "Please enter a password"
+            return
+        }
+        
+        if (password.length < 6) {
+            _errorMessage.value = "Password must be at least 6 characters"
+            return
+        }
+        
+        _isLoading.value = true
+        _errorMessage.value = null
+        Logger.info("MoodManagementViewModel", "Sign up attempt for: $email")
+        
+        viewModelScope.launch {
+            userManager.signUp(email, password)
+                .onSuccess {
+                    Logger.info("MoodManagementViewModel", "Sign up successful: ${it.id}")
+                    _isLoading.value = false
+                    _emailText.value = ""
+                    _passwordText.value = ""
+                    _isSignUpMode.value = false
+                }
+                .onFailure { error ->
+                    Logger.error("MoodManagementViewModel", "Sign up failed", error)
+                    _errorMessage.value = "Sign up failed: ${error.message}"
+                    _isLoading.value = false
+                }
+        }
+    }
+    
+    /**
+     * Initiate Google OAuth sign-in
+     * Returns the OAuth URL to open in browser
+     */
+    fun signInWithGoogle() {
+        _isLoading.value = true
+        _errorMessage.value = null
+        Logger.info("MoodManagementViewModel", "Initiating Google OAuth sign-in")
+        
+        viewModelScope.launch {
+            userManager.getGoogleOAuthUrl()
+                .onSuccess { url ->
+                    Logger.info("MoodManagementViewModel", "Google OAuth URL obtained")
+                    _googleOAuthUrl.value = url
+                    _isLoading.value = false
+                }
+                .onFailure { error ->
+                    Logger.error("MoodManagementViewModel", "Failed to get Google OAuth URL", error)
+                    _errorMessage.value = "Failed to start Google sign-in: ${error.message}"
                     _isLoading.value = false
                 }
         }
