@@ -10,8 +10,17 @@ import org.junit.Assert.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun `should calculate addition correctly`() {
+        // Arrange
+        val operand1 = 2
+        val operand2 = 2
+        val expectedResult = 4
+        
+        // Act
+        val result = operand1 + operand2
+        
+        // Assert
+        assertEquals(expectedResult, result)
     }
 }
 

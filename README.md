@@ -64,6 +64,50 @@ gh run list --status failure --limit 1 | head -1 | awk '{print $7}' | xargs gh r
 ./gradlew bundleRelease
 ```
 
+### Running on Android Emulator
+
+To test the app locally on an Android emulator:
+
+**1. List available emulators:**
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
+emulator -list-avds
+```
+
+**2. Start an emulator:**
+```bash
+emulator -avd <AVD_NAME> &
+# Or use the full path:
+$ANDROID_HOME/emulator/emulator -avd <AVD_NAME> &
+```
+
+**3. Wait for emulator to boot:**
+```bash
+adb wait-for-device
+adb devices  # Should show device as "device" not "offline"
+```
+
+**4. Install and run the app:**
+```bash
+# Install the debug APK
+./gradlew installDebug
+
+# Launch the app
+adb shell am start -n com.electricsheep.app/.MainActivity
+```
+
+**5. Rebuild and reinstall after changes:**
+```bash
+./gradlew installDebug
+```
+
+**6. Stop the emulator:**
+- Close the emulator window, or
+- Run: `adb emu kill`
+
+**Note:** If you don't have an emulator set up, you can create one using Android Studio's AVD Manager, or install one via command line using `sdkmanager` and `avdmanager`.
+
 ## Contributing
 
 See [AI_AGENT_GUIDELINES.md](./AI_AGENT_GUIDELINES.md) for detailed development guidelines and best practices.

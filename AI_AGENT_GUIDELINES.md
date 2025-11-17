@@ -21,11 +21,19 @@ This document provides guidance for AI agents working on this codebase. Follow t
 - **Readability**: Write code that is self-documenting and easy to understand
 - **DRY (Don't Repeat Yourself)**: Avoid duplication; extract common functionality
 - **SOLID Principles**: Apply object-oriented design principles where applicable
+- **UK English**: Use UK English spellings throughout the codebase
+  - Use "analyse" not "analyze"
+  - Use "colour" in user-facing text (though "color" is acceptable in technical contexts like variable names)
+  - Use "organise" not "organize"
+  - Use "centre" in user-facing text (though "center" is acceptable in technical contexts like Compose alignment)
+  - Use "recognise" not "recognize"
+  - Use "optimise" not "optimize"
+  - Use "realise" not "realize"
 - **Language-Specific**: Adhere to Kotlin Multiplatform style guides and best practices
   - Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
   - Use `expect`/`actual` declarations for platform-specific implementations
   - Keep shared code platform-agnostic when possible
-  - Organize code by source sets (commonMain, androidMain, iosMain, etc.)
+  - Organise code by source sets (commonMain, androidMain, iosMain, etc.)
   - Prefer common code over platform-specific implementations
 
 ### Before Making Changes
@@ -38,6 +46,7 @@ This document provides guidance for AI agents working on this codebase. Follow t
 - **Start Small**: Implement minimal viable functionality first, then iterate
 - **Preserve Functionality**: Ensure existing features continue to work
 - **Add Tests**: Write tests alongside implementation, not after
+- **Add Logging**: Implement appropriate logging for each feature with correct log levels
 - **Update Documentation**: Keep documentation in sync with code changes
 - **Push and Verify**: After making changes, push to a feature branch, create a PR, and verify CI pipeline passes (see [Git Workflow](#workflow-push-changes-and-create-pr))
 
@@ -78,6 +87,7 @@ This pattern provides fast feedback through extensive unit tests while ensuring 
 - **Tight Scoping**: Test individual functions, classes, or small components in isolation
 - **Mock External Dependencies**: Mock APIs, databases, file systems, and other external services
 - **Test Coverage**: Aim for >80% code coverage through unit tests
+- **Test Logging**: Write unit tests for logging utilities to verify API structure and method signatures
 
 #### Integration Tests (Narrow Middle)
 - **Minimal Use**: Use sparingly for testing component interactions that can't be tested at unit or stack level
@@ -460,10 +470,72 @@ try {
 ```
 
 ### Logging Best Practices
-- **Log Levels**: Use appropriate log levels (DEBUG, INFO, WARN, ERROR)
-- **Structured Logging**: Use structured logging when possible
-- **Sensitive Data**: Never log passwords, tokens, or sensitive user data
-- **Context**: Include relevant context in log messages
+
+#### Logging Requirements
+- **Implement with Features**: Add logging when implementing new features, not as an afterthought
+- **Test Logging**: Write tests to verify logging works correctly (see [Testing](#testing))
+- **Appropriate Levels**: Choose the correct log level for each situation (see below)
+- **Use Logger Utility**: Always use the centralised `Logger` utility (`com.electricsheep.app.util.Logger`)
+
+#### Log Level Guidelines
+
+**VERBOSE** - Very detailed diagnostic information
+- Use for: Detailed tracing of execution flow, variable values during development
+- Example: `Logger.verbose("ComponentName", "Processing item: $itemId")`
+- Typically disabled in production builds
+
+**DEBUG** - Development debugging information
+- Use for: Diagnostic information helpful during development, UI state changes, component lifecycle
+- Example: `Logger.debug("ScreenName", "Screen displayed")`, `Logger.debug("ViewModel", "State updated: $state")`
+- Typically disabled in production builds
+
+**INFO** - General informational messages
+- Use for: Important application flow events, user actions, successful operations, navigation events
+- Example: `Logger.info("ScreenName", "User navigated to settings")`, `Logger.info("Repository", "Data loaded successfully")`
+- Should be enabled in production for monitoring
+
+**WARN** - Warning messages for potential issues
+- Use for: Recoverable errors, deprecated API usage, unusual but non-fatal conditions, fallback scenarios
+- Example: `Logger.warn("NetworkService", "API call failed, using cached data")`, `Logger.warn("Validation", "Invalid input format, using default")`
+- Should be enabled in production
+
+**ERROR** - Error messages for actual problems
+- Use for: Exceptions, failures, errors that need attention, unrecoverable conditions
+- Example: `Logger.error("DatabaseService", "Failed to save data", exception)`, `Logger.error("ApiClient", "Network request failed", networkException)`
+- Always enabled in production
+
+#### Logging Implementation Checklist
+- [ ] Log important user actions (INFO level)
+- [ ] Log screen/component lifecycle events (DEBUG level)
+- [ ] Log errors and exceptions (ERROR level with throwable)
+- [ ] Log warnings for unusual conditions (WARN level)
+- [ ] Use descriptive tags (component/class name)
+- [ ] Include relevant context in messages
+- [ ] Never log sensitive data (passwords, tokens, PII)
+- [ ] Write tests for logging functionality (unit tests for Logger API, instrumented tests for actual logging)
+- [ ] Consider log volume (avoid excessive logging in loops)
+- [ ] Review log levels - ensure appropriate level chosen for each log statement
+
+#### Example Logging Implementation
+```kotlin
+// Good: Appropriate log levels with context
+class UserRepository {
+    fun loadUser(userId: String): User? {
+        Logger.debug("UserRepository", "Loading user: $userId")
+        return try {
+            val user = apiService.getUser(userId)
+            Logger.info("UserRepository", "User loaded successfully: $userId")
+            user
+        } catch (e: NetworkException) {
+            Logger.warn("UserRepository", "Network error loading user, using cache", e)
+            cache.getUser(userId)
+        } catch (e: Exception) {
+            Logger.error("UserRepository", "Failed to load user: $userId", e)
+            null
+        }
+    }
+}
+```
 
 ## Performance
 
