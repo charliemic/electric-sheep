@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS public.moods (
     score INTEGER NOT NULL CHECK (score >= 1 AND score <= 10),
     timestamp BIGINT NOT NULL,
     created_at BIGINT,
-    updated_at BIGINT,
-    CONSTRAINT moods_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+    updated_at BIGINT
 );
 
 -- Create index on user_id for faster queries
