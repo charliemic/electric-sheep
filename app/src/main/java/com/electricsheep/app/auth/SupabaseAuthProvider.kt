@@ -93,17 +93,27 @@ class SupabaseAuthProvider(
                 Result.success(user)
             } else {
                 Logger.error("SupabaseAuthProvider", "Sign in succeeded but user is null")
-                Result.failure(Exception("Sign in succeeded but user is null"))
+                Result.failure(AuthError.Generic("Sign in succeeded but user is not available. Please try again."))
             }
         } catch (e: Exception) {
             Logger.error("SupabaseAuthProvider", "Sign in failed", e)
-            Result.failure(e)
+            Result.failure(AuthError.fromException(e))
         }
     }
 
     override suspend fun signUp(email: String, password: String, displayName: String?): Result<User> {
         return try {
             Logger.info("SupabaseAuthProvider", "Sign up attempt for: $email")
+            
+            // Validate email format
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                return Result.failure(AuthError.InvalidEmail())
+            }
+            
+            // Validate password length
+            if (password.length < 6) {
+                return Result.failure(AuthError.WeakPassword())
+            }
             
             val metadata = if (displayName != null) {
                 buildJsonObject {
@@ -119,17 +129,28 @@ class SupabaseAuthProvider(
                 this.data = metadata
             }
             
-            val user = getCurrentUser()
-            if (user != null) {
+            // After signUp, try to get user from current session
+            // Note: If email confirmation is required, user won't be available until confirmed
+            val userInfo = supabaseClient.auth.currentSessionOrNull()?.user
+            
+            if (userInfo != null) {
+                val extractedDisplayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
+                val user = User(
+                    id = userInfo.id,
+                    email = userInfo.email ?: "",
+                    displayName = extractedDisplayName,
+                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+                )
                 Logger.info("SupabaseAuthProvider", "User signed up: ${user.id}")
                 Result.success(user)
             } else {
-                Logger.error("SupabaseAuthProvider", "Sign up succeeded but user is null")
-                Result.failure(Exception("Sign up succeeded but user is null"))
+                // If email confirmation is required, the user won't be available until confirmed
+                Logger.warn("SupabaseAuthProvider", "Sign up succeeded but user is null - email confirmation may be required")
+                Result.failure(AuthError.EmailNotConfirmed())
             }
         } catch (e: Exception) {
             Logger.error("SupabaseAuthProvider", "Sign up failed", e)
-            Result.failure(e)
+            Result.failure(AuthError.fromException(e))
         }
     }
 
@@ -167,13 +188,21 @@ class SupabaseAuthProvider(
         return try {
             Logger.info("SupabaseAuthProvider", "Handling OAuth callback: $callbackUri")
             
+            // Check for error in callback
+            val error = callbackUri.getQueryParameter("error")
+            if (error != null) {
+                val errorDescription = callbackUri.getQueryParameter("error_description") ?: error
+                Logger.error("SupabaseAuthProvider", "OAuth callback error: $error - $errorDescription")
+                return Result.failure(AuthError.OAuthCallbackError(Exception(errorDescription)))
+            }
+            
             // Exchange the OAuth code for a session
             // Parse the callback URI to extract the code
             val code = callbackUri.getQueryParameter("code")
             if (code != null) {
                 supabaseClient.auth.exchangeCodeForSession(code)
             } else {
-                throw Exception("No authorization code found in callback URI")
+                return Result.failure(AuthError.OAuthCallbackError(Exception("No authorization code found in callback URI")))
             }
             
             // Get the current session after callback
@@ -181,22 +210,22 @@ class SupabaseAuthProvider(
             val userInfo = session?.user
             
             if (userInfo != null) {
-                val displayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
+                val extractedDisplayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
                 val user = User(
                     id = userInfo.id,
                     email = userInfo.email ?: "",
-                    displayName = displayName,
+                    displayName = extractedDisplayName,
                     createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
                 )
                 Logger.info("SupabaseAuthProvider", "OAuth callback handled successfully: ${user.id}")
                 Result.success(user)
             } else {
                 Logger.error("SupabaseAuthProvider", "OAuth callback succeeded but user is null")
-                Result.failure(Exception("OAuth callback succeeded but user is null"))
+                Result.failure(AuthError.OAuthCallbackError(Exception("OAuth callback succeeded but user is not available")))
             }
         } catch (e: Exception) {
             Logger.error("SupabaseAuthProvider", "OAuth callback handling failed", e)
-            Result.failure(e)
+            Result.failure(AuthError.fromException(e))
         }
     }
 

@@ -68,16 +68,19 @@ class MoodRepository(
                 moodWithUser
             }
             
+            // Set timestamps (createdAt and updatedAt)
+            val moodWithTimestamps = moodWithId.withUpdatedTimestamp()
+            
             // Save to local storage first (offline-first)
-            Logger.info("MoodRepository", "Saving mood locally: score=${moodWithId.score}, userId=${moodWithId.userId}")
-            moodDao.insertMood(moodWithId)
+            Logger.info("MoodRepository", "Saving mood locally: score=${moodWithTimestamps.score}, userId=${moodWithTimestamps.userId}")
+            moodDao.insertMood(moodWithTimestamps)
             
             // Try to sync to remote (non-blocking, failures are logged but don't affect local save)
             // Skip remote sync if offline-only mode is enabled or remote data source is unavailable
             if (!featureFlagManager.isOfflineOnly() && remoteDataSource != null) {
                 try {
-                    remoteDataSource.insertMood(moodWithId)
-                    Logger.info("MoodRepository", "Mood synced to remote: id=${moodWithId.id}")
+                    remoteDataSource.insertMood(moodWithTimestamps)
+                    Logger.info("MoodRepository", "Mood synced to remote: id=${moodWithTimestamps.id}")
                 } catch (e: Exception) {
                     Logger.warn("MoodRepository", "Failed to sync mood to remote, will retry later", e)
                     // Mood is saved locally, sync will happen later
@@ -86,7 +89,7 @@ class MoodRepository(
                 Logger.debug("MoodRepository", "Skipping remote sync (offline-only mode enabled or remote unavailable)")
             }
             
-            Result.success(moodWithId)
+            Result.success(moodWithTimestamps)
         } catch (e: Exception) {
             Logger.error("MoodRepository", "Failed to save mood", e)
             Result.failure(e)

@@ -24,7 +24,7 @@ class SupabaseDataSource(
             val moods = supabaseClient.from(tableName)
                 .select(columns = Columns.ALL) {
                     filter {
-                        eq("userId", userId)
+                        eq("user_id", userId)
                     }
                 }
                 .decodeList<Mood>()

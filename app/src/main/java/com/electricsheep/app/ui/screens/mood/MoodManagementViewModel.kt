@@ -125,10 +125,14 @@ class MoodManagementViewModel(
                     _isLoading.value = false
                     _emailText.value = ""
                     _passwordText.value = ""
+                    _errorMessage.value = null
                 }
                 .onFailure { error ->
                     Logger.error("MoodManagementViewModel", "Sign in failed", error)
-                    _errorMessage.value = "Sign in failed: ${error.message}"
+                    _errorMessage.value = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> error.message
+                        else -> "Sign in failed: ${error.message ?: "Please try again"}"
+                    }
                     _isLoading.value = false
                 }
         }
@@ -171,7 +175,10 @@ class MoodManagementViewModel(
                 }
                 .onFailure { error ->
                     Logger.error("MoodManagementViewModel", "Sign up failed", error)
-                    _errorMessage.value = "Sign up failed: ${error.message}"
+                    _errorMessage.value = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> error.message
+                        else -> "Sign up failed: ${error.message ?: "Please try again"}"
+                    }
                     _isLoading.value = false
                 }
         }
@@ -195,7 +202,10 @@ class MoodManagementViewModel(
                 }
                 .onFailure { error ->
                     Logger.error("MoodManagementViewModel", "Failed to get Google OAuth URL", error)
-                    _errorMessage.value = "Failed to start Google sign-in: ${error.message}"
+                    _errorMessage.value = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> error.message
+                        else -> "Failed to start Google sign-in: ${error.message ?: "Please try again"}"
+                    }
                     _isLoading.value = false
                 }
         }
