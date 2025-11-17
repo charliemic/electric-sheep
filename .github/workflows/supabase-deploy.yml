@@ -68,7 +68,6 @@ jobs:
     needs: validate-migrations
     environment:
       name: staging
-      url: https://${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co
     
     steps:
       - name: Checkout code
@@ -108,7 +107,6 @@ jobs:
     needs: validate-migrations
     environment:
       name: production
-      url: https://${{ secrets.SUPABASE_PROJECT_REF_PROD }}.supabase.co
     
     steps:
       - name: Checkout code
