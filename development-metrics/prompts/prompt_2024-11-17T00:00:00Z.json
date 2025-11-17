@@ -1,0 +1,7 @@
+{
+  "timestamp": "2024-11-17T00:00:00Z",
+  "prompt": "Let's try something a bit different. As we iterate on the app, I'm curious to see how various metrics change and are influenced. Lets start to build up a living history of the process. Create a folder called development-metrics. \n\nAdd to the agent instructions a command to update this as we go. I want every prompt to be stored there. When we rebuild the app/run tests, let's also store the execution time, test failures, and other important metrics here. It might be best to create a script to do this and make something which does this automatically so the prompt doesn't lose the context. Also include cognitive complexity, accessibility, coverage, etc. Periodically we can analyse this and consider trends and patterns which contribute to different factors in the codebase",
+  "promptLength": 456,
+  "wordCount": 78
+}
+

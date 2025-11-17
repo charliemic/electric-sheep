@@ -64,12 +64,17 @@ object Logger {
     }
     
     private fun log(level: Level, tag: String, message: String, throwable: Throwable?) {
-        when (level) {
-            Level.VERBOSE -> if (throwable != null) Log.v(tag, message, throwable) else Log.v(tag, message)
-            Level.DEBUG -> if (throwable != null) Log.d(tag, message, throwable) else Log.d(tag, message)
-            Level.INFO -> if (throwable != null) Log.i(tag, message, throwable) else Log.i(tag, message)
-            Level.WARN -> if (throwable != null) Log.w(tag, message, throwable) else Log.w(tag, message)
-            Level.ERROR -> if (throwable != null) Log.e(tag, message, throwable) else Log.e(tag, message)
+        try {
+            when (level) {
+                Level.VERBOSE -> if (throwable != null) Log.v(tag, message, throwable) else Log.v(tag, message)
+                Level.DEBUG -> if (throwable != null) Log.d(tag, message, throwable) else Log.d(tag, message)
+                Level.INFO -> if (throwable != null) Log.i(tag, message, throwable) else Log.i(tag, message)
+                Level.WARN -> if (throwable != null) Log.w(tag, message, throwable) else Log.w(tag, message)
+                Level.ERROR -> if (throwable != null) Log.e(tag, message, throwable) else Log.e(tag, message)
+            }
+        } catch (e: RuntimeException) {
+            // Silently ignore logging failures in unit tests where android.util.Log is not available
+            // This allows unit tests to run without mocking Android framework classes
         }
         
         // Future: Add external log streaming here

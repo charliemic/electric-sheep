@@ -1,11 +1,16 @@
 package com.electricsheep.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.electricsheep.app.ElectricSheepApplication
 import com.electricsheep.app.ui.screens.LandingScreen
 import com.electricsheep.app.ui.screens.mood.MoodManagementScreen
+import com.electricsheep.app.ui.screens.mood.MoodManagementViewModel
+import com.electricsheep.app.ui.screens.mood.MoodManagementViewModelFactory
 import com.electricsheep.app.util.Logger
 
 sealed class Screen(val route: String) {
@@ -28,7 +33,17 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
         composable(Screen.MoodManagement.route) {
+            val context = LocalContext.current
+            val application = context.applicationContext as ElectricSheepApplication
+            val userManager = application.getUserManager()
+            val moodRepository = application.getMoodRepository()
+            
+            val viewModel: MoodManagementViewModel = viewModel(
+                factory = MoodManagementViewModelFactory(userManager, moodRepository)
+            )
+            
             MoodManagementScreen(
+                viewModel = viewModel,
                 onNavigateBack = {
                     Logger.debug("NavGraph", "Navigating back from Mood Management screen")
                     navController.popBackStack()

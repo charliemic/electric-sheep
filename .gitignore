@@ -1,6 +1,5 @@
 # Built application files
 *.apk
-*.aar
 *.ap_
 *.aab
 
@@ -87,4 +86,12 @@ lint/tmp/
 # Android Profiling
 *.hprof
 
-local.properties
+# Mac
+.DS_Store
+
+# Background build logs
+.build-watch.log
+
+# Metrics temporary files
+.build-info.tmp
+.test-info.tmp

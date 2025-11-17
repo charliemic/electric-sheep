@@ -10,6 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,7 +52,12 @@ fun LandingScreen(
                 Logger.info("LandingScreen", "User tapped Mood Management utility")
                 onNavigateToMoodManagement()
             },
-            modifier = Modifier.fillMaxWidth(0.85f)
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .semantics {
+                    contentDescription = "Mood Management utility. Track your mood throughout the day and analyse trends"
+                    role = Role.Button
+                }
         )
         
         // Placeholder for future utilities
@@ -56,7 +65,12 @@ fun LandingScreen(
             title = "Coming Soon",
             description = "More utilities will be available soon",
             onClick = { },
-            modifier = Modifier.fillMaxWidth(0.85f),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .semantics {
+                    contentDescription = "Coming Soon utility. More utilities will be available soon. Currently unavailable"
+                    role = Role.Button
+                },
             enabled = false
         )
     }
