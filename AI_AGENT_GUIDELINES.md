@@ -168,11 +168,13 @@ fun `should display user profile after successful login`() = runTest {
 ### Github Actions
 
 ### Continuous Integration
+- **Runs on All Pushes**: CI pipeline automatically runs on every push to any branch
 - **Automated Testing**: All tests must pass before merging
 - **Linting**: Code must pass linting/static analysis checks (ktlint, detekt)
 - **Build Verification**: Ensure code compiles and builds successfully (debug and release builds)
 - **Fast Feedback**: Keep CI pipeline fast (<15 minutes for Android builds is reasonable)
 - **Android-Specific**: Test on multiple API levels when possible
+- **Branch Protection**: PRs cannot be merged if CI checks fail (enforced via branch protection rules)
 
 ### Android Pipeline Stages
 1. **Lint/Format Check**: Verify code style (ktlint, detekt) and formatting
@@ -230,6 +232,26 @@ fun `should display user profile after successful login`() = runTest {
 - **Rollback Plan**: Have a rollback strategy (Play Store allows staged rollbacks)
 - **Feature Flags**: Use feature flags for gradual rollouts when possible
 - **Staged Rollouts**: Use Play Store staged rollouts (1% → 10% → 50% → 100%)
+
+### Branch Protection Rules
+
+To enforce that PRs cannot be merged if tests fail, configure branch protection rules:
+
+**GitHub Branch Protection Setup:**
+1. Navigate to repository Settings → Branches
+2. Add rule for `main` branch (and `develop` if applicable)
+3. Enable the following settings:
+   - ✅ **Require a pull request before merging**
+   - ✅ **Require status checks to pass before merging**
+     - Required status checks: `build` and `ci-status`
+   - ✅ **Require branches to be up to date before merging**
+   - ✅ **Do not allow bypassing the above settings**
+
+**Required Status Checks:**
+- `build` - Main CI pipeline (lint, test, build)
+- `ci-status` - Final status verification
+
+**Result:** PRs will be blocked from merging until all CI checks pass. The merge button will be disabled until all required status checks are green.
 
 ### Local Development → CI/CD Progression
 1. **Local Builds**: Start with local Gradle builds (`./gradlew build`)
@@ -324,6 +346,7 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
    ```
    - Always push to a feature branch, never directly to `main`
    - Use `-u` flag on first push to set upstream tracking
+   - **CI pipeline automatically runs on every push** to any branch
 
 4. **Create Pull Request**
    - Navigate to the repository on GitHub/GitLab
@@ -336,15 +359,18 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
      - Any breaking changes
 
 5. **Verify CI Pipeline**
-   - The CI pipeline will automatically trigger on PR creation
+   - The CI pipeline automatically runs on:
+     - Every push to any branch
+     - Every PR creation and update
    - Monitor the pipeline status in the PR checks
    - Ensure all checks pass:
      - ✅ Lint checks
      - ✅ Unit tests
      - ✅ Build (debug APK)
      - ✅ Build (release AAB)
-   - **Do not merge** if any CI checks fail
+   - **PRs are blocked from merging** if any CI checks fail (enforced by branch protection)
    - Fix any failures and push additional commits to the same branch
+   - CI will automatically re-run on each push
 
 6. **Address Review Feedback**
    - Make requested changes
