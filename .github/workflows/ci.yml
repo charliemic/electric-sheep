@@ -24,6 +24,35 @@ jobs:
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Cache Gradle build cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          .gradle
+          app/.gradle
+        key: ${{ runner.os }}-gradle-build-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-build-
+
+    - name: Cache Android build artifacts
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.android/build-cache
+        key: ${{ runner.os }}-android-build-${{ hashFiles('**/build.gradle*', '**/gradle.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-android-build-
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       working-directory: ${{ github.workspace }}
