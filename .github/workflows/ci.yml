@@ -23,6 +23,18 @@ jobs:
 
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        target: default
+        arch: x86_64
+
+    - name: Debug environment
+      run: |
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "JAVA_HOME: $JAVA_HOME"
+        echo "PATH: $PATH"
+        ls -la $ANDROID_HOME 2>/dev/null || echo "ANDROID_HOME not set"
+        ./gradlew --version || echo "Gradle wrapper check failed"
 
     - name: Cache Gradle dependencies
       uses: actions/cache@v4
@@ -59,25 +71,25 @@ jobs:
 
     - name: Lint check
       id: lint
-      run: ./gradlew lint
+      run: ./gradlew lint --stacktrace --info
       working-directory: ${{ github.workspace }}
       continue-on-error: false
 
     - name: Run unit tests
       id: test
-      run: ./gradlew test
+      run: ./gradlew test --stacktrace
       working-directory: ${{ github.workspace }}
       continue-on-error: false
 
     - name: Build debug APK
       id: build-debug
-      run: ./gradlew assembleDebug
+      run: ./gradlew assembleDebug --stacktrace
       working-directory: ${{ github.workspace }}
       continue-on-error: false
 
     - name: Build release AAB
       id: build-release
-      run: ./gradlew bundleRelease
+      run: ./gradlew bundleRelease --stacktrace
       working-directory: ${{ github.workspace }}
       continue-on-error: false
 
