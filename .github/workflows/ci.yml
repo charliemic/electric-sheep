@@ -24,9 +24,7 @@ jobs:
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
       with:
-        api-level: 34
-        target: default
-        arch: x86_64
+        accept-android-sdk-licenses: true
 
     - name: Debug environment
       run: |
