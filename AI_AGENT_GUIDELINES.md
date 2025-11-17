@@ -372,6 +372,48 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
    - Fix any failures and push additional commits to the same branch
    - CI will automatically re-run on each push
 
+### Debugging CI Failures
+
+When CI builds fail, use these methods to access failure information:
+
+#### Using GitHub CLI (Recommended)
+If `gh` CLI is installed and authenticated:
+```bash
+# List recent workflow runs for your branch
+gh run list --branch <branch-name>
+
+# View full logs for a specific run
+gh run view <run-id> --log
+
+# View logs for latest failed run
+gh run list --status failure --limit 1 | head -1 | awk '{print $7}' | xargs gh run view --log
+
+# Watch a running workflow
+gh run watch
+```
+
+#### Using GitHub Web Interface
+1. Navigate to repository → Actions tab
+2. Click on the failed workflow run
+3. Click on the `build` job
+4. Expand each step to see detailed logs:
+   - **Debug environment** step shows ANDROID_HOME, JAVA_HOME, PATH
+   - Failed steps show full stack traces (--stacktrace flag)
+5. Check error messages and stack traces to identify the issue
+
+#### Common CI Issues
+- **Android SDK not found**: Check "Debug environment" step for ANDROID_HOME
+- **Gradle wrapper issues**: Verify gradlew has execute permissions
+- **Lint failures**: Check lint output; configured to not fail on warnings
+- **Build failures**: Full stack traces are available in step logs
+- **Cache issues**: Caches are automatically managed but can be cleared if needed
+
+#### When Debugging Fails
+- Check the "Debug environment" step output for environment variables
+- Review full stack traces (--stacktrace is enabled on all Gradle commands)
+- Verify Android SDK setup matches requirements (API 34)
+- Check if dependencies need updating
+
 6. **Address Review Feedback**
    - Make requested changes
    - Push additional commits to the same branch
