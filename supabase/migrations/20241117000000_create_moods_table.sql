@@ -1,8 +1,11 @@
 -- Create moods table for mood tracking
 -- This migration creates the initial schema for mood entries
 
+-- Drop existing table if it exists (from previous failed migration attempts)
+DROP TABLE IF EXISTS public.moods CASCADE;
+
 -- Create moods table
-CREATE TABLE IF NOT EXISTS public.moods (
+CREATE TABLE public.moods (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     score INTEGER NOT NULL CHECK (score >= 1 AND score <= 10),
