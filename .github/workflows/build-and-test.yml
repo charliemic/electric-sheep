@@ -3,17 +3,47 @@ name: Build and Test Android App (Kotlin/Gradle)
 on:
   push:
     branches: ['**']  # Run on all branches
-    paths-ignore:
-      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
-      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
   pull_request:
     branches: ['**']  # Run on PRs to any branch
-    paths-ignore:
-      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
-      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
 
 jobs:
+  # Detect which files changed to determine which jobs to run
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app-code: ${{ steps.filter.outputs.app-code }}
+      docs: ${{ steps.filter.outputs.docs }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Detect changed files
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            app-code:
+              - 'app/**'
+              - 'build.gradle*'
+              - 'gradle/**'
+              - 'settings.gradle*'
+              - 'gradlew*'
+            docs:
+              - 'docs/**'
+              - '*.md'
+              - 'README.md'
+            scripts:
+              - 'scripts/**'
+            workflows:
+              - '.github/workflows/**'
+          list-files: shell
+
   setup:
+    needs: changes
+    # Only run setup if app code changed (needed for lint, test, build jobs)
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     outputs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
@@ -55,7 +85,9 @@ jobs:
           ${{ runner.os }}-android-
 
   lint:
-    needs: setup
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -96,7 +128,9 @@ jobs:
         retention-days: 7
 
   accessibility:
-    needs: setup
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -129,7 +163,9 @@ jobs:
       continue-on-error: false
 
   test:
-    needs: setup
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -191,7 +227,9 @@ jobs:
         retention-days: 7
 
   build-debug:
-    needs: setup
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -234,7 +272,9 @@ jobs:
       continue-on-error: false
 
   build-release:
-    needs: setup
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
