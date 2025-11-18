@@ -97,6 +97,12 @@ android {
         // Check for text contrast
         enable += "TextContrast"
     }
+    
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = false
+        }
+    }
 }
 
 // KSP configuration for Room schema export
@@ -162,21 +168,25 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
-// Optimize test execution
-tasks.withType<Test> {
-    maxParallelForks = Runtime.getRuntime().availableProcessors()
-    forkEvery = 0 // Don't fork for each test class - faster execution
-    
-    // Ensure JUnit XML output for GitHub Actions
-    reports {
-        junitXml.required.set(true)
-        html.required.set(true)
-    }
-    
-    // Output test results to standard location
-    testLogging {
-        events("passed", "skipped", "failed")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+// Configure test execution for Android unit tests
+// Android unit tests use AndroidUnitTest tasks, but they extend Test
+// Configure after evaluation to ensure all test tasks are created
+afterEvaluate {
+    tasks.withType<Test> {
+        maxParallelForks = Runtime.getRuntime().availableProcessors()
+        forkEvery = 0 // Don't fork for each test class - faster execution
+        
+        // Ensure JUnit XML output for GitHub Actions
+        reports {
+            junitXml.required.set(true)
+            html.required.set(true)
+        }
+        
+        // Output test results to standard location
+        testLogging {
+            events("passed", "skipped", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
     }
 }
 

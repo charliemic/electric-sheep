@@ -161,6 +161,13 @@ jobs:
       run: ./gradlew test --stacktrace
       continue-on-error: false
 
+    - name: List test result files (debug)
+      if: always()
+      run: |
+        echo "Checking for test XML files..."
+        find app/build/test-results -name "*.xml" -type f || echo "No XML files found"
+        ls -la app/build/test-results/ || echo "test-results directory does not exist"
+
     - name: Publish Test Results
       if: always()
       continue-on-error: true
