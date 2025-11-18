@@ -111,10 +111,13 @@ jobs:
       
       - name: Deploy migrations
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # Use staging password if available, otherwise fall back to production password
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for staging deployment"
           fi
           supabase db push
       
