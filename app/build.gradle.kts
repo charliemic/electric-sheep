@@ -36,17 +36,27 @@ android {
         val supabaseUrl = readProperty("supabase.url", "https://your-project.supabase.co")
         val supabaseAnonKey = readProperty("supabase.anon.key", "your-anon-key")
         
+        // Staging Supabase configuration (optional, for testing)
+        val supabaseStagingUrl = readProperty("supabase.staging.url", "")
+        val supabaseStagingAnonKey = readProperty("supabase.staging.anon.key", "")
+        
         // Supabase URL - default to placeholder, override in local.properties
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         
         // Supabase anon key - default to placeholder, override in local.properties
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        
+        // Staging Supabase (optional, for debug builds)
+        buildConfigField("String", "SUPABASE_STAGING_URL", if (supabaseStagingUrl.isNotEmpty()) "\"$supabaseStagingUrl\"" else "\"\"")
+        buildConfigField("String", "SUPABASE_STAGING_ANON_KEY", if (supabaseStagingAnonKey.isNotEmpty()) "\"$supabaseStagingAnonKey\"" else "\"\"")
     }
 
     buildTypes {
         debug {
             // Enable offline-only mode for debug builds (can be toggled)
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+            // Allow switching to staging Supabase in debug builds
+            buildConfigField("boolean", "USE_STAGING_SUPABASE", "false")
         }
         release {
             isMinifyEnabled = false

@@ -20,6 +20,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.electricsheep.app.BuildConfig
 import com.electricsheep.app.ElectricSheepApplication
 import com.electricsheep.app.config.FeatureFlag
 import com.electricsheep.app.util.Logger
@@ -37,6 +43,10 @@ fun LandingScreen(
         defaultValue = false
     )
     
+    // Debug-only: Show staging environment indicator
+    val isDebug = BuildConfig.DEBUG
+    val isUsingStaging = BuildConfig.USE_STAGING_SUPABASE && isDebug
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -44,6 +54,16 @@ fun LandingScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
     ) {
+        // Debug environment indicator (only in debug builds)
+        if (isDebug) {
+            DebugEnvironmentIndicator(
+                isUsingStaging = isUsingStaging,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(bottom = 8.dp)
+            )
+        }
+        
         // Feature flag indicator (if enabled)
         if (showIndicator) {
             FeatureFlagIndicator(
@@ -95,6 +115,66 @@ fun LandingScreen(
                 },
             enabled = false
         )
+    }
+}
+
+/**
+ * Debug environment indicator.
+ * Shows which Supabase environment is being used (staging or production).
+ * Only visible in debug builds.
+ */
+@Composable
+fun DebugEnvironmentIndicator(
+    isUsingStaging: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isUsingStaging) {
+                MaterialTheme.colorScheme.errorContainer
+            } else {
+                MaterialTheme.colorScheme.tertiaryContainer
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .semantics {
+                    contentDescription = if (isUsingStaging) {
+                        "Debug mode: Using staging Supabase environment"
+                    } else {
+                        "Debug mode: Using production Supabase environment"
+                    }
+                    role = Role.Image
+                },
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = null,
+                tint = if (isUsingStaging) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onTertiaryContainer
+                },
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = if (isUsingStaging) "STAGING" else "PROD",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isUsingStaging) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onTertiaryContainer
+                },
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 

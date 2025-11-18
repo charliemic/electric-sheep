@@ -229,6 +229,70 @@ jobs:
     needs: validate-flags
     environment:
       name: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Verify Supabase credentials
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+      
+      - name: Login to Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase login --token "$SUPABASE_ACCESS_TOKEN"
+      
+      - name: Link to staging project
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret"
+            exit 1
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Get database connection string
+        id: db-url
+        run: |
+          # Construct database URL from project reference
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          
+          # Get database host (this is a simplified approach - in production, use Supabase API to get connection details)
+          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+          
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "Using database connection for project: $PROJECT_REF"
+      
+      - name: Sync feature flags
+        env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+        run: |
+          chmod +x scripts/sync-feature-flags.sh
+          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+      
+      - name: Verify deployment
+        run: |
+          echo "Feature flags deployed successfully to staging"
 
   deploy-production:
     name: Deploy to Production

@@ -49,11 +49,40 @@ object DataModule {
         }
         
         return try {
-            Logger.info("DataModule", "Initialising Supabase client for: $supabaseUrl")
+            // In debug builds, allow switching to staging Supabase
+            val useStaging = com.electricsheep.app.BuildConfig.USE_STAGING_SUPABASE && 
+                            com.electricsheep.app.BuildConfig.DEBUG
+            
+            val finalUrl = if (useStaging) {
+                val stagingUrl = com.electricsheep.app.BuildConfig.SUPABASE_STAGING_URL
+                if (stagingUrl.isNotEmpty() && stagingUrl != "\"\"") {
+                    Logger.info("DataModule", "Using STAGING Supabase: $stagingUrl")
+                    stagingUrl
+                } else {
+                    Logger.warn("DataModule", "USE_STAGING_SUPABASE is true but SUPABASE_STAGING_URL is not set, using production")
+                    supabaseUrl
+                }
+            } else {
+                supabaseUrl
+            }
+            
+            val finalKey = if (useStaging) {
+                val stagingKey = com.electricsheep.app.BuildConfig.SUPABASE_STAGING_ANON_KEY
+                if (stagingKey.isNotEmpty() && stagingKey != "\"\"") {
+                    stagingKey
+                } else {
+                    Logger.warn("DataModule", "USE_STAGING_SUPABASE is true but SUPABASE_STAGING_ANON_KEY is not set, using production")
+                    supabaseKey
+                }
+            } else {
+                supabaseKey
+            }
+            
+            Logger.info("DataModule", "Initialising Supabase client for: $finalUrl")
             
             createSupabaseClient(
-                supabaseUrl = supabaseUrl,
-                supabaseKey = supabaseKey
+                supabaseUrl = finalUrl,
+                supabaseKey = finalKey
             ) {
                 install(Postgrest)
                 install(Realtime)

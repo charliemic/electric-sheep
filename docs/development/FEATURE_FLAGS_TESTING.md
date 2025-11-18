@@ -10,6 +10,48 @@ Feature flags can be tested in the staging environment before merging to ensure 
 2. Verify flag behavior with the app
 3. Catch issues before they reach production
 
+## Using Staging Supabase in Debug Builds
+
+For testing feature flags against staging Supabase before merging:
+
+### Setup
+
+1. **Add staging credentials to `local.properties`**:
+   ```properties
+   # Production (required)
+   supabase.url=https://your-project.supabase.co
+   supabase.anon.key=your-anon-key
+   
+   # Staging (optional, for testing)
+   supabase.staging.url=https://your-staging-project.supabase.co
+   supabase.staging.anon.key=your-staging-anon-key
+   ```
+
+2. **Enable staging in `app/build.gradle.kts`** (debug build type):
+   ```kotlin
+   debug {
+       buildConfigField("boolean", "USE_STAGING_SUPABASE", "true")
+   }
+   ```
+
+3. **Rebuild the app**:
+   ```bash
+   ./gradlew :app:assembleDebug
+   ```
+
+4. **The app will**:
+   - Use staging Supabase URL/key when `USE_STAGING_SUPABASE` is `true`
+   - Show a "STAGING" indicator in the top-left corner (debug builds only)
+   - Fetch feature flags from staging environment
+
+### Visual Indicator
+
+In debug builds, you'll see:
+- **"STAGING"** badge (red) = Using staging Supabase
+- **"PROD"** badge (blue) = Using production Supabase
+
+This makes it clear which environment you're testing against.
+
 ## Testing Methods
 
 ### Method 1: Manual Workflow Dispatch (Recommended)
