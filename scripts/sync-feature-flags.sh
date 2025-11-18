@@ -170,10 +170,10 @@ else
             VALUE=$(yq ".flags[$i].boolean_value" "$FLAGS_FILE")
             SQL=$(cat <<EOF
 INSERT INTO public.feature_flags (
-    key, value_type, boolean_value, enabled, description, segment_id, user_id
+    key, value_type, boolean_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', $VALUE, $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}
+    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
@@ -185,6 +185,7 @@ ON CONFLICT (key) DO UPDATE SET
     segment_id = EXCLUDED.segment_id,
     user_id = EXCLUDED.user_id,
     updated_at = NOW();
+    -- Note: version is auto-incremented by trigger on UPDATE
 EOF
 )
         elif [ "$VALUE_TYPE" = "string" ]; then
@@ -193,10 +194,10 @@ EOF
             VALUE_ESCAPED=$(echo "$VALUE" | sed "s/'/''/g")
             SQL=$(cat <<EOF
 INSERT INTO public.feature_flags (
-    key, value_type, string_value, enabled, description, segment_id, user_id
+    key, value_type, string_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', '$VALUE_ESCAPED', $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}
+    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
@@ -208,16 +209,17 @@ ON CONFLICT (key) DO UPDATE SET
     segment_id = EXCLUDED.segment_id,
     user_id = EXCLUDED.user_id,
     updated_at = NOW();
+    -- Note: version is auto-incremented by trigger on UPDATE
 EOF
 )
         elif [ "$VALUE_TYPE" = "int" ]; then
             VALUE=$(yq ".flags[$i].int_value" "$FLAGS_FILE")
             SQL=$(cat <<EOF
 INSERT INTO public.feature_flags (
-    key, value_type, int_value, enabled, description, segment_id, user_id
+    key, value_type, int_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', $VALUE, $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}
+    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
@@ -229,6 +231,7 @@ ON CONFLICT (key) DO UPDATE SET
     segment_id = EXCLUDED.segment_id,
     user_id = EXCLUDED.user_id,
     updated_at = NOW();
+    -- Note: version is auto-incremented by trigger on UPDATE
 EOF
 )
         fi
