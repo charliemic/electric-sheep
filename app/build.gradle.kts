@@ -164,5 +164,17 @@ dependencies {
 tasks.withType<Test> {
     maxParallelForks = Runtime.getRuntime().availableProcessors()
     forkEvery = 0 // Don't fork for each test class - faster execution
+    
+    // Ensure JUnit XML output for GitHub Actions
+    reports {
+        junitXml.required.set(true)
+        html.required.set(true)
+    }
+    
+    // Output test results to standard location
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
