@@ -370,19 +370,21 @@ jobs:
       
       - name: Link to production project
         run: |
+          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
           if [ -z "$PROJECT_REF" ]; then
             echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
             exit 1
           fi
+          echo "Linking to production project: $PROJECT_REF"
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Get database connection string
         id: db-url
         run: |
-          # Validate required secrets (same credentials used for all environments)
+          # Validate required secrets for production
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}"
           
           if [ -z "$PROJECT_REF" ]; then
             echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
@@ -390,11 +392,11 @@ jobs:
           fi
           
           if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            echo "ERROR: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD secret is not set"
             exit 1
           fi
           
-          echo "Using project reference: $PROJECT_REF"
+          echo "Using production project reference: $PROJECT_REF"
           
           # Construct database URL using Supabase connection pooler format
           # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres

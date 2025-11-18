@@ -100,11 +100,13 @@ jobs:
       
       - name: Link to staging project
         run: |
+          # Use staging project ref if available, otherwise fall back to production or workflow input
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
-            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
             exit 1
           fi
+          echo "Linking to staging project: $PROJECT_REF"
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Deploy migrations
@@ -160,11 +162,13 @@ jobs:
       
       - name: Link to production project
         run: |
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
-            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            echo "ERROR: SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
             exit 1
           fi
+          echo "Linking to production project: $PROJECT_REF"
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Deploy migrations
