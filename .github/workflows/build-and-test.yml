@@ -187,7 +187,7 @@ jobs:
         name: test-results
         path: |
           app/build/reports/tests/
-          app/build/test-results/test/
+          app/build/test-results/
         retention-days: 7
 
   build-debug:
