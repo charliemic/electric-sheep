@@ -162,6 +162,19 @@ else
         SEGMENT_ID=$(yq ".flags[$i].segment_id // \"\"" "$FLAGS_FILE")
         USER_ID=$(yq ".flags[$i].user_id // \"\"" "$FLAGS_FILE")
         
+        # Handle null values properly
+        if [ "$SEGMENT_ID" = "null" ] || [ -z "$SEGMENT_ID" ] || [ "$SEGMENT_ID" = "\"\"" ]; then
+            SEGMENT_ID_SQL="NULL"
+        else
+            SEGMENT_ID_SQL="'$SEGMENT_ID'"
+        fi
+        
+        if [ "$USER_ID" = "null" ] || [ -z "$USER_ID" ] || [ "$USER_ID" = "\"\"" ]; then
+            USER_ID_SQL="NULL"
+        else
+            USER_ID_SQL="'$USER_ID'"
+        fi
+        
         # Escape single quotes in description
         DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed "s/'/''/g")
         
@@ -173,7 +186,7 @@ INSERT INTO public.feature_flags (
     key, value_type, boolean_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', $VALUE, $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
+    $SEGMENT_ID_SQL, $USER_ID_SQL, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
