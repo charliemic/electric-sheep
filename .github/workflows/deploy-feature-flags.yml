@@ -15,6 +15,15 @@ on:
     paths:
       - 'feature-flags/**'
   workflow_dispatch: # Allow manual triggering
+    inputs:
+      environment:
+        description: 'Environment to deploy to (staging or production)'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
 
 jobs:
   validate-flags:
@@ -133,13 +142,17 @@ jobs:
           
           echo "All flags validated successfully (including BuildConfig fallback checks)"
 
-  deploy-staging:
-    name: Deploy to Staging
+  deploy-preview:
+    name: Deploy to Staging (Preview/Test)
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
+    # Run on workflow_dispatch from feature branches (not main) OR when explicitly requested via PR comment
+    # This allows testing feature flags before merging without auto-deploying on every PR
+    if: (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && contains(github.event.pull_request.body, '[deploy-flags]'))
     needs: validate-flags
     environment:
       name: staging
+    # This job allows testing feature flags from feature branches before merging
+    # To trigger from a PR, add [deploy-flags] to the PR description or trigger manually via workflow_dispatch
     
     steps:
       - name: Checkout code
@@ -204,11 +217,23 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Feature flags deployed successfully to staging"
+          echo "This is a preview/test deployment from branch: ${{ github.ref }}"
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "PR: ${{ github.event.pull_request.html_url }}"
+          fi
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging' && github.ref == 'refs/heads/main')
+    needs: validate-flags
+    environment:
+      name: staging
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production' && github.ref == 'refs/heads/main')
     needs: validate-flags
     environment:
       name: production
