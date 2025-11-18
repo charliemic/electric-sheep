@@ -516,6 +516,7 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
      - Why the changes were needed
      - How to test the changes
      - Any breaking changes
+   - **CRITICAL**: Ensure you're creating a PR from a feature branch, not from `main`
 
 6. **Verify Tests Pass Locally**
    - **CRITICAL**: Run tests locally before pushing (`./gradlew test`)
