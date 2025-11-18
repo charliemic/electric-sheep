@@ -98,6 +98,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.1")
     
+    // Chrome Custom Tabs for OAuth (recommended Android pattern)
+    implementation("androidx.browser:browser:1.7.0")
+    
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2023.10.01"))
     implementation("androidx.compose.ui:ui")

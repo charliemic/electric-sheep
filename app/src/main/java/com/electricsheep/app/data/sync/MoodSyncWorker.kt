@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.electricsheep.app.data.repository.MoodRepository
+import com.electricsheep.app.error.NetworkError
+import com.electricsheep.app.error.SystemError
 import com.electricsheep.app.util.Logger
 
 /**
@@ -11,6 +13,7 @@ import com.electricsheep.app.util.Logger
  * Runs periodically to keep local and remote data in sync.
  * 
  * Uses WorkManager for reliable background execution even when app is closed.
+ * Handles errors appropriately: retries recoverable errors, fails on non-recoverable errors.
  */
 class MoodSyncWorker(
     context: Context,
@@ -35,14 +38,46 @@ class MoodSyncWorker(
                     Result.success()
                 },
                 onFailure = { error ->
-                    Logger.error("MoodSyncWorker", "Background sync failed", error)
-                    // Return retry result so WorkManager will retry
-                    Result.retry()
+                    // Handle different error types appropriately
+                    when (error) {
+                        is NetworkError -> {
+                            error.log("MoodSyncWorker", "Background sync failed - network error")
+                            if (error.isRecoverable && error.shouldRetry) {
+                                // Retry with exponential backoff (WorkManager handles this)
+                                Logger.info("MoodSyncWorker", "Retrying sync after ${error.retryDelayMillis}ms")
+                                Result.retry()
+                            } else {
+                                // Non-retryable network error (e.g., unauthorized) - fail
+                                Logger.warn("MoodSyncWorker", "Sync failed with non-retryable network error")
+                                Result.failure()
+                            }
+                        }
+                        is SystemError -> {
+                            error.log("MoodSyncWorker", "Background sync failed - system error")
+                            // System errors are non-recoverable - don't retry
+                            Result.failure()
+                        }
+                        else -> {
+                            Logger.error("MoodSyncWorker", "Background sync failed with unknown error", error)
+                            // Unknown errors - retry once
+                            Result.retry()
+                        }
+                    }
                 }
             )
+        } catch (e: NetworkError) {
+            e.log("MoodSyncWorker", "Unexpected network error during background sync")
+            if (e.isRecoverable && e.shouldRetry) {
+                Result.retry()
+            } else {
+                Result.failure()
+            }
+        } catch (e: SystemError) {
+            e.log("MoodSyncWorker", "Unexpected system error during background sync")
+            Result.failure()
         } catch (e: Exception) {
             Logger.error("MoodSyncWorker", "Unexpected error during background sync", e)
-            // Retry on unexpected errors
+            // Unknown errors - retry once
             Result.retry()
         }
     }

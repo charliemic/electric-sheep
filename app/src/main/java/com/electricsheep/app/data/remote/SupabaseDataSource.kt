@@ -1,6 +1,7 @@
 package com.electricsheep.app.data.remote
 
 import com.electricsheep.app.data.model.Mood
+import com.electricsheep.app.error.NetworkError
 import com.electricsheep.app.util.Logger
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -9,11 +10,22 @@ import io.github.jan.supabase.postgrest.query.Columns
 /**
  * Remote data source for Mood entities using Supabase.
  * Handles all remote operations and sync with Supabase backend.
+ * 
+ * All methods throw NetworkError exceptions that can be caught and handled appropriately.
  */
 class SupabaseDataSource(
     private val supabaseClient: SupabaseClient
 ) {
     private val tableName = "moods"
+    
+    /**
+     * Wrap exceptions in NetworkError with proper classification.
+     */
+    private fun handleException(operation: String, exception: Exception): Nothing {
+        val networkError = NetworkError.fromException(exception)
+        networkError.log("SupabaseDataSource", "Operation: $operation")
+        throw networkError
+    }
     
     /**
      * Fetch all moods for a user from remote
@@ -32,8 +44,7 @@ class SupabaseDataSource(
             Logger.info("SupabaseDataSource", "Fetched ${moods.size} moods from remote for user: $userId")
             moods
         } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to fetch moods from remote", e)
-            throw e
+            handleException("getAllMoods(userId=$userId)", e)
         }
     }
     
@@ -46,7 +57,7 @@ class SupabaseDataSource(
             val moods = supabaseClient.from(tableName)
                 .select(columns = Columns.ALL) {
                     filter {
-                        eq("userId", userId)
+                        eq("user_id", userId)
                         gte("timestamp", startTime)
                         lte("timestamp", endTime)
                     }
@@ -56,8 +67,7 @@ class SupabaseDataSource(
             Logger.debug("SupabaseDataSource", "Fetched ${moods.size} moods in date range for user: $userId")
             moods
         } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to fetch moods by date range", e)
-            throw e
+            handleException("getMoodsByDateRange(userId=$userId, startTime=$startTime, endTime=$endTime)", e)
         }
     }
     
@@ -66,15 +76,14 @@ class SupabaseDataSource(
      */
     suspend fun insertMood(mood: Mood): Mood {
         return try {
-            Logger.debug("SupabaseDataSource", "Inserting mood to remote: score=${mood.score}")
+            Logger.debug("SupabaseDataSource", "Inserting mood to remote: score=${mood.score}, id=${mood.id}")
             val inserted = supabaseClient.from(tableName)
                 .insert(mood)
                 .decodeSingle<Mood>()
             Logger.info("SupabaseDataSource", "Mood inserted to remote with id: ${inserted.id}")
             inserted
         } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to insert mood to remote", e)
-            throw e
+            handleException("insertMood(id=${mood.id}, score=${mood.score})", e)
         }
     }
     
@@ -94,9 +103,11 @@ class SupabaseDataSource(
                 .decodeSingle<Mood>()
             Logger.info("SupabaseDataSource", "Mood updated in remote: id=${updated.id}")
             updated
-        } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to update mood in remote", e)
+        } catch (e: IllegalArgumentException) {
+            // Re-throw validation errors as-is
             throw e
+        } catch (e: Exception) {
+            handleException("updateMood(id=${mood.id})", e)
         }
     }
     
@@ -114,8 +125,7 @@ class SupabaseDataSource(
                 }
             Logger.info("SupabaseDataSource", "Mood deleted from remote: id=$id")
         } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to delete mood from remote", e)
-            throw e
+            handleException("deleteMood(id=$id)", e)
         }
     }
     
@@ -131,8 +141,7 @@ class SupabaseDataSource(
                 .upsert(moods)
             Logger.info("SupabaseDataSource", "Upserted ${moods.size} moods to remote")
         } catch (e: Exception) {
-            Logger.error("SupabaseDataSource", "Failed to upsert moods to remote", e)
-            throw e
+            handleException("upsertMoods(count=${moods.size})", e)
         }
     }
 }

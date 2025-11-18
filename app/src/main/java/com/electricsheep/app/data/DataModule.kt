@@ -14,6 +14,7 @@ import com.electricsheep.app.util.Logger
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.FlowType
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 
@@ -56,10 +57,28 @@ object DataModule {
             ) {
                 install(Postgrest)
                 install(Realtime)
-                install(Auth) // Enable authentication
+                install(Auth) {
+                    // Enable PKCE flow (OAuth 2.1 best practice)
+                    flowType = FlowType.PKCE
+                    // Configure deep link for OAuth callbacks
+                    scheme = "com.electricsheep.app"
+                    host = "auth-callback"
+                }
             }
+        } catch (e: com.electricsheep.app.error.NetworkError) {
+            e.log("DataModule", "Failed to create Supabase client - network error")
+            Logger.warn("DataModule", "App will continue in offline-only mode")
+            null
+        } catch (e: com.electricsheep.app.error.SystemError) {
+            e.log("DataModule", "Failed to create Supabase client - system error")
+            Logger.warn("DataModule", "App will continue in offline-only mode")
+            null
         } catch (e: Exception) {
-            Logger.error("DataModule", "Failed to create Supabase client", e)
+            val systemError = com.electricsheep.app.error.SystemError.ConfigurationError(
+                config = "Supabase client",
+                errorCause = e
+            )
+            systemError.log("DataModule", "Failed to create Supabase client")
             Logger.warn("DataModule", "App will continue in offline-only mode")
             null
         }

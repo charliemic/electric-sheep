@@ -128,12 +128,34 @@ class MoodManagementViewModel(
                     _errorMessage.value = null
                 }
                 .onFailure { error ->
-                    Logger.error("MoodManagementViewModel", "Sign in failed", error)
-                    _errorMessage.value = when (error) {
-                        is com.electricsheep.app.auth.AuthError -> error.message
-                        else -> "Sign in failed: ${error.message ?: "Please try again"}"
+                    // Handle different error types with appropriate user messages
+                    val userMessage = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> {
+                            error.message // AuthError already has user-friendly messages
+                        }
+                        is com.electricsheep.app.error.NetworkError -> {
+                            if (error.isRecoverable && error.shouldRetry) {
+                                "Connection issue. Please check your internet and try again."
+                            } else {
+                                error.userMessage
+                            }
+                        }
+                        else -> {
+                            "Sign in failed: ${error.message ?: "Please try again"}"
+                        }
                     }
+                    _errorMessage.value = userMessage
                     _isLoading.value = false
+                    
+                    // Log error with context
+                    when (error) {
+                        is com.electricsheep.app.error.AppError -> {
+                            error.log("MoodManagementViewModel", "Sign in failed")
+                        }
+                        else -> {
+                            Logger.error("MoodManagementViewModel", "Sign in failed", error)
+                        }
+                    }
                 }
         }
     }
@@ -174,39 +196,85 @@ class MoodManagementViewModel(
                     _isSignUpMode.value = false
                 }
                 .onFailure { error ->
-                    Logger.error("MoodManagementViewModel", "Sign up failed", error)
-                    _errorMessage.value = when (error) {
-                        is com.electricsheep.app.auth.AuthError -> error.message
-                        else -> "Sign up failed: ${error.message ?: "Please try again"}"
+                    // Handle different error types with appropriate user messages
+                    val userMessage = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> {
+                            error.message // AuthError already has user-friendly messages
+                        }
+                        is com.electricsheep.app.error.NetworkError -> {
+                            if (error.isRecoverable && error.shouldRetry) {
+                                "Connection issue. Please check your internet and try again."
+                            } else {
+                                error.userMessage
+                            }
+                        }
+                        else -> {
+                            "Sign up failed: ${error.message ?: "Please try again"}"
+                        }
                     }
+                    _errorMessage.value = userMessage
                     _isLoading.value = false
+                    
+                    // Log error with context
+                    when (error) {
+                        is com.electricsheep.app.error.AppError -> {
+                            error.log("MoodManagementViewModel", "Sign up failed")
+                        }
+                        else -> {
+                            Logger.error("MoodManagementViewModel", "Sign up failed", error)
+                        }
+                    }
                 }
         }
     }
     
     /**
-     * Initiate Google OAuth sign-in
-     * Returns the OAuth URL to open in browser
+     * Initiate Google OAuth sign-in using Supabase SDK's native method.
+     * The SDK handles PKCE, state, and deep link callbacks automatically.
+     * Returns the OAuth URL to open in browser.
      */
     fun signInWithGoogle() {
         _isLoading.value = true
         _errorMessage.value = null
-        Logger.info("MoodManagementViewModel", "Initiating Google OAuth sign-in")
+        Logger.info("MoodManagementViewModel", "Initiating Google OAuth sign-in using native SDK method")
         
         viewModelScope.launch {
             userManager.getGoogleOAuthUrl()
                 .onSuccess { url ->
-                    Logger.info("MoodManagementViewModel", "Google OAuth URL obtained")
+                    Logger.info("MoodManagementViewModel", "Google OAuth URL obtained from SDK")
+                    Logger.debug("MoodManagementViewModel", "SDK will handle PKCE, state, and callback automatically")
                     _googleOAuthUrl.value = url
                     _isLoading.value = false
                 }
                 .onFailure { error ->
-                    Logger.error("MoodManagementViewModel", "Failed to get Google OAuth URL", error)
-                    _errorMessage.value = when (error) {
-                        is com.electricsheep.app.auth.AuthError -> error.message
-                        else -> "Failed to start Google sign-in: ${error.message ?: "Please try again"}"
+                    // Handle different error types with appropriate user messages
+                    val userMessage = when (error) {
+                        is com.electricsheep.app.auth.AuthError -> {
+                            error.message // AuthError already has user-friendly messages
+                        }
+                        is com.electricsheep.app.error.NetworkError -> {
+                            if (error.isRecoverable && error.shouldRetry) {
+                                "Connection issue. Please check your internet and try again."
+                            } else {
+                                error.userMessage
+                            }
+                        }
+                        else -> {
+                            "Failed to start Google sign-in: ${error.message ?: "Please try again"}"
+                        }
                     }
+                    _errorMessage.value = userMessage
                     _isLoading.value = false
+                    
+                    // Log error with context
+                    when (error) {
+                        is com.electricsheep.app.error.AppError -> {
+                            error.log("MoodManagementViewModel", "Failed to get Google OAuth URL")
+                        }
+                        else -> {
+                            Logger.error("MoodManagementViewModel", "Failed to get Google OAuth URL", error)
+                        }
+                    }
                 }
         }
     }
@@ -283,12 +351,41 @@ class MoodManagementViewModel(
                     .onSuccess {
                         Logger.info("MoodManagementViewModel", "Mood saved successfully: ${it.id}")
                         _moodScoreText.value = ""
+                        _moodErrorMessage.value = null
                         _isSavingMood.value = false
                     }
                     .onFailure { error ->
-                        Logger.error("MoodManagementViewModel", "Failed to save mood", error)
-                        _moodErrorMessage.value = "Failed to save mood: ${error.message ?: "Unknown error"}"
+                        // Handle different error types with appropriate user messages
+                        val userMessage = when (error) {
+                            is com.electricsheep.app.error.NetworkError -> {
+                                if (error.isRecoverable) {
+                                    "Mood saved locally. Will sync when connection is available."
+                                } else {
+                                    error.userMessage
+                                }
+                            }
+                            is com.electricsheep.app.error.DataError -> {
+                                error.userMessage
+                            }
+                            is com.electricsheep.app.error.SystemError -> {
+                                error.userMessage
+                            }
+                            else -> {
+                                "Failed to save mood: ${error.message ?: "Unknown error"}"
+                            }
+                        }
+                        _moodErrorMessage.value = userMessage
                         _isSavingMood.value = false
+                        
+                        // Log error with context
+                        when (error) {
+                            is com.electricsheep.app.error.AppError -> {
+                                error.log("MoodManagementViewModel", "Failed to save mood")
+                            }
+                            else -> {
+                                Logger.error("MoodManagementViewModel", "Failed to save mood", error)
+                            }
+                        }
                     }
             } catch (e: IllegalStateException) {
                 Logger.error("MoodManagementViewModel", "User authentication error when saving mood", e)
@@ -314,6 +411,20 @@ class MoodManagementViewModel(
      */
     fun clearLoginError() {
         _errorMessage.value = null
+    }
+    
+    /**
+     * Set error message (for UI-initiated errors)
+     */
+    fun setError(message: String) {
+        _errorMessage.value = message
+    }
+    
+    /**
+     * Clear Google OAuth URL after it's been opened
+     */
+    fun clearGoogleOAuthUrl() {
+        _googleOAuthUrl.value = null
     }
 }
 

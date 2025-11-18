@@ -124,17 +124,29 @@ class UserManager(
     }
     
     /**
-     * Get Google OAuth URL for sign-in.
+     * Get Google OAuth URL for sign-in using Supabase SDK's native method.
      * Only works if using SupabaseAuthProvider.
+     * The SDK handles PKCE, state, and deep link callbacks automatically.
      * 
      * @return Result containing the OAuth URL or error
      */
     suspend fun getGoogleOAuthUrl(): Result<String> {
-        Logger.info("UserManager", "Getting Google OAuth URL")
+        Logger.info("UserManager", "Getting Google OAuth URL using native SDK method")
         return if (authProvider is SupabaseAuthProvider) {
-            authProvider.getGoogleOAuthUrl()
+            authProvider.getGoogleOAuthUrl().also { result ->
+                result.onSuccess { url ->
+                    Logger.debug("UserManager", "OAuth URL obtained from SDK - URL length: ${url.length}")
+                }.onFailure { error ->
+                    Logger.error("UserManager", "Failed to get OAuth URL", error)
+                }
+            }
         } else {
-            Result.failure(Exception("Google OAuth not supported with current auth provider"))
+            val error = com.electricsheep.app.error.SystemError.ConfigurationError(
+                config = "OAuth provider",
+                errorCause = IllegalArgumentException("Google OAuth not supported with current auth provider")
+            )
+            error.log("UserManager", "OAuth not supported")
+            Result.failure(error)
         }
     }
     
@@ -157,7 +169,12 @@ class UserManager(
                 }
             }
         } else {
-            Result.failure(Exception("OAuth callback not supported with current auth provider"))
+            val error = com.electricsheep.app.error.SystemError.ConfigurationError(
+                config = "OAuth provider",
+                errorCause = IllegalArgumentException("OAuth callback not supported with current auth provider")
+            )
+            error.log("UserManager", "OAuth callback not supported")
+            Result.failure(error)
         }
     }
 }

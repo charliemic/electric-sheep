@@ -14,6 +14,8 @@ import androidx.navigation.compose.rememberNavController
 import com.electricsheep.app.ui.navigation.AppNavGraph
 import com.electricsheep.app.ui.theme.ElectricSheepTheme
 import com.electricsheep.app.util.Logger
+import io.github.jan.supabase.gotrue.handleDeeplinks
+import io.github.jan.supabase.gotrue.user.UserSession
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -46,8 +48,8 @@ class MainActivity : ComponentActivity() {
     }
     
     /**
-     * Handle OAuth callback from deep link.
-     * Called when user returns from OAuth provider (e.g., Google sign-in).
+     * Handle OAuth callback from deep link using Supabase SDK's native method.
+     * The SDK handles PKCE verification, state validation, and session creation automatically.
      */
     private fun handleOAuthCallback(intent: Intent?) {
         intent?.data?.let { uri ->
@@ -55,18 +57,34 @@ class MainActivity : ComponentActivity() {
                 Logger.info("MainActivity", "OAuth callback received: $uri")
                 
                 val application = applicationContext as ElectricSheepApplication
-                val userManager = application.getUserManager()
+                val supabaseClient = application.getSupabaseClient()
                 
-                lifecycleScope.launch {
-                    userManager.handleOAuthCallback(uri)
-                        .onSuccess { user ->
-                            Logger.info("MainActivity", "OAuth callback successful: ${user.id}")
-                            // UI will automatically update via StateFlow in ViewModel
+                if (supabaseClient != null) {
+                    // Use Supabase SDK's native handleDeeplinks extension function
+                    // This processes the deep link and completes the OAuth flow automatically
+                    // It handles PKCE verification, state validation, and session creation
+                    // The callback receives the UserSession when authentication completes
+                    Logger.debug("MainActivity", "Processing OAuth callback with SDK's handleDeeplinks()")
+                    // Call handleDeeplinks - it's a top-level function that takes SupabaseClient as first parameter
+                    // In Kotlin, this appears as an extension function: supabaseClient.handleDeeplinks(intent) { session -> }
+                    supabaseClient.handleDeeplinks(intent) { session: UserSession ->
+                        Logger.info("MainActivity", "OAuth callback processed successfully by SDK - Session created")
+                        // The SDK has created the session, now retrieve the user
+                        lifecycleScope.launch {
+                            val userManager = application.getUserManager()
+                            userManager.handleOAuthCallback(uri)
+                                .onSuccess { user ->
+                                    Logger.info("MainActivity", "OAuth callback successful: ${user.id}")
+                                    // UI will automatically update via StateFlow in ViewModel
+                                }
+                                .onFailure { error ->
+                                    Logger.error("MainActivity", "OAuth callback failed", error)
+                                    // Error is already logged, UI can show error via ViewModel state if needed
+                                }
                         }
-                        .onFailure { error ->
-                            Logger.error("MainActivity", "OAuth callback failed", error)
-                            // Error is already logged, UI can show error via ViewModel state if needed
-                        }
+                    }
+                } else {
+                    Logger.error("MainActivity", "Supabase client is null - cannot process OAuth callback")
                 }
             }
         }

@@ -11,9 +11,10 @@ on:
       - 'supabase/**'  # Ignore Supabase changes (handled by separate workflow)
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
-
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -30,16 +31,8 @@ jobs:
       with:
         accept-android-sdk-licenses: true
 
-    - name: Debug environment
-      run: |
-        echo "Java version:"
-        java -version
-        echo "Gradle version:"
-        ./gradlew --version
-        echo "Android SDK:"
-        echo $ANDROID_HOME
-
     - name: Cache Gradle dependencies
+      id: cache
       uses: actions/cache@v3
       with:
         path: |
@@ -59,34 +52,111 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-android-
 
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
     - name: Lint check
-      id: lint
-      run: ./gradlew lint --stacktrace --info
-      working-directory: ${{ github.workspace }}
+      run: ./gradlew lint --stacktrace
       continue-on-error: false
+
+    - name: Upload lint results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-results
+        path: app/build/reports/lint-results*.html
+        retention-days: 7
+
+  accessibility:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
     - name: Accessibility lint check
-      id: accessibility-lint
-      run: ./gradlew lint --stacktrace --info -Pandroid.lint.checkAccessibility=true
-      working-directory: ${{ github.workspace }}
+      run: ./gradlew lint --stacktrace -Pandroid.lint.checkAccessibility=true
       continue-on-error: false
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
     - name: Run unit tests
-      id: unit-tests
-      run: ./gradlew test --stacktrace --info
-      working-directory: ${{ github.workspace }}
-      continue-on-error: false
-
-    - name: Build debug APK
-      id: build-debug
-      run: ./gradlew assembleDebug --stacktrace --info
-      working-directory: ${{ github.workspace }}
-      continue-on-error: false
-
-    - name: Build release AAB
-      id: build-release
-      run: ./gradlew bundleRelease --stacktrace --info
-      working-directory: ${{ github.workspace }}
+      run: ./gradlew test --stacktrace
       continue-on-error: false
 
     - name: Upload test results
@@ -97,10 +167,88 @@ jobs:
         path: app/build/reports/tests/
         retention-days: 7
 
-    - name: Upload lint results
-      if: always()
-      uses: actions/upload-artifact@v4
+  build-debug:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
       with:
-        name: lint-results
-        path: app/build/reports/lint-results*.html
-        retention-days: 7
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Restore Android build cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.android/build-cache
+          ${{ github.workspace }}/.gradle
+        key: ${{ runner.os }}-android-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-android-
+
+    - name: Build debug APK
+      run: ./gradlew assembleDebug --stacktrace
+      continue-on-error: false
+
+  build-release:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Restore Android build cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.android/build-cache
+          ${{ github.workspace }}/.gradle
+        key: ${{ runner.os }}-android-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-android-
+
+    - name: Build release AAB
+      run: ./gradlew bundleRelease --stacktrace
+      continue-on-error: false

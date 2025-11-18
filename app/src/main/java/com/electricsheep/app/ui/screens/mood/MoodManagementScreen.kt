@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.error
+import android.content.Intent
 import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
 import com.electricsheep.app.util.DateFormatter
@@ -52,15 +53,72 @@ fun MoodManagementScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
-    // Handle Google OAuth URL - open in browser when available
+    // Handle Google OAuth URL - open in Chrome Custom Tabs (Android best practice)
     LaunchedEffect(googleOAuthUrl) {
         googleOAuthUrl?.let { url ->
             try {
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                context.startActivity(intent)
-                Logger.info("MoodManagementScreen", "Opened Google OAuth URL in browser")
+                Logger.info("MoodManagementScreen", "Attempting to open Google OAuth URL in Custom Tab: $url")
+                
+                // Use Chrome Custom Tabs for OAuth (recommended Android pattern)
+                // Custom Tabs provide better UX: look like part of the app, share cookies, faster
+                val uri = android.net.Uri.parse(url)
+                
+                // Check if Chrome Custom Tabs is available
+                val packageName = androidx.browser.customtabs.CustomTabsClient.getPackageName(
+                    context,
+                    null // Use default browser
+                )
+                
+                Logger.debug("MoodManagementScreen", "CustomTabsClient.getPackageName returned: $packageName")
+                
+                if (packageName != null) {
+                    val builder = androidx.browser.customtabs.CustomTabsIntent.Builder()
+                    builder.setShowTitle(true)
+                    // Use a default toolbar color (can be customized based on app theme)
+                    // Note: MaterialTheme.colorScheme is not accessible in LaunchedEffect
+                    builder.setToolbarColor(0xFF6200EE.toInt()) // Material Purple 700
+                    
+                    val customTabsIntent = builder.build()
+                    customTabsIntent.intent.setPackage(packageName)
+                    customTabsIntent.launchUrl(context, uri)
+                    Logger.info("MoodManagementScreen", "Opened Google OAuth URL in Custom Tab (package: $packageName)")
+                } else {
+                    // Fallback to regular browser if Custom Tabs not available
+                    Logger.warn("MoodManagementScreen", "Custom Tabs not available, falling back to regular browser")
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    
+                    // Check what activities can handle this intent
+                    val resolveInfo = context.packageManager.queryIntentActivities(intent, 0)
+                    Logger.debug("MoodManagementScreen", "Found ${resolveInfo.size} activities that can handle ACTION_VIEW for URL")
+                    resolveInfo.forEach { info ->
+                        Logger.debug("MoodManagementScreen", "  - ${info.activityInfo.packageName}/${info.activityInfo.name}")
+                    }
+                    
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        try {
+                            context.startActivity(intent)
+                            Logger.info("MoodManagementScreen", "Opened Google OAuth URL in browser")
+                        } catch (e: Exception) {
+                            Logger.error("MoodManagementScreen", "Failed to start browser activity", e)
+                            viewModel.setError("Failed to open browser: ${e.message}")
+                        }
+                    } else {
+                        Logger.error("MoodManagementScreen", "No browser app found to open OAuth URL")
+                        viewModel.setError("No web browser found. Please install Chrome from the Play Store to sign in with Google.")
+                    }
+                }
+                
+                // Clear the URL after attempting to open to prevent re-opening
+                viewModel.clearGoogleOAuthUrl()
+            } catch (e: android.content.ActivityNotFoundException) {
+                Logger.error("MoodManagementScreen", "No browser app found to open OAuth URL", e)
+                viewModel.setError("No web browser found. Please install Chrome from the Play Store to sign in with Google.")
+                viewModel.clearGoogleOAuthUrl()
             } catch (e: Exception) {
                 Logger.error("MoodManagementScreen", "Failed to open OAuth URL", e)
+                viewModel.setError("Failed to open sign-in page. Please try again.")
+                viewModel.clearGoogleOAuthUrl()
             }
         }
     }

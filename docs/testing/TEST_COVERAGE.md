@@ -30,11 +30,16 @@
   - All error types (InvalidCredentials, UserAlreadyExists, etc.)
   - Case-insensitive matching
   - Generic error handling
-- ⚠️ `SupabaseAuthProvider` - **Needs Tests**
-  - Would require mocking Supabase client
-  - Complex OAuth flow testing
-  - Email/password authentication
-  - Session management
+- ⚠️ `SupabaseAuthProvider` - **Partial Coverage**
+  - ✅ OAuth URL generation - `SupabaseAuthProviderOAuthUrlTest.kt` (NEW)
+    - Path correction (/auth/v1/ → /auth/v1/authorize)
+    - API key addition
+    - Query parameter preservation
+  - ⚠️ OAuth callback parsing - Removed (no longer needed - SDK handles this)
+  - ⚠️ Full provider testing would require mocking Supabase client
+  - ⚠️ Complex OAuth flow testing (covered via ViewModel tests)
+  - ⚠️ Email/password authentication (covered via UserManager tests)
+  - ⚠️ Session management (covered via UserManager tests)
 
 ### ✅ Repository Layer (High Coverage)
 - ✅ `MoodRepository` - `MoodRepositoryTest.kt`

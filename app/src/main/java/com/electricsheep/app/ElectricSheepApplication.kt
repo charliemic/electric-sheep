@@ -25,6 +25,7 @@ class ElectricSheepApplication : Application() {
     private lateinit var syncManager: SyncManager
     private lateinit var userManager: UserManager
     private var moodRepository: MoodRepository? = null
+    private var supabaseClient: SupabaseClient? = null
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     override fun onCreate() {
@@ -36,14 +37,19 @@ class ElectricSheepApplication : Application() {
             Logger.info("ElectricSheepApplication", "Application onCreate")
             
             val featureFlagManager = initializeFeatureFlags()
-            val supabaseClient = DataModule.createSupabaseClient(featureFlagManager)
+            supabaseClient = DataModule.createSupabaseClient(featureFlagManager)
             userManager = initializeAuth(supabaseClient)
             moodRepository = initializeDataLayer(featureFlagManager, userManager, supabaseClient)
             initializeSync(featureFlagManager)
             
             Logger.info("ElectricSheepApplication", "Application initialised successfully")
+        } catch (e: com.electricsheep.app.error.SystemError) {
+            e.log("ElectricSheepApplication", "Critical system error during application initialisation")
+            // Log to crash reporting service in production
+            // The app will continue but may be in a degraded state
         } catch (e: Exception) {
-            Logger.error("ElectricSheepApplication", "Critical error during application initialisation", e)
+            val systemError = com.electricsheep.app.error.SystemError.Unknown(e)
+            systemError.log("ElectricSheepApplication", "Critical error during application initialisation")
             // Log to crash reporting service in production
             // The app will continue but may be in a degraded state
         }
@@ -54,7 +60,15 @@ class ElectricSheepApplication : Application() {
      */
     private fun installGlobalExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            Logger.error("ElectricSheepApplication", "Uncaught exception in thread: ${thread.name}", exception)
+            // Classify and log the error appropriately
+            when (exception) {
+                is com.electricsheep.app.error.AppError -> {
+                    exception.log("ElectricSheepApplication", "Uncaught error in thread: ${thread.name}")
+                }
+                else -> {
+                    Logger.error("ElectricSheepApplication", "Uncaught exception in thread: ${thread.name}", exception)
+                }
+            }
             // Log to crash reporting service in production
             // For now, just log and let the default handler process it
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -74,6 +88,8 @@ class ElectricSheepApplication : Application() {
         applicationScope.launch {
             try {
                 userManager.initialise()
+            } catch (e: com.electricsheep.app.error.SystemError) {
+                e.log("ElectricSheepApplication", "Failed to initialise user manager")
             } catch (e: Exception) {
                 Logger.error("ElectricSheepApplication", "Failed to initialise user manager", e)
             }
@@ -115,8 +131,14 @@ class ElectricSheepApplication : Application() {
             
             Logger.info("ElectricSheepApplication", "Data layer initialised successfully")
             repository
+        } catch (e: com.electricsheep.app.error.SystemError) {
+            e.log("ElectricSheepApplication", "Failed to initialise data layer")
+            // App will continue but may have limited functionality
+            // In production, you might want to show an error screen or retry
+            null
         } catch (e: Exception) {
-            Logger.error("ElectricSheepApplication", "Failed to initialise data layer", e)
+            val systemError = com.electricsheep.app.error.SystemError.Unknown(e)
+            systemError.log("ElectricSheepApplication", "Failed to initialise data layer")
             // App will continue but may have limited functionality
             // In production, you might want to show an error screen or retry
             null
@@ -147,8 +169,12 @@ class ElectricSheepApplication : Application() {
             syncManager.startPeriodicSync()
             
             Logger.info("ElectricSheepApplication", "Background sync initialised successfully")
+        } catch (e: com.electricsheep.app.error.SystemError) {
+            e.log("ElectricSheepApplication", "Failed to initialise WorkManager")
+            // Continue without WorkManager - app can still function
         } catch (e: Exception) {
-            Logger.error("ElectricSheepApplication", "Failed to initialise WorkManager", e)
+            val systemError = com.electricsheep.app.error.SystemError.Unknown(e)
+            systemError.log("ElectricSheepApplication", "Failed to initialise WorkManager")
             // Continue without WorkManager - app can still function
         }
     }
@@ -168,4 +194,10 @@ class ElectricSheepApplication : Application() {
      * Returns null if data layer failed to initialise
      */
     fun getMoodRepository(): MoodRepository? = moodRepository
+    
+    /**
+     * Get Supabase client instance (for OAuth deep link handling)
+     * Returns null if Supabase client failed to initialise
+     */
+    fun getSupabaseClient(): SupabaseClient? = supabaseClient
 }

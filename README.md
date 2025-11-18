@@ -28,6 +28,16 @@ export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-
 sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 ```
 
+**Important**: Add Android SDK to your shell PATH permanently:
+```bash
+# For zsh (default on macOS)
+echo 'export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"' >> ~/.zshrc
+source ~/.zshrc
+
+# Verify adb is accessible
+adb version
+```
+
 Create `local.properties` in project root:
 ```properties
 sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk

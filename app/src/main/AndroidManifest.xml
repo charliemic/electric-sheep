@@ -4,6 +4,27 @@
 
     <!-- Required for network requests to Supabase -->
     <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Package visibility queries (required for Android 11+ to discover browsers) -->
+    <queries>
+        <!-- Query for browsers that support Custom Tabs -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+        
+        <!-- Query for browsers that can handle HTTP/HTTPS URLs -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        
+        <!-- Explicitly query for Chrome (most common Custom Tabs provider) -->
+        <package android:name="com.android.chrome" />
+    </queries>
 
     <application
         android:name=".ElectricSheepApplication"
