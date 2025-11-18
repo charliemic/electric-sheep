@@ -20,6 +20,7 @@ android {
         
         // Feature flags - can be overridden per build type
         buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+        buildConfigField("boolean", "SHOW_FEATURE_FLAG_INDICATOR_MODE", "false")
         
         // Supabase configuration - read from local.properties
         val localPropertiesFile = rootProject.file("local.properties")
@@ -147,5 +148,11 @@ dependencies {
     
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+// Optimize test execution
+tasks.withType<Test> {
+    maxParallelForks = Runtime.getRuntime().availableProcessors()
+    forkEvery = 0 // Don't fork for each test class - faster execution
 }
 

@@ -11,6 +11,12 @@ object FeatureFlag {
      */
     const val OFFLINE_ONLY = "offline_only"
     
+    /**
+     * Shows a feature flag indicator icon on the landing page.
+     * Used for testing feature flag functionality.
+     */
+    const val SHOW_FEATURE_FLAG_INDICATOR = "show_feature_flag_indicator"
+    
     // Add more feature flags here as needed
     // const val ENABLE_MOOD_ANALYTICS = "enable_mood_analytics"
     // const val ENABLE_EXPORT = "enable_export"

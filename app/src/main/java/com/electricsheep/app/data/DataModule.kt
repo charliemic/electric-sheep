@@ -116,11 +116,40 @@ object DataModule {
     }
     
     /**
-     * Create feature flag manager
+     * Create feature flag manager with composite provider (Supabase primary, Config fallback).
+     * 
+     * Features using flags are agnostic to the source - they always get a value,
+     * either from Supabase (primary) or BuildConfig (fallback).
+     * 
+     * @param context Android context for cache creation
+     * @param supabaseClient Supabase client (can be null if offline-only)
+     * @param userManager User manager for user-specific flags (can be null for initial setup)
+     * @return FeatureFlagManager instance
      */
-    fun createFeatureFlagManager(): FeatureFlagManager {
+    fun createFeatureFlagManager(
+        context: android.content.Context,
+        supabaseClient: SupabaseClient?,
+        userManager: com.electricsheep.app.auth.UserManager?
+    ): FeatureFlagManager {
         Logger.debug("DataModule", "Creating feature flag manager")
-        val provider = ConfigBasedFeatureFlagProvider()
+        
+        // Always create config-based provider as fallback
+        val fallbackProvider = ConfigBasedFeatureFlagProvider()
+        
+        val provider = if (supabaseClient != null && userManager != null) {
+            // Create cache for TTL support
+            val cache = com.electricsheep.app.config.FeatureFlagCache(context)
+            
+            // Use composite provider: Supabase (primary) + Config (fallback)
+            Logger.info("DataModule", "Using composite feature flag provider (Supabase primary, Config fallback)")
+            val primaryProvider = com.electricsheep.app.config.SupabaseFeatureFlagProvider(supabaseClient, userManager, cache)
+            com.electricsheep.app.config.CompositeFeatureFlagProvider(primaryProvider, fallbackProvider)
+        } else {
+            // Offline-only or initial setup: use config provider only
+            Logger.info("DataModule", "Using config-based feature flag provider (offline-only or initial setup)")
+            fallbackProvider
+        }
+        
         return FeatureFlagManager(provider)
     }
     

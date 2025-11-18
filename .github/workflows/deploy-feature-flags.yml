@@ -1,0 +1,302 @@
+name: Deploy Feature Flags
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'feature-flags/**'
+      - '.github/workflows/deploy-feature-flags.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'feature-flags/**'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  validate-flags:
+    name: Validate Feature Flags
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Validate flags.yaml syntax
+        run: |
+          if [ ! -f "feature-flags/flags.yaml" ]; then
+            echo "Error: feature-flags/flags.yaml not found"
+            exit 1
+          fi
+          
+          # Check YAML syntax
+          yq eval '.flags' feature-flags/flags.yaml > /dev/null || {
+            echo "Error: Invalid YAML syntax in flags.yaml"
+            exit 1
+          }
+          
+          # Validate flag structure
+          FLAG_COUNT=$(yq '.flags | length' feature-flags/flags.yaml)
+          echo "Found $FLAG_COUNT flag(s)"
+          
+          MISSING_CONFIG_FLAGS=()
+          
+          for i in $(seq 0 $((FLAG_COUNT - 1))); do
+            KEY=$(yq ".flags[$i].key" feature-flags/flags.yaml)
+            VALUE_TYPE=$(yq ".flags[$i].value_type" feature-flags/flags.yaml)
+            ENABLED=$(yq ".flags[$i].enabled" feature-flags/flags.yaml)
+            
+            # Validate required fields
+            if [ -z "$KEY" ] || [ "$KEY" = "null" ]; then
+              echo "Error: Flag at index $i is missing 'key'"
+              exit 1
+            fi
+            
+            if [ -z "$VALUE_TYPE" ] || [ "$VALUE_TYPE" = "null" ]; then
+              echo "Error: Flag '$KEY' is missing 'value_type'"
+              exit 1
+            fi
+            
+            if [ "$VALUE_TYPE" != "boolean" ] && [ "$VALUE_TYPE" != "string" ] && [ "$VALUE_TYPE" != "int" ]; then
+              echo "Error: Flag '$KEY' has invalid value_type: $VALUE_TYPE (must be 'boolean', 'string', or 'int')"
+              exit 1
+            fi
+            
+            # Validate value matches type
+            if [ "$VALUE_TYPE" = "boolean" ]; then
+              VALUE=$(yq ".flags[$i].boolean_value" feature-flags/flags.yaml)
+              if [ "$VALUE" != "true" ] && [ "$VALUE" != "false" ]; then
+                echo "Error: Flag '$KEY' has invalid boolean_value: $VALUE"
+                exit 1
+              fi
+            elif [ "$VALUE_TYPE" = "string" ]; then
+              VALUE=$(yq ".flags[$i].string_value" feature-flags/flags.yaml)
+              if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
+                echo "Error: Flag '$KEY' is missing 'string_value'"
+                exit 1
+              fi
+            elif [ "$VALUE_TYPE" = "int" ]; then
+              VALUE=$(yq ".flags[$i].int_value" feature-flags/flags.yaml)
+              if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
+                echo "Error: Flag '$KEY' is missing 'int_value'"
+                exit 1
+              fi
+            fi
+            
+            # Check if flag has corresponding BuildConfig field
+            # Convert key to BuildConfig field name: "offline_only" -> "OFFLINE_ONLY_MODE" or "OFFLINE_ONLY_VALUE"
+            CONFIG_KEY=$(echo "$KEY" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            if [ "$VALUE_TYPE" = "boolean" ]; then
+              CONFIG_FIELD="${CONFIG_KEY}_MODE"
+            else
+              CONFIG_FIELD="${CONFIG_KEY}_VALUE"
+            fi
+            
+            # Check if BuildConfig field exists in build.gradle.kts
+            # Look for buildConfigField with the config field name (case-insensitive)
+            # Pattern matches: buildConfigField("type", "CONFIG_FIELD", ...)
+            if ! grep -qiE "buildConfigField.*[\"']${CONFIG_FIELD}[\"']" app/build.gradle.kts; then
+              MISSING_CONFIG_FLAGS+=("$KEY (expected BuildConfig field: $CONFIG_FIELD)")
+            fi
+            
+            echo "✓ Validated flag: $KEY ($VALUE_TYPE)"
+          done
+          
+          # Report missing BuildConfig fields
+          if [ ${#MISSING_CONFIG_FLAGS[@]} -gt 0 ]; then
+            echo ""
+            echo "⚠️  Warning: The following flags are missing BuildConfig fallback values:"
+            for flag in "${MISSING_CONFIG_FLAGS[@]}"; do
+              echo "   - $flag"
+            done
+            echo ""
+            echo "To fix: Add the corresponding buildConfigField in app/build.gradle.kts"
+            echo "Example for boolean flag 'offline_only':"
+            echo "  buildConfigField(\"boolean\", \"OFFLINE_ONLY_MODE\", \"false\")"
+            echo ""
+            echo "Example for string flag 'export_format':"
+            echo "  buildConfigField(\"String\", \"EXPORT_FORMAT_VALUE\", \"\\\"csv\\\"\")"
+            echo ""
+            echo "Example for int flag 'max_moods_per_day':"
+            echo "  buildConfigField(\"int\", \"MAX_MOODS_PER_DAY_VALUE\", \"10\")"
+            echo ""
+            exit 1
+          fi
+          
+          echo "All flags validated successfully (including BuildConfig fallback checks)"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')
+    needs: validate-flags
+    environment:
+      name: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Verify Supabase credentials
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+      
+      - name: Login to Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase login --token "$SUPABASE_ACCESS_TOKEN"
+      
+      - name: Link to staging project
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret"
+            exit 1
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Get database connection string
+        id: db-url
+        run: |
+          # Construct database URL from project reference
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          
+          # Get database host (this is a simplified approach - in production, use Supabase API to get connection details)
+          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+          
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "Using database connection for project: $PROJECT_REF"
+      
+      - name: Sync feature flags
+        env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+        run: |
+          chmod +x scripts/sync-feature-flags.sh
+          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+      
+      - name: Verify deployment
+        run: |
+          echo "Feature flags deployed successfully to staging"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: validate-flags
+    environment:
+      name: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Verify Supabase credentials
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+      
+      - name: Login to Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase login --token "$SUPABASE_ACCESS_TOKEN"
+      
+      - name: Link to production project
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF_PROD or SUPABASE_PROJECT_REF secret"
+            exit 1
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Get database connection string
+        id: db-url
+        run: |
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          
+          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+          
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "Using database connection for project: $PROJECT_REF"
+      
+      - name: Sync feature flags
+        env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+        run: |
+          chmod +x scripts/sync-feature-flags.sh
+          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+      
+      - name: Verify deployment
+        run: |
+          echo "Feature flags deployed successfully to production"
+
+  preview-flags:
+    name: Preview Feature Flags (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: validate-flags
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Show flag changes
+        run: |
+          echo "## Feature Flag Changes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Flags that will be deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          yq '.flags' feature-flags/flags.yaml >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+

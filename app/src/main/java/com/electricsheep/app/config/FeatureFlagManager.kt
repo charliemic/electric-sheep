@@ -11,7 +11,7 @@ import com.electricsheep.app.util.Logger
  * Can be extended to support multiple providers with priority/fallback.
  */
 class FeatureFlagManager(
-    private val provider: FeatureFlagProvider
+    val provider: FeatureFlagProvider
 ) {
     /**
      * Check if offline-only mode is enabled.

@@ -24,6 +24,7 @@ class ElectricSheepApplication : Application() {
     
     private lateinit var syncManager: SyncManager
     private lateinit var userManager: UserManager
+    private lateinit var featureFlagManager: FeatureFlagManager
     private var moodRepository: MoodRepository? = null
     private var supabaseClient: SupabaseClient? = null
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -36,9 +37,37 @@ class ElectricSheepApplication : Application() {
         try {
             Logger.info("ElectricSheepApplication", "Application onCreate")
             
-            val featureFlagManager = initializeFeatureFlags()
-            supabaseClient = DataModule.createSupabaseClient(featureFlagManager)
+            // Create initial feature flag manager (config-based) for Supabase client creation
+            val initialFeatureFlagManager = DataModule.createFeatureFlagManager(this, null, null)
+            supabaseClient = DataModule.createSupabaseClient(initialFeatureFlagManager)
             userManager = initializeAuth(supabaseClient)
+            
+            // Recreate feature flag manager with Supabase client and user manager
+            featureFlagManager = DataModule.createFeatureFlagManager(this, supabaseClient, userManager)
+            
+            // Initialize feature flags from Supabase
+            applicationScope.launch {
+                try {
+                    // Check if provider is composite and get primary provider
+                    val primaryProvider = when (val provider = featureFlagManager.provider) {
+                        is com.electricsheep.app.config.CompositeFeatureFlagProvider -> {
+                            // Get primary provider from composite
+                            provider.primaryProvider
+                        }
+                        is com.electricsheep.app.config.SupabaseFeatureFlagProvider -> {
+                            provider
+                        }
+                        else -> null
+                    }
+                    
+                    if (primaryProvider is com.electricsheep.app.config.SupabaseFeatureFlagProvider) {
+                        primaryProvider.initialise()
+                    }
+                } catch (e: Exception) {
+                    Logger.warn("ElectricSheepApplication", "Failed to initialise feature flags from Supabase", e)
+                }
+            }
+            
             moodRepository = initializeDataLayer(featureFlagManager, userManager, supabaseClient)
             initializeSync(featureFlagManager)
             
@@ -98,13 +127,6 @@ class ElectricSheepApplication : Application() {
         return userManager
     }
     
-    /**
-     * Initialise feature flags.
-     */
-    private fun initializeFeatureFlags(): FeatureFlagManager {
-        Logger.debug("ElectricSheepApplication", "Initialising feature flags")
-        return DataModule.createFeatureFlagManager()
-    }
     
     /**
      * Initialise data layer (database, repository).
@@ -200,4 +222,9 @@ class ElectricSheepApplication : Application() {
      * Returns null if Supabase client failed to initialise
      */
     fun getSupabaseClient(): SupabaseClient? = supabaseClient
+    
+    /**
+     * Get feature flag manager instance (for feature flag access)
+     */
+    fun getFeatureFlagManager(): FeatureFlagManager = featureFlagManager
 }
