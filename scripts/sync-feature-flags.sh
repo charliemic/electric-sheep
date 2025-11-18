@@ -197,7 +197,7 @@ INSERT INTO public.feature_flags (
     key, value_type, string_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', '$VALUE_ESCAPED', $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
+    $SEGMENT_ID_SQL, $USER_ID_SQL, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
@@ -219,7 +219,7 @@ INSERT INTO public.feature_flags (
     key, value_type, int_value, enabled, description, segment_id, user_id, version
 ) VALUES (
     '$KEY', '$VALUE_TYPE', $VALUE, $ENABLED, '$DESCRIPTION_ESCAPED', 
-    ${SEGMENT_ID:-NULL}, ${USER_ID:-NULL}, 1
+    $SEGMENT_ID_SQL, $USER_ID_SQL, 1
 )
 ON CONFLICT (key) DO UPDATE SET
     value_type = EXCLUDED.value_type,
@@ -237,11 +237,14 @@ EOF
         fi
         
         # Execute SQL
-        if psql "$SUPABASE_DB_URL" -c "$SQL" > /dev/null 2>&1; then
+        PSQL_OUTPUT=$(psql "$SUPABASE_DB_URL" -c "$SQL" 2>&1)
+        PSQL_EXIT_CODE=$?
+        if [ $PSQL_EXIT_CODE -eq 0 ]; then
             echo -e "${GREEN}✓ Synced: $KEY${NC}"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
             echo -e "${RED}✗ Failed: $KEY${NC}"
+            echo -e "${RED}Error output: $PSQL_OUTPUT${NC}"
             ERROR_COUNT=$((ERROR_COUNT + 1))
         fi
     done
