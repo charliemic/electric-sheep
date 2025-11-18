@@ -166,6 +166,24 @@ gh run watch <run-id>
 gh run view <run-id> --log
 ```
 
+**Debugging Supabase Issues:**
+```bash
+# Comprehensive debug report (READ-ONLY)
+./scripts/supabase-debug.sh -p <project-ref> -t <access-token>
+
+# Fetch specific log types (READ-ONLY)
+./scripts/supabase-logs.sh -p <project-ref> -t <access-token> --log-type api --limit 100
+
+# Or use environment variables
+export SUPABASE_ACCESS_TOKEN="sbp_..."
+export SUPABASE_PROJECT_REF="your-project-ref"
+./scripts/supabase-debug.sh
+
+# Available log types: api, auth, postgres, storage, functions
+```
+
+**Note**: Supabase logs may not be available via Management API yet. For detailed logs, use the [Supabase Dashboard](https://supabase.com/dashboard/project/YOUR_PROJECT_REF/logs).
+
 ## Project Structure
 
 ```
