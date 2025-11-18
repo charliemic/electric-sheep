@@ -37,10 +37,13 @@ This document provides guidance for AI agents working on this codebase. Follow t
   - Prefer common code over platform-specific implementations
 
 ### Before Making Changes
-1. **Understand Context**: Read existing code and understand the architecture before modifying
-2. **Check Dependencies**: Verify compatibility with existing dependencies and versions
-3. **Review Related Code**: Look for similar implementations to maintain consistency
-4. **Consider Impact**: Assess how changes affect other parts of the system
+1. **Verify Branch**: **CRITICAL** - Check that you are NOT on the `main` branch (`git status` or `git branch`)
+   - If on `main`, immediately create a feature branch before proceeding
+   - Never make changes while on `main` branch
+2. **Understand Context**: Read existing code and understand the architecture before modifying
+3. **Check Dependencies**: Verify compatibility with existing dependencies and versions
+4. **Review Related Code**: Look for similar implementations to maintain consistency
+5. **Consider Impact**: Assess how changes affect other parts of the system
 
 ### When Implementing Features
 - **Start Small**: Implement minimal viable functionality first, then iterate
@@ -417,6 +420,36 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 
 ## Git Workflow
 
+### ⚠️ CRITICAL: Never Work on Main Branch
+
+**IMPORTANT**: This repository does not have branch protection rules enabled (free private repository limitation). Therefore, **AI agents must NEVER work directly on the `main` branch**.
+
+**Required Workflow:**
+1. **Always create a feature branch** before making any changes
+2. **Never commit directly to `main`** - all changes must go through feature branches
+3. **Always push to feature branches** - never push directly to `main`
+4. **Create Pull Requests** for all changes, even small fixes
+5. **Verify CI passes** before requesting review
+
+**Why This Matters:**
+- Without branch protection, direct commits to `main` bypass all CI/CD checks
+- Feature branches ensure CI runs before code reaches `main`
+- Pull requests provide visibility and review opportunity
+- This is the only way to ensure code quality in a free private repository
+
+**If you find yourself on `main` branch:**
+```bash
+# Immediately create a feature branch
+git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix
+```
+
+**Before starting any work:**
+1. Check current branch: `git branch` or `git status`
+2. If on `main`, create a feature branch immediately
+3. Never proceed with changes while on `main`
+
 ### Commit Messages
 - **Format**: Use conventional commit format when applicable
   - `feat: add user authentication`
@@ -428,36 +461,53 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 - **Atomic**: Make commits atomic (one logical change per commit)
 
 ### Branch Strategy
-- **Feature Branches**: Create feature branches for new functionality
+- **Feature Branches**: **ALWAYS** create feature branches for new functionality - **NEVER work directly on `main`**
 - **Branch Naming**: Use descriptive branch names (e.g., `feature/user-auth`, `fix/login-bug`)
-- **Keep Updated**: Regularly sync with main branch
+- **Never Commit to Main**: All changes must go through feature branches and Pull Requests
+- **Keep Updated**: Regularly sync feature branches with `main` branch (via `git pull origin main` or rebase)
 - **Clean History**: Keep commit history clean and meaningful
+- **Verify Branch**: Always check `git status` or `git branch` before starting work to ensure you're not on `main`
 
 ### Workflow: Push Changes and Create PR
 
+**⚠️ CRITICAL FIRST STEP**: Before making any changes, verify you are NOT on the `main` branch:
+```bash
+git status  # Check current branch
+# If on main, immediately create a feature branch:
+git checkout -b feature/your-feature-name
+```
+
 When implementing changes, follow this workflow to ensure CI/CD verification:
 
-1. **Create Feature Branch**
+1. **Verify Current Branch (REQUIRED)**
+   ```bash
+   git status  # Must show a feature branch, NOT main
+   # If on main, STOP and create a feature branch first
+   ```
+
+2. **Create Feature Branch** (if not already on one)
    ```bash
    git checkout -b feature/your-feature-name
    # or
    git checkout -b fix/your-bug-fix
    ```
 
-2. **Make Changes and Commit**
+3. **Make Changes and Commit**
    - Make your code changes
    - Stage changes: `git add .`
    - Commit with descriptive message: `git commit -m "feat: add new feature"`
+   - **Verify you're still on a feature branch** (not `main`) before committing
 
-3. **Push to Remote Repository**
+4. **Push to Remote Repository**
    ```bash
    git push -u origin feature/your-feature-name
    ```
-   - Always push to a feature branch, never directly to `main`
+   - **CRITICAL**: Always push to a feature branch, **NEVER directly to `main`**
    - Use `-u` flag on first push to set upstream tracking
    - **CI pipeline automatically runs on every push** to any branch
+   - If you accidentally try to push to `main`, stop and create a feature branch instead
 
-4. **Create Pull Request**
+5. **Create Pull Request**
    - Navigate to the repository on GitHub/GitLab
    - Click "New Pull Request" or "Create Merge Request"
    - Select your feature branch as source and `main` (or target branch) as destination
@@ -466,14 +516,15 @@ When implementing changes, follow this workflow to ensure CI/CD verification:
      - Why the changes were needed
      - How to test the changes
      - Any breaking changes
+   - **CRITICAL**: Ensure you're creating a PR from a feature branch, not from `main`
 
-5. **Verify Tests Pass Locally**
+6. **Verify Tests Pass Locally**
    - **CRITICAL**: Run tests locally before pushing (`./gradlew test`)
    - Fix any failing tests immediately
    - Do not push code with failing tests - this wastes CI resources and creates confusion
    - All tests must pass locally before creating a PR
 
-6. **Verify CI Pipeline**
+7. **Verify CI Pipeline**
    - The CI pipeline automatically runs on:
      - Every push to any branch
      - Every PR creation and update
@@ -529,12 +580,12 @@ gh run watch
 - Verify Android SDK setup matches requirements (API 34)
 - Check if dependencies need updating
 
-6. **Address Review Feedback**
+8. **Address Review Feedback**
    - Make requested changes
    - Push additional commits to the same branch
    - CI will re-run automatically on each push
 
-7. **Merge After Approval**
+9. **Merge After Approval**
    - Wait for code review approval
    - Ensure all CI checks pass
    - Merge the PR (squash merge recommended for clean history)
