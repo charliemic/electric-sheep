@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - 'feature-flags/**'
-      - '.github/workflows/deploy-feature-flags.yml'
+      - '.github/workflows/supabase-feature-flags-deploy.yml'
   pull_request:
     branches:
       - main
