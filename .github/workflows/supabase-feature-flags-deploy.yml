@@ -1,4 +1,4 @@
-name: Deploy Feature Flags
+name: Deploy Feature Flag Values to Supabase
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: CI
+name: Build and Test Android App
 
 on:
   push:

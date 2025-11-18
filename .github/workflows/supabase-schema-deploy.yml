@@ -1,4 +1,4 @@
-name: Supabase Deploy
+name: Deploy Supabase Database Schema (Migrations)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - 'supabase/**'
-      - '.github/workflows/supabase-deploy.yml'
+      - '.github/workflows/supabase-schema-deploy.yml'
   pull_request:
     branches:
       - main
