@@ -65,6 +65,8 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+            // Staging is disabled in release builds
+            buildConfigField("boolean", "USE_STAGING_SUPABASE", "false")
         }
     }
     compileOptions {
