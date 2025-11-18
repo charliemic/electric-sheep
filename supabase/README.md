@@ -86,7 +86,7 @@ All Supabase configuration is version controlled:
 
 ## CI/CD Integration
 
-See `.github/workflows/supabase-deploy.yml` for automated deployment.
+See `.github/workflows/supabase-schema-deploy.yml` for automated deployment.
 
 The pipeline:
 1. Runs on changes to `supabase/` directory

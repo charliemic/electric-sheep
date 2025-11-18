@@ -82,7 +82,7 @@ flags:
 
 ### GitHub Actions Workflow
 
-**File**: `.github/workflows/deploy-feature-flags.yml`
+**File**: `.github/workflows/supabase-feature-flags-deploy.yml`
 
 **Triggers**:
 - Push to `main` or `develop` branches (when `feature-flags/` changes)

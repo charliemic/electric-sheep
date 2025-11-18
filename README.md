@@ -149,7 +149,10 @@ SELECT * FROM moods;
 
 ## CI/CD
 
-The project uses GitHub Actions for CI/CD. See `.github/workflows/ci.yml` for configuration.
+The project uses GitHub Actions for CI/CD:
+- **Build and Test**: `.github/workflows/build-and-test.yml` - Runs lint, tests, and builds the Android app
+- **Supabase Schema Deploy**: `.github/workflows/supabase-schema-deploy.yml` - Deploys database migrations
+- **Feature Flags Deploy**: `.github/workflows/supabase-feature-flags-deploy.yml` - Deploys feature flag values
 
 **Viewing CI Build Logs:**
 ```bash

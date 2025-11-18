@@ -64,7 +64,7 @@ The easiest way to test feature flags from a feature branch:
    ```
 
 2. **Trigger the workflow manually**:
-   - Go to: https://github.com/YOUR_USERNAME/electric-sheep/actions/workflows/deploy-feature-flags.yml
+   - Go to: https://github.com/YOUR_USERNAME/electric-sheep/actions/workflows/supabase-feature-flags-deploy.yml
    - Click "Run workflow"
    - Select your feature branch from the dropdown
    - Choose "staging" as the environment
