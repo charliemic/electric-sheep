@@ -2,7 +2,8 @@
 # Sync feature flags from flags.yaml to Supabase
 # This script reads flags.yaml and upserts flags into the feature_flags table
 
-set -e
+# Don't use set -e here - we handle errors explicitly
+set -u  # Fail on undefined variables (safer than set -e)
 
 # Colors for output
 RED='\033[0;31m'
@@ -250,14 +251,19 @@ EOF
         fi
         
         # Execute SQL
+        # Temporarily disable set -u for psql command (may fail)
+        set +u
         PSQL_OUTPUT=$(psql "$SUPABASE_DB_URL" -c "$SQL" 2>&1)
         PSQL_EXIT_CODE=$?
+        set -u
         if [ $PSQL_EXIT_CODE -eq 0 ]; then
             echo -e "${GREEN}✓ Synced: $KEY${NC}"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
             echo -e "${RED}✗ Failed: $KEY${NC}"
             echo -e "${RED}Error output: $PSQL_OUTPUT${NC}"
+            echo -e "${YELLOW}SQL that failed:${NC}"
+            echo "$SQL"
             ERROR_COUNT=$((ERROR_COUNT + 1))
         fi
     done
