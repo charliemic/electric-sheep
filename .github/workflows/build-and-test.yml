@@ -4,11 +4,13 @@ on:
   push:
     branches: ['**']  # Run on all branches
     paths-ignore:
-      - 'supabase/**'  # Ignore Supabase changes (handled by separate workflow)
+      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
+      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
   pull_request:
     branches: ['**']  # Run on PRs to any branch
     paths-ignore:
-      - 'supabase/**'  # Ignore Supabase changes (handled by separate workflow)
+      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
+      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
 
 jobs:
   setup:
