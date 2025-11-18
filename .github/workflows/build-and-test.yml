@@ -163,13 +163,15 @@ jobs:
 
     - name: Publish Test Results
       if: always()
+      continue-on-error: true
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         files: |
-          app/build/test-results/test/**/*.xml
+          app/build/test-results/**/*.xml
         check_name: Unit Test Results
         report_individual_runs: true
         deduplicate_classes_by_file_name: true
+        compare_to_earlier_commit: false
 
     - name: Upload test reports
       if: always()
