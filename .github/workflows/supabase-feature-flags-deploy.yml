@@ -207,12 +207,19 @@ jobs:
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
           echo "Using database connection for project: $PROJECT_REF"
       
+      - name: Diagnose database connection and schema
+        env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+        run: |
+          chmod +x scripts/test-feature-flags-sql.sh
+          ./scripts/test-feature-flags-sql.sh || echo "Diagnostic script completed (may have found issues)"
+      
       - name: Sync feature flags
         env:
           SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
-          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+          ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
       
       - name: Verify deployment
         run: |
@@ -288,7 +295,7 @@ jobs:
           SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
-          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+          ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
       
       - name: Verify deployment
         run: |
@@ -353,12 +360,19 @@ jobs:
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
           echo "Using database connection for project: $PROJECT_REF"
       
+      - name: Diagnose database connection and schema
+        env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+        run: |
+          chmod +x scripts/test-feature-flags-sql.sh
+          ./scripts/test-feature-flags-sql.sh || echo "Diagnostic script completed (may have found issues)"
+      
       - name: Sync feature flags
         env:
           SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
-          ./scripts/sync-feature-flags.sh feature-flags/flags.yaml
+          ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
       
       - name: Verify deployment
         run: |
