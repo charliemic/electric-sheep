@@ -28,8 +28,27 @@ if ! command -v psql &> /dev/null; then
     exit 1
 fi
 
+# Parse command line arguments
+FLAGS_FILE=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        *)
+            if [ -z "$FLAGS_FILE" ]; then
+                FLAGS_FILE="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Default to feature-flags/flags.yaml if not provided
+FLAGS_FILE="${FLAGS_FILE:-feature-flags/flags.yaml}"
+
 # Check if flags.yaml exists
-FLAGS_FILE="${1:-feature-flags/flags.yaml}"
 if [ ! -f "$FLAGS_FILE" ]; then
     echo -e "${RED}Error: Flags file not found: $FLAGS_FILE${NC}"
     exit 1
@@ -69,6 +88,23 @@ else
 fi
 
 echo -e "${GREEN}Syncing feature flags from $FLAGS_FILE${NC}"
+
+# Verify database connection before proceeding
+if [ "$USE_API" = false ] && [ -n "$SUPABASE_DB_URL" ]; then
+    echo -e "${YELLOW}Testing database connection...${NC}"
+    set +u
+    CONNECTION_TEST=$(psql "$SUPABASE_DB_URL" -c "SELECT 1;" 2>&1)
+    CONNECTION_EXIT=$?
+    set -u
+    if [ $CONNECTION_EXIT -ne 0 ]; then
+        echo -e "${RED}✗ Database connection failed${NC}"
+        echo -e "${RED}Error: $CONNECTION_TEST${NC}"
+        echo -e "${YELLOW}DB URL format: postgresql://user:password@host:port/database${NC}"
+        exit 1
+    else
+        echo -e "${GREEN}✓ Database connection successful${NC}"
+    fi
+fi
 
 # Count flags
 FLAG_COUNT=$(yq '.flags | length' "$FLAGS_FILE")
