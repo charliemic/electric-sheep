@@ -347,43 +347,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Install yq
+      - name: Install required tools
         run: |
+          # Install yq for YAML parsing
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
+          # Install PostgreSQL client for direct database connections
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
       
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      
-      - name: Verify Supabase credentials
+      - name: Verify required secrets
         run: |
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-      
-      - name: Login to Supabase
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase login --token "$SUPABASE_ACCESS_TOKEN"
-      
-      - name: Link to production project
-        run: |
-          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}"
+          
           if [ -z "$PROJECT_REF" ]; then
             echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
             exit 1
           fi
-          echo "Linking to production project: $PROJECT_REF"
-          supabase link --project-ref "$PROJECT_REF"
+          
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+          
+          echo "Secrets verified - using production project: $PROJECT_REF"
+          echo "Note: Using direct PostgreSQL connection (no Supabase CLI link required)"
       
       - name: Get database connection string
         id: db-url

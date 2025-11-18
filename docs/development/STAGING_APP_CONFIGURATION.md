@@ -38,8 +38,9 @@ supabase.staging.anon.key=your-staging-anon-key
 ```
 
 **Where to find these values:**
-- **Staging URL**: `https://<staging-project-ref>.supabase.co`
+- **Staging URL**: `https://<staging-project-ref>.supabase.co` (e.g., `https://rmcnvcqnowgsvvbmfssi.supabase.co`)
 - **Staging Anon Key**: Supabase Dashboard → Staging Project → Settings → API → `anon` `public` key
+- **Staging Project Ref**: Found in your Supabase dashboard URL: `https://supabase.com/dashboard/project/<project-ref>`
 
 ### 2. Enable Staging in Debug Builds
 
