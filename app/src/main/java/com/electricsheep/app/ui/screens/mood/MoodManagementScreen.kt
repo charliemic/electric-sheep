@@ -39,7 +39,7 @@ fun MoodManagementScreen(
     val currentUser by viewModel.currentUser.collectAsState()
     val emailText by viewModel.emailText.collectAsState()
     val passwordText by viewModel.passwordText.collectAsState()
-    val isSignUpMode by viewModel.isSignUpMode.collectAsState()
+    // Removed isSignUpMode - Google OAuth handles both sign-in and account creation automatically
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val moodScoreText by viewModel.moodScoreText.collectAsState()
@@ -123,15 +123,23 @@ fun MoodManagementScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = if (isSignUpMode) "Create Account" else "Sign In",
+                            text = "Sign In",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         
+                        Text(
+                            text = "Sign in with Google to get started. If you don't have an account, one will be created automatically.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        // Google SSO button
-                        OutlinedButton(
+                        // Primary: Sign in with Google button
+                        // Google OAuth automatically handles both sign-in and account creation
+                        Button(
                             onClick = {
                                 coroutineScope.launch {
                                     viewModel.signInWithGoogle()
@@ -156,29 +164,58 @@ fun MoodManagementScreen(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .semantics { contentDescription = "Loading Google sign-in" },
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
                             } else {
                                 Text("Sign in with Google")
                             }
                         }
                         
-                        // Divider
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Divider(modifier = Modifier.weight(1f))
+                        // Error message
+                        if (errorMessage != null) {
                             Text(
-                                text = "OR",
-                                modifier = Modifier.padding(horizontal = 16.dp),
+                                text = errorMessage!!,
+                                color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        error(errorMessage!!)
+                                    }
                             )
-                            Divider(modifier = Modifier.weight(1f))
                         }
                         
-                        // Email input
+                        // Secondary: Email/password option (collapsible)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        var showEmailPassword by remember { mutableStateOf(false) }
+                        
+                        TextButton(
+                            onClick = { showEmailPassword = !showEmailPassword },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = if (showEmailPassword) {
+                                        "Hide email and password sign in"
+                                    } else {
+                                        "Show email and password sign in"
+                                    }
+                                }
+                        ) {
+                            Text(
+                                text = if (showEmailPassword) {
+                                    "Hide email/password sign in"
+                                } else {
+                                    "Sign in with email and password"
+                                },
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        
+                        if (showEmailPassword) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Email input
                         OutlinedTextField(
                             value = emailText,
                             onValueChange = { viewModel.updateEmailText(it) },
@@ -216,87 +253,61 @@ fun MoodManagementScreen(
                                 imeAction = ImeAction.Done
                             )
                         )
-                        
-                        // Error message
-                        if (errorMessage != null) {
-                            Text(
-                                text = errorMessage!!,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        
-                        // Sign in/Sign up button
-                        Button(
-                            onClick = {
-                                if (isSignUpMode) {
-                                    viewModel.signUp()
-                                } else {
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Sign in button (email/password)
+                            OutlinedButton(
+                                onClick = {
                                     viewModel.signIn()
-                                }
-                                keyboardController?.hide()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .semantics {
-                                    contentDescription = if (isLoading) {
-                                        if (isSignUpMode) {
-                                            "Creating account, please wait"
-                                        } else {
+                                    keyboardController?.hide()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription = if (isLoading) {
                                             "Signing in, please wait"
-                                        }
-                                    } else {
-                                        if (isSignUpMode) {
-                                            "Create account with email and password"
                                         } else {
                                             "Sign in with email and password"
                                         }
-                                    }
-                                    if (isLoading) {
-                                        stateDescription = "Loading"
-                                    }
-                                },
-                            enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .semantics { 
-                                            contentDescription = if (isSignUpMode) {
-                                                "Creating account progress"
-                                            } else {
-                                                "Signing in progress"
-                                            }
-                                        },
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            } else {
-                                Text(if (isSignUpMode) "Create Account" else "Sign In")
-                            }
-                        }
-                        
-                        // Toggle between sign in and sign up
-                        TextButton(
-                            onClick = { viewModel.toggleSignUpMode() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .semantics {
-                                    contentDescription = if (isSignUpMode) {
-                                        "Switch to sign in"
-                                    } else {
-                                        "Switch to create account"
-                                    }
-                                }
-                        ) {
-                            Text(
-                                text = if (isSignUpMode) {
-                                    "Already have an account? Sign in"
+                                        if (isLoading) {
+                                            stateDescription = "Loading"
+                                        }
+                                    },
+                                enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .semantics { 
+                                                contentDescription = "Signing in progress"
+                                            },
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                 } else {
-                                    "Don't have an account? Create one"
+                                    Text("Sign In")
+                                }
+                            }
+                            
+                            // Sign up link
+                            TextButton(
+                                onClick = {
+                                    viewModel.signUp()
+                                    keyboardController?.hide()
                                 },
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription = "Create account with email and password"
+                                    },
+                                enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
+                            ) {
+                                Text(
+                                    text = "Don't have an account? Create one",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     }
                 }
