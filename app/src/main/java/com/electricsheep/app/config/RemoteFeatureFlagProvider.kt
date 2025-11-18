@@ -29,12 +29,26 @@ abstract class RemoteFeatureFlagProvider : FeatureFlagProvider {
      * Cache of feature flags fetched from remote.
      * Should be updated periodically or via real-time subscriptions.
      */
+    @JvmField
     protected var cachedFlags: Map<String, Any> = emptyMap()
     
     /**
      * Whether flags have been fetched at least once.
      */
+    @JvmField
     protected var flagsInitialised: Boolean = false
+    
+    /**
+     * Check if provider is ready (flags initialised).
+     * Public method for composite provider access.
+     */
+    fun isReady(): Boolean = flagsInitialised
+    
+    /**
+     * Get cached flags map.
+     * Public method for composite provider access.
+     */
+    fun getCachedFlags(): Map<String, Any> = cachedFlags
     
     /**
      * Fetch flags from remote service.
@@ -48,7 +62,7 @@ abstract class RemoteFeatureFlagProvider : FeatureFlagProvider {
      * Initialise flags by fetching from remote.
      * Falls back to cached values if fetch fails.
      */
-    suspend fun initialise() {
+    open suspend fun initialise() {
         try {
             Logger.info("RemoteFeatureFlagProvider", "Fetching feature flags from remote")
             cachedFlags = fetchFlags()

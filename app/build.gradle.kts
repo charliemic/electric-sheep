@@ -20,6 +20,7 @@ android {
         
         // Feature flags - can be overridden per build type
         buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+        buildConfigField("boolean", "SHOW_FEATURE_FLAG_INDICATOR_MODE", "false")
         
         // Supabase configuration - read from local.properties
         val localPropertiesFile = rootProject.file("local.properties")
@@ -35,17 +36,27 @@ android {
         val supabaseUrl = readProperty("supabase.url", "https://your-project.supabase.co")
         val supabaseAnonKey = readProperty("supabase.anon.key", "your-anon-key")
         
+        // Staging Supabase configuration (optional, for testing)
+        val supabaseStagingUrl = readProperty("supabase.staging.url", "")
+        val supabaseStagingAnonKey = readProperty("supabase.staging.anon.key", "")
+        
         // Supabase URL - default to placeholder, override in local.properties
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         
         // Supabase anon key - default to placeholder, override in local.properties
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        
+        // Staging Supabase (optional, for debug builds)
+        buildConfigField("String", "SUPABASE_STAGING_URL", if (supabaseStagingUrl.isNotEmpty()) "\"$supabaseStagingUrl\"" else "\"\"")
+        buildConfigField("String", "SUPABASE_STAGING_ANON_KEY", if (supabaseStagingAnonKey.isNotEmpty()) "\"$supabaseStagingAnonKey\"" else "\"\"")
     }
 
     buildTypes {
         debug {
             // Enable offline-only mode for debug builds (can be toggled)
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+            // Allow switching to staging Supabase in debug builds
+            buildConfigField("boolean", "USE_STAGING_SUPABASE", "false")
         }
         release {
             isMinifyEnabled = false
@@ -54,6 +65,8 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+            // Staging is disabled in release builds
+            buildConfigField("boolean", "USE_STAGING_SUPABASE", "false")
         }
     }
     compileOptions {
@@ -83,6 +96,12 @@ android {
         enable += "IconColors"
         // Check for text contrast
         enable += "TextContrast"
+    }
+    
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = false
+        }
     }
 }
 
@@ -147,5 +166,27 @@ dependencies {
     
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+// Configure test execution for Android unit tests
+// Android unit tests use AndroidUnitTest tasks, but they extend Test
+// Configure after evaluation to ensure all test tasks are created
+afterEvaluate {
+    tasks.withType<Test> {
+        maxParallelForks = Runtime.getRuntime().availableProcessors()
+        forkEvery = 0 // Don't fork for each test class - faster execution
+        
+        // Ensure JUnit XML output for GitHub Actions
+        reports {
+            junitXml.required.set(true)
+            html.required.set(true)
+        }
+        
+        // Output test results to standard location
+        testLogging {
+            events("passed", "skipped", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
+    }
 }
 

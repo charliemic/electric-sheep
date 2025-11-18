@@ -5,10 +5,13 @@ import com.electricsheep.app.util.Logger
 
 /**
  * Feature flag provider that reads from BuildConfig.
- * Suitable for development and build-time configuration.
  * 
- * For production, consider implementing RemoteFeatureFlagProvider
- * that fetches flags from a remote service.
+ * This serves as a fallback provider when Supabase is unavailable or flags haven't been fetched yet.
+ * All flags defined in feature-flags/flags.yaml should have corresponding BuildConfig fields
+ * to ensure fallback values are available.
+ * 
+ * BuildConfig fields are generated at build time by Gradle from build.gradle.kts.
+ * The naming convention is: FLAG_KEY_UPPERCASE (e.g., "offline_only" -> "OFFLINE_ONLY_MODE")
  */
 class ConfigBasedFeatureFlagProvider : FeatureFlagProvider {
     
@@ -22,20 +25,49 @@ class ConfigBasedFeatureFlagProvider : FeatureFlagProvider {
                 value
             }
             else -> {
-                Logger.debug("ConfigBasedFeatureFlagProvider", "Unknown feature flag: $key, using default: $defaultValue")
-                defaultValue
+                // For other boolean flags, try to read from BuildConfig
+                // BuildConfig field name convention: FLAG_KEY_UPPERCASE
+                val configKey = key.uppercase().replace("-", "_")
+                try {
+                    // Use reflection to access BuildConfig field (if it exists)
+                    val field = BuildConfig::class.java.getField("${configKey}_MODE")
+                    val value = field.get(null) as Boolean
+                    Logger.debug("ConfigBasedFeatureFlagProvider", "$configKey = $value")
+                    value
+                } catch (e: Exception) {
+                    Logger.debug("ConfigBasedFeatureFlagProvider", "BuildConfig field not found for $key, using default: $defaultValue")
+                    defaultValue
+                }
             }
         }
     }
     
     override fun getString(key: String, defaultValue: String): String {
-        Logger.debug("ConfigBasedFeatureFlagProvider", "String feature flags not yet implemented, using default for: $key")
-        return defaultValue
+        // Try to read from BuildConfig
+        val configKey = key.uppercase().replace("-", "_")
+        try {
+            val field = BuildConfig::class.java.getField("${configKey}_VALUE")
+            val value = field.get(null) as String
+            Logger.debug("ConfigBasedFeatureFlagProvider", "$configKey = $value")
+            return value
+        } catch (e: Exception) {
+            Logger.debug("ConfigBasedFeatureFlagProvider", "BuildConfig field not found for $key, using default: $defaultValue")
+            return defaultValue
+        }
     }
     
     override fun getInt(key: String, defaultValue: Int): Int {
-        Logger.debug("ConfigBasedFeatureFlagProvider", "Int feature flags not yet implemented, using default for: $key")
-        return defaultValue
+        // Try to read from BuildConfig
+        val configKey = key.uppercase().replace("-", "_")
+        try {
+            val field = BuildConfig::class.java.getField("${configKey}_VALUE")
+            val value = field.get(null) as Int
+            Logger.debug("ConfigBasedFeatureFlagProvider", "$configKey = $value")
+            return value
+        } catch (e: Exception) {
+            Logger.debug("ConfigBasedFeatureFlagProvider", "BuildConfig field not found for $key, using default: $defaultValue")
+            return defaultValue
+        }
     }
 }
 

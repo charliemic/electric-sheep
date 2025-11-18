@@ -1,14 +1,16 @@
-name: CI
+name: Build and Test Android App (Kotlin/Gradle)
 
 on:
   push:
     branches: ['**']  # Run on all branches
     paths-ignore:
-      - 'supabase/**'  # Ignore Supabase changes (handled by separate workflow)
+      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
+      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
   pull_request:
     branches: ['**']  # Run on PRs to any branch
     paths-ignore:
-      - 'supabase/**'  # Ignore Supabase changes (handled by separate workflow)
+      - 'supabase/**'  # Ignore Supabase schema changes (handled by supabase-schema-deploy.yml)
+      - 'feature-flags/**'  # Ignore feature flag changes (handled by supabase-feature-flags-deploy.yml)
 
 jobs:
   setup:
@@ -159,12 +161,33 @@ jobs:
       run: ./gradlew test --stacktrace
       continue-on-error: false
 
-    - name: Upload test results
+    - name: List test result files (debug)
+      if: always()
+      run: |
+        echo "Checking for test XML files..."
+        find app/build/test-results -name "*.xml" -type f || echo "No XML files found"
+        ls -la app/build/test-results/ || echo "test-results directory does not exist"
+
+    - name: Publish Test Results
+      if: always()
+      continue-on-error: true
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: |
+          app/build/test-results/**/*.xml
+        check_name: Unit Test Results
+        report_individual_runs: true
+        deduplicate_classes_by_file_name: true
+        compare_to_earlier_commit: false
+
+    - name: Upload test reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: app/build/reports/tests/
+        path: |
+          app/build/reports/tests/
+          app/build/test-results/
         retention-days: 7
 
   build-debug:

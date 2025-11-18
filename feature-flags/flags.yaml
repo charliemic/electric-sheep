@@ -1,0 +1,48 @@
+# Feature Flags Definition
+# This file defines all feature flags in version control
+# Changes to this file are automatically deployed via GitHub Actions
+
+flags:
+  # Offline-only mode: When enabled, disables all remote sync operations
+  - key: offline_only
+    value_type: boolean
+    boolean_value: false
+    enabled: true
+    description: "When enabled, disables all remote sync operations. Useful for development and testing offline functionality."
+    segment_id: null
+    user_id: null
+  
+  # Test feature flag: Shows a jazzy feature flag icon on the landing page
+  - key: show_feature_flag_indicator
+    value_type: boolean
+    boolean_value: true
+    enabled: true
+    description: "Shows a feature flag indicator icon on the landing page to demonstrate feature flag functionality"
+    segment_id: null
+    user_id: null
+
+  # Example: Future feature flags
+  # - key: enable_mood_analytics
+  #   value_type: boolean
+  #   boolean_value: false
+  #   enabled: true
+  #   description: "Enable mood analytics and insights"
+  #   segment_id: null
+  #   user_id: null
+  #
+  # - key: export_format
+  #   value_type: string
+  #   string_value: "csv"
+  #   enabled: true
+  #   description: "Default export format for mood data"
+  #   segment_id: null
+  #   user_id: null
+  #
+  # - key: max_moods_per_day
+  #   value_type: int
+  #   int_value: 10
+  #   enabled: true
+  #   description: "Maximum number of mood entries per day"
+  #   segment_id: null
+  #   user_id: null
+

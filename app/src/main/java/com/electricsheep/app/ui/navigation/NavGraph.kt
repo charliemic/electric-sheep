@@ -25,11 +25,14 @@ fun AppNavGraph(navController: NavHostController) {
         startDestination = Screen.Landing.route
     ) {
         composable(Screen.Landing.route) {
+            val context = LocalContext.current
+            val application = context.applicationContext as ElectricSheepApplication
             LandingScreen(
                 onNavigateToMoodManagement = {
                     Logger.info("NavGraph", "Navigating to Mood Management screen")
                     navController.navigate(Screen.MoodManagement.route)
-                }
+                },
+                application = application
             )
         }
         composable(Screen.MoodManagement.route) {

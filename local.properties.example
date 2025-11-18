@@ -1,9 +1,12 @@
 # Android SDK location
-sdk.dir=/path/to/your/android/sdk
+sdk.dir=/path/to/android/sdk
 
-# Supabase Configuration
-# Copy this file to local.properties and fill in your values
-# DO NOT commit local.properties to git (it's in .gitignore)
-supabase.url=https://your-project-ref.supabase.co
-supabase.anon.key=your-anon-key-here
+# Supabase Configuration (Production)
+# These values are read by build.gradle.kts and exposed via BuildConfig
+supabase.url=https://your-project.supabase.co
+supabase.anon.key=your-anon-key
 
+# Supabase Staging Configuration (Optional, for testing)
+# Only used when USE_STAGING_SUPABASE is set to true in debug builds
+# supabase.staging.url=https://your-staging-project.supabase.co
+# supabase.staging.anon.key=your-staging-anon-key
