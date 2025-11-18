@@ -370,9 +370,9 @@ jobs:
       
       - name: Link to production project
         run: |
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF }}"
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
           if [ -z "$PROJECT_REF" ]; then
-            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF_PROD or SUPABASE_PROJECT_REF secret"
+            echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
             exit 1
           fi
           supabase link --project-ref "$PROJECT_REF"
@@ -380,12 +380,12 @@ jobs:
       - name: Get database connection string
         id: db-url
         run: |
-          # Validate required secrets
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF }}"
+          # Validate required secrets (same credentials used for all environments)
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
           
           if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_PROD or SUPABASE_PROJECT_REF secret is not set"
+            echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
             exit 1
           fi
           
