@@ -3,7 +3,11 @@
 # This script reads flags.yaml and upserts flags into the feature_flags table
 
 # Don't use set -e here - we handle errors explicitly
+# Use set -u to catch undefined variables, but allow commands to fail
 set -u  # Fail on undefined variables (safer than set -e)
+
+# Add verbose mode
+VERBOSE="${VERBOSE:-false}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -251,11 +255,22 @@ EOF
         fi
         
         # Execute SQL
-        # Temporarily disable set -u for psql command (may fail)
+        # Note: We use set +u temporarily to allow psql to fail without script exiting
         set +u
+        echo -e "${YELLOW}Executing SQL for flag: $KEY${NC}"
         PSQL_OUTPUT=$(psql "$SUPABASE_DB_URL" -c "$SQL" 2>&1)
         PSQL_EXIT_CODE=$?
         set -u
+        
+        # Always show output for debugging
+        if [ "$VERBOSE" = "true" ] || [ $PSQL_EXIT_CODE -ne 0 ]; then
+            echo -e "${YELLOW}psql exit code: $PSQL_EXIT_CODE${NC}"
+            if [ -n "$PSQL_OUTPUT" ]; then
+                echo -e "${YELLOW}psql output:${NC}"
+                echo "$PSQL_OUTPUT"
+            fi
+        fi
+        
         if [ $PSQL_EXIT_CODE -eq 0 ]; then
             echo -e "${GREEN}✓ Synced: $KEY${NC}"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
@@ -264,6 +279,7 @@ EOF
             echo -e "${RED}Error output: $PSQL_OUTPUT${NC}"
             echo -e "${YELLOW}SQL that failed:${NC}"
             echo "$SQL"
+            echo ""
             ERROR_COUNT=$((ERROR_COUNT + 1))
         fi
     done
