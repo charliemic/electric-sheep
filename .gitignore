@@ -95,3 +95,10 @@ lint/tmp/
 # Metrics temporary files
 .build-info.tmp
 .test-info.tmp
+
+# Supabase local files
+supabase/.env
+supabase/.env.local
+supabase/.temp
+supabase/.branches
+supabase/.temp

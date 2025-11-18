@@ -2,6 +2,7 @@ package com.electricsheep.app.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
@@ -20,10 +21,13 @@ import java.time.Instant
 data class Mood(
     @PrimaryKey
     val id: String,
+    @SerialName("user_id")
     val userId: String,
     val score: Int,
     val timestamp: Long,
+    @SerialName("created_at")
     val createdAt: Long? = null,
+    @SerialName("updated_at")
     val updatedAt: Long? = null
 ) {
     /**

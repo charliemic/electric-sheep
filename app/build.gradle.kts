@@ -20,6 +20,26 @@ android {
         
         // Feature flags - can be overridden per build type
         buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
+        
+        // Supabase configuration - read from local.properties
+        val localPropertiesFile = rootProject.file("local.properties")
+        fun readProperty(key: String, defaultValue: String): String {
+            if (!localPropertiesFile.exists()) return defaultValue
+            return localPropertiesFile.readLines()
+                .find { it.startsWith("$key=") }
+                ?.substringAfter("=")
+                ?.trim()
+                ?: defaultValue
+        }
+        
+        val supabaseUrl = readProperty("supabase.url", "https://your-project.supabase.co")
+        val supabaseAnonKey = readProperty("supabase.anon.key", "your-anon-key")
+        
+        // Supabase URL - default to placeholder, override in local.properties
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        
+        // Supabase anon key - default to placeholder, override in local.properties
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     buildTypes {
@@ -78,6 +98,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.1")
     
+    // Chrome Custom Tabs for OAuth (recommended Android pattern)
+    implementation("androidx.browser:browser:1.7.0")
+    
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2023.10.01"))
     implementation("androidx.compose.ui:ui")
@@ -95,6 +118,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:realtime-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:functions-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt") // Auth support
     // HTTP client engine for Supabase (required)
     implementation("io.ktor:ktor-client-android:2.3.5")
     

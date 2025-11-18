@@ -72,12 +72,20 @@ This document provides guidance for AI agents working on this codebase. Follow t
   - Verify user ownership before allowing data access/modification
   - Handle unauthenticated states gracefully (show sign-in UI or disable features)
   - See [Authentication Architecture](../docs/architecture/AUTHENTICATION.md) for details
+- **Handle Browser Requirements**: When implementing OAuth or web-based features
+  - **Always use Chrome Custom Tabs** for OAuth flows (Android best practice)
+  - Check if Custom Tabs is available before opening URLs
+  - Provide fallback to regular browser if Custom Tabs unavailable
+  - Never use WebView for OAuth (security concerns, not recommended)
+  - See [OAuth Implementation Guide](../docs/development/OAUTH_IMPLEMENTATION.md) for details
+  - See [Google OAuth Setup](../docs/development/GOOGLE_OAUTH_SETUP.md) for OAuth configuration
 - **Consider Database Migrations**: When implementing features that change data models or schema
   - Add a migration if adding/modifying/removing database columns or tables
   - Update database version in `AppDatabase.kt`
   - Add migration to `DatabaseMigrations.getMigrations()`
   - Test migration on both fresh and existing databases
   - Follow Room migration best practices (no raw Cursor, trust Room's migration system)
+  - Use [Migration Checklist](../docs/architecture/MIGRATION_CHECKLIST.md) to ensure completeness
   - See [Data Layer Architecture](../docs/architecture/DATA_LAYER_ARCHITECTURE.md) for migration details
 - **Use Library Functionality First**: Before implementing custom functionality, check if the library/tool provides it
   - Review library documentation and APIs before writing custom code
@@ -85,6 +93,7 @@ This document provides guidance for AI agents working on this codebase. Follow t
   - Examples: Room migrations (don't use raw Cursor), WorkManager constraints (don't implement custom scheduling), etc.
   - Only implement custom solutions when library doesn't provide the needed functionality
   - Document why custom implementation was chosen if library functionality exists
+  - See [Error Conversion Strategies](../docs/architecture/ERROR_CONVERSION_STRATEGIES.md) for error handling patterns
 - **Track Development Metrics**: Update development metrics after significant changes
   - Run `./scripts/metrics/capture-all-metrics.sh` to capture complexity, accessibility, and other metrics
   - Store user prompts in `development-metrics/prompts/` using `./scripts/metrics/capture-prompt.sh "prompt text"`
@@ -540,12 +549,15 @@ gh run watch
 
 ## Error Handling
 
+**See [Error Handling Guide](../docs/architecture/ERROR_HANDLING.md) for complete documentation.**
+
 ### Error Handling Principles
 - **Fail Fast**: Detect errors as early as possible
 - **Graceful Degradation**: Handle errors gracefully without crashing
 - **User-Friendly Messages**: Provide clear, actionable error messages to users
 - **Logging**: Log errors with sufficient context for debugging
 - **Error Types**: Use appropriate error types (validation, network, system, etc.)
+- **Error Conversion**: Follow [Error Conversion Strategies](../docs/architecture/ERROR_CONVERSION_STRATEGIES.md) when converting between error types
 
 ### Error Handling Patterns
 ```kotlin
@@ -844,6 +856,50 @@ We track development metrics over time to analyze trends and identify patterns t
 - Test metrics: Captured automatically when using `./gradlew test` wrapper
 - Complexity/Accessibility: Run `./scripts/metrics/capture-all-metrics.sh` manually or in CI
 
+## Important Documentation References
+
+When implementing features, refer to these documents for detailed guidance:
+
+### Architecture & Design
+- **[Data Layer Architecture](../docs/architecture/DATA_LAYER_ARCHITECTURE.md)** - Room, Supabase, offline-first patterns, migrations
+- **[Authentication Architecture](../docs/architecture/AUTHENTICATION.md)** - Auth system, user management, OAuth
+- **[Error Handling Guide](../docs/architecture/ERROR_HANDLING.md)** - Error handling system, patterns, best practices
+- **[Error Conversion Strategies](../docs/architecture/ERROR_CONVERSION_STRATEGIES.md)** - When and how to convert between error types
+- **[Feature Flags](../docs/architecture/FEATURE_FLAGS.md)** - Feature flag system and usage
+- **[Migration Checklist](../docs/architecture/MIGRATION_CHECKLIST.md)** - Database migration checklist
+
+### Development Workflows
+- **[Hot Reload Guide](../docs/development/HOT_RELOAD.md)** - Development workflow, hot reloading, continuous build
+- **[Supabase Setup](../docs/development/SUPABASE_SETUP.md)** - Complete Supabase setup (local and cloud)
+- **[Cloud Setup Steps](../docs/development/CLOUD_SETUP_STEPS.md)** - Step-by-step cloud setup
+- **[Google OAuth Setup](../docs/development/GOOGLE_OAUTH_SETUP.md)** - Google OAuth configuration
+- **[Supabase Google Config](../docs/development/SUPABASE_GOOGLE_CONFIG.md)** - Supabase Google provider setup
+- **[OAuth Callback Setup](../docs/development/SUPABASE_OAUTH_CALLBACK_SETUP.md)** - OAuth callback URL configuration (fixes localhost redirect issue)
+- **[OAuth Implementation Guide](../docs/development/OAUTH_IMPLEMENTATION.md)** - OAuth implementation guide (Chrome Custom Tabs)
+- **[Email Confirmation](../docs/development/SUPABASE_EMAIL_CONFIRMATION.md)** - Email confirmation configuration
+- **[CI/CD Migration Setup](../docs/development/CI_CD_MIGRATION_SETUP.md)** - CI/CD migration deployment
+- **[Service Role Setup](../docs/development/SERVICE_ROLE_SETUP.md)** - Service role key configuration
+- **[Docker Setup](../docs/development/DOCKER_SETUP.md)** - Docker Desktop installation (if needed)
+- **[KSP Migration](../docs/development/KSP_MIGRATION.md)** - KSP migration reference (historical)
+
+### Testing
+- **[Test Coverage](../docs/testing/TEST_COVERAGE.md)** - Current test coverage status
+- **[Database Access](../docs/testing/DATABASE_ACCESS.md)** - Accessing Room database on emulator
+- **[Supabase Auth Provider Testing](../docs/testing/SUPABASE_AUTH_PROVIDER_TESTING.md)** - Testing Supabase auth
+
+### Architecture Decisions
+- **[Data Storage Options](../docs/architecture/decisions/DATA_STORAGE_OPTIONS.md)** - Technology decision for data storage
+
+### Archived Evaluations
+Historical evaluations (kept for reference):
+- **[Architecture Evaluation](../docs/archive/ARCHITECTURE_EVALUATION.md)** - Architecture evaluation and recommendations
+- **[Error Handling Evaluation](../docs/archive/ERROR_HANDLING_EVALUATION.md)** - Error handling system evaluation
+- **[Google SSO Implementation](../docs/archive/GOOGLE_SSO_IMPLEMENTATION.md)** - Google SSO implementation status (historical)
+
+### Quick Reference
+- **[Documentation Index](../docs/README.md)** - Complete documentation index
+- **[Project README](../README.md)** - Project overview and quick start
+
 ## When in Doubt
 
 - **Ask for Clarification**: If requirements are unclear, ask for clarification
@@ -852,6 +908,7 @@ We track development metrics over time to analyze trends and identify patterns t
 - **Test Thoroughly**: When uncertain, add more tests
 - **Document Decisions**: Document non-obvious decisions and trade-offs
 - **Question Abstractions**: If an abstraction layer seems unnecessary, evaluate whether it should be removed
+- **Check Documentation**: Refer to relevant documentation files before implementing features
 
 ---
 

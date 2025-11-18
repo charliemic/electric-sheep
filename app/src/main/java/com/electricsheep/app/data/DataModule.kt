@@ -13,6 +13,8 @@ import com.electricsheep.app.data.repository.MoodRepository
 import com.electricsheep.app.util.Logger
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.FlowType
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 
@@ -24,7 +26,7 @@ object DataModule {
     
     /**
      * Create and configure Supabase client
-     * TODO: Move these to BuildConfig or environment variables
+     * Reads configuration from BuildConfig (populated from local.properties)
      * 
      * @return SupabaseClient instance, or null if offline-only mode or initialization fails
      */
@@ -35,11 +37,19 @@ object DataModule {
             return null
         }
         
-        val supabaseUrl = "https://your-project.supabase.co" // TODO: Replace with actual URL
-        val supabaseKey = "your-anon-key" // TODO: Replace with actual key
+        val supabaseUrl = com.electricsheep.app.BuildConfig.SUPABASE_URL
+        val supabaseKey = com.electricsheep.app.BuildConfig.SUPABASE_ANON_KEY
+        
+        // Validate configuration
+        if (supabaseUrl == "https://your-project.supabase.co" || supabaseKey == "your-anon-key") {
+            Logger.warn("DataModule", "Supabase credentials not configured. Using placeholder values.")
+            Logger.warn("DataModule", "Add supabase.url and supabase.anon.key to local.properties")
+            Logger.warn("DataModule", "App will continue in offline-only mode")
+            return null
+        }
         
         return try {
-            Logger.info("DataModule", "Initialising Supabase client")
+            Logger.info("DataModule", "Initialising Supabase client for: $supabaseUrl")
             
             createSupabaseClient(
                 supabaseUrl = supabaseUrl,
@@ -47,9 +57,28 @@ object DataModule {
             ) {
                 install(Postgrest)
                 install(Realtime)
+                install(Auth) {
+                    // Enable PKCE flow (OAuth 2.1 best practice)
+                    flowType = FlowType.PKCE
+                    // Configure deep link for OAuth callbacks
+                    scheme = "com.electricsheep.app"
+                    host = "auth-callback"
+                }
             }
+        } catch (e: com.electricsheep.app.error.NetworkError) {
+            e.log("DataModule", "Failed to create Supabase client - network error")
+            Logger.warn("DataModule", "App will continue in offline-only mode")
+            null
+        } catch (e: com.electricsheep.app.error.SystemError) {
+            e.log("DataModule", "Failed to create Supabase client - system error")
+            Logger.warn("DataModule", "App will continue in offline-only mode")
+            null
         } catch (e: Exception) {
-            Logger.error("DataModule", "Failed to create Supabase client", e)
+            val systemError = com.electricsheep.app.error.SystemError.ConfigurationError(
+                config = "Supabase client",
+                errorCause = e
+            )
+            systemError.log("DataModule", "Failed to create Supabase client")
             Logger.warn("DataModule", "App will continue in offline-only mode")
             null
         }

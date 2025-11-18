@@ -1,0 +1,19 @@
+# Supabase local files (not version controlled)
+.env
+.env.local
+.temp
+.branches
+
+# Local database files
+.branches/
+.temp/
+
+
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local

@@ -68,17 +68,32 @@ class MoodRepository(
                 moodWithUser
             }
             
+            // Set timestamps (createdAt and updatedAt)
+            val moodWithTimestamps = moodWithId.withUpdatedTimestamp()
+            
             // Save to local storage first (offline-first)
-            Logger.info("MoodRepository", "Saving mood locally: score=${moodWithId.score}, userId=${moodWithId.userId}")
-            moodDao.insertMood(moodWithId)
+            Logger.info("MoodRepository", "Saving mood locally: score=${moodWithTimestamps.score}, userId=${moodWithTimestamps.userId}")
+            
+            // Wrap Room operation to handle database-specific errors
+            val insertResult = com.electricsheep.app.data.local.RoomErrorHandler.wrapRoomOperation(
+                operation = { moodDao.insertMood(moodWithTimestamps) },
+                context = "insertMood(id=${moodWithTimestamps.id})"
+            )
+            
+            insertResult.getOrThrow() // Throw DataError if insert fails
             
             // Try to sync to remote (non-blocking, failures are logged but don't affect local save)
             // Skip remote sync if offline-only mode is enabled or remote data source is unavailable
             if (!featureFlagManager.isOfflineOnly() && remoteDataSource != null) {
                 try {
-                    remoteDataSource.insertMood(moodWithId)
-                    Logger.info("MoodRepository", "Mood synced to remote: id=${moodWithId.id}")
+                    remoteDataSource.insertMood(moodWithTimestamps)
+                    Logger.info("MoodRepository", "Mood synced to remote: id=${moodWithTimestamps.id}")
+                } catch (e: com.electricsheep.app.error.NetworkError) {
+                    // Network errors are recoverable - mood is saved locally, will sync later
+                    e.log("MoodRepository", "Failed to sync mood to remote (will retry later)")
+                    // Mood is saved locally, sync will happen later via background sync
                 } catch (e: Exception) {
+                    // Other errors - log and continue
                     Logger.warn("MoodRepository", "Failed to sync mood to remote, will retry later", e)
                     // Mood is saved locally, sync will happen later
                 }
@@ -86,7 +101,22 @@ class MoodRepository(
                 Logger.debug("MoodRepository", "Skipping remote sync (offline-only mode enabled or remote unavailable)")
             }
             
-            Result.success(moodWithId)
+            Result.success(moodWithTimestamps)
+        } catch (e: com.electricsheep.app.error.NetworkError) {
+            // Network errors are already handled above - this shouldn't happen
+            e.log("MoodRepository", "Unexpected network error in saveMood")
+            Result.failure(e)
+        } catch (e: com.electricsheep.app.error.DataError) {
+            e.log("MoodRepository", "Data error in saveMood")
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            // Validation errors - re-throw as DataError
+            val dataError = com.electricsheep.app.error.DataError.InvalidData(
+                field = "mood",
+                errorCause = e
+            )
+            dataError.log("MoodRepository", "Invalid mood data")
+            Result.failure(dataError)
         } catch (e: Exception) {
             Logger.error("MoodRepository", "Failed to save mood", e)
             Result.failure(e)
@@ -116,22 +146,48 @@ class MoodRepository(
             
             Logger.info("MoodRepository", "Updating mood: id=${moodWithTimestamp.id}, userId=$userId")
             
-            // Update local storage first
-            moodDao.updateMood(moodWithTimestamp)
+            // Update local storage first - wrap Room operation to handle database-specific errors
+            val updateResult = com.electricsheep.app.data.local.RoomErrorHandler.wrapRoomOperation(
+                operation = { moodDao.updateMood(moodWithTimestamp) },
+                context = "updateMood(id=${moodWithTimestamp.id})"
+            )
+            
+            updateResult.getOrThrow() // Throw DataError if update fails
             
             // Try to sync to remote (skip if offline-only mode is enabled or remote unavailable)
             if (!featureFlagManager.isOfflineOnly() && remoteDataSource != null) {
                 try {
                     remoteDataSource.updateMood(moodWithTimestamp)
                     Logger.info("MoodRepository", "Mood update synced to remote")
+                } catch (e: com.electricsheep.app.error.NetworkError) {
+                    // Network errors are recoverable - mood is updated locally, will sync later
+                    e.log("MoodRepository", "Failed to sync mood update to remote (will retry later)")
+                    // Mood is updated locally, sync will happen later via background sync
                 } catch (e: Exception) {
+                    // Other errors - log and continue
                     Logger.warn("MoodRepository", "Failed to sync mood update to remote", e)
+                    // Mood is updated locally, sync will happen later
                 }
             } else {
                 Logger.debug("MoodRepository", "Skipping remote sync (offline-only mode enabled or remote unavailable)")
             }
             
             Result.success(moodWithTimestamp)
+        } catch (e: com.electricsheep.app.error.NetworkError) {
+            // Network errors are already handled above - this shouldn't happen
+            e.log("MoodRepository", "Unexpected network error in updateMood")
+            Result.failure(e)
+        } catch (e: com.electricsheep.app.error.DataError) {
+            e.log("MoodRepository", "Data error in updateMood")
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            // Validation errors - re-throw as DataError
+            val dataError = com.electricsheep.app.error.DataError.InvalidData(
+                field = "mood",
+                errorCause = e
+            )
+            dataError.log("MoodRepository", "Invalid mood data")
+            Result.failure(dataError)
         } catch (e: Exception) {
             Logger.error("MoodRepository", "Failed to update mood", e)
             Result.failure(e)
@@ -153,8 +209,13 @@ class MoodRepository(
                 return Result.failure(IllegalArgumentException("Mood not found"))
             }
             
-            // Delete from local storage first
-            moodDao.deleteMoodById(id)
+            // Delete from local storage first - wrap Room operation to handle database-specific errors
+            val deleteResult = com.electricsheep.app.data.local.RoomErrorHandler.wrapRoomOperation(
+                operation = { moodDao.deleteMoodById(id) },
+                context = "deleteMood(id=$id)"
+            )
+            
+            deleteResult.getOrThrow() // Throw DataError if delete fails
             
             // Try to sync deletion to remote (skip if offline-only mode is enabled or remote unavailable)
             if (!featureFlagManager.isOfflineOnly() && remoteDataSource != null) {
@@ -169,6 +230,21 @@ class MoodRepository(
             }
             
             Result.success(Unit)
+        } catch (e: com.electricsheep.app.error.NetworkError) {
+            // Network errors are already handled above - this shouldn't happen
+            e.log("MoodRepository", "Unexpected network error in deleteMood")
+            Result.failure(e)
+        } catch (e: com.electricsheep.app.error.DataError) {
+            e.log("MoodRepository", "Data error in deleteMood")
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            // Validation errors - re-throw as DataError
+            val dataError = com.electricsheep.app.error.DataError.NotFound(
+                resource = "mood",
+                errorCause = e
+            )
+            dataError.log("MoodRepository", "Mood not found")
+            Result.failure(dataError)
         } catch (e: Exception) {
             Logger.error("MoodRepository", "Failed to delete mood", e)
             Result.failure(e)
@@ -230,6 +306,10 @@ class MoodRepository(
                     pushedCount = localMoods.size
                     Logger.info("MoodRepository", "Pushed $pushedCount moods to remote")
                 }
+            } catch (e: com.electricsheep.app.error.NetworkError) {
+                // Network errors are recoverable - log and continue
+                e.log("MoodRepository", "Failed to push local changes to remote (will retry later)")
+                // Continue with pull even if push fails
             } catch (e: Exception) {
                 Logger.warn("MoodRepository", "Failed to push local changes to remote", e)
                 // Continue with pull even if push fails
@@ -238,6 +318,18 @@ class MoodRepository(
             // Step 3: Pull remote changes for current user
             val remoteMoods = try {
                 remoteDataSource.getAllMoods(userId)
+            } catch (e: com.electricsheep.app.error.NetworkError) {
+                // Network errors are recoverable - return partial success
+                e.log("MoodRepository", "Failed to pull remote changes (will retry later)")
+                // If pull fails but push succeeded, return partial success
+                return Result.success(
+                    SyncResult(
+                        pushedCount = pushedCount,
+                        pulledCount = 0,
+                        mergedCount = 0,
+                        conflictsResolved = 0
+                    )
+                )
             } catch (e: Exception) {
                 Logger.error("MoodRepository", "Failed to pull remote changes", e)
                 // If pull fails but push succeeded, return partial success
@@ -254,7 +346,16 @@ class MoodRepository(
             Logger.debug("MoodRepository", "Fetched ${remoteMoods.size} moods from remote")
             
             // Step 4: Merge remote with local (conflict resolution: latest wins)
-            val mergeResult = mergeMoods(localMoods, remoteMoods)
+            val (moodsToSave, mergeResult) = mergeMoods(localMoods, remoteMoods)
+            
+            // Step 5: Save merged moods to local storage (wrap Room operations)
+            if (moodsToSave.isNotEmpty()) {
+                val insertResult = com.electricsheep.app.data.local.RoomErrorHandler.wrapRoomOperation(
+                    operation = { moodDao.insertMoods(moodsToSave) },
+                    context = "syncWithRemote - insert merged moods"
+                )
+                insertResult.getOrThrow() // Throw DataError if insert fails
+            }
             
             Logger.info(
                 "MoodRepository",
@@ -263,6 +364,10 @@ class MoodRepository(
             )
             
             Result.success(mergeResult.copy(pushedCount = pushedCount))
+        } catch (e: com.electricsheep.app.error.DataError) {
+            // Data errors (e.g., database corruption) - log and fail
+            e.log("MoodRepository", "Failed to sync with remote - data error")
+            Result.failure(e)
         } catch (e: Exception) {
             Logger.error("MoodRepository", "Failed to sync with remote", e)
             Result.failure(e)
@@ -275,12 +380,12 @@ class MoodRepository(
      * 
      * @param localMoods Current local moods
      * @param remoteMoods Moods from remote
-     * @return Merge result with statistics
+     * @return Pair of (moods to save, sync result statistics)
      */
     private suspend fun mergeMoods(
         localMoods: List<Mood>,
         remoteMoods: List<Mood>
-    ): SyncResult {
+    ): Pair<List<Mood>, SyncResult> {
         val localMap = localMoods.associateBy { it.id }
         val remoteMap = remoteMoods.associateBy { it.id }
         
@@ -323,17 +428,14 @@ class MoodRepository(
             }
         }
         
-        // Save merged moods to local storage
-        if (moodsToSave.isNotEmpty()) {
-            moodDao.insertMoods(moodsToSave)
-        }
-        
-        return SyncResult(
+        // Note: Saving is handled by caller with error handling wrapper
+        val syncResult = SyncResult(
             pushedCount = 0, // Will be set by caller
             pulledCount = remoteMoods.size,
             mergedCount = moodsToSave.size,
             conflictsResolved = conflictsResolved
         )
+        return Pair(moodsToSave, syncResult)
     }
 }
 
