@@ -197,15 +197,29 @@ jobs:
       - name: Get database connection string
         id: db-url
         run: |
-          # Construct database URL from project reference
+          # Validate required secrets
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
           
-          # Get database host (this is a simplified approach - in production, use Supabase API to get connection details)
+          if [ -z "$PROJECT_REF" ]; then
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
+            exit 1
+          fi
+          
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+          
+          echo "Using project reference: $PROJECT_REF"
+          
+          # Construct database URL using Supabase connection pooler format
+          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres
+          # Note: The username format is 'postgres.[PROJECT_REF]' for connection pooler
           DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
           
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Using database connection for project: $PROJECT_REF"
+          echo "Database connection string constructed (host: aws-0-eu-central-1.pooler.supabase.com:6543)"
       
       - name: Diagnose database connection and schema
         env:
@@ -280,15 +294,29 @@ jobs:
       - name: Get database connection string
         id: db-url
         run: |
-          # Construct database URL from project reference
+          # Validate required secrets
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
           
-          # Get database host (this is a simplified approach - in production, use Supabase API to get connection details)
+          if [ -z "$PROJECT_REF" ]; then
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
+            exit 1
+          fi
+          
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
+            exit 1
+          fi
+          
+          echo "Using project reference: $PROJECT_REF"
+          
+          # Construct database URL using Supabase connection pooler format
+          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres
+          # Note: The username format is 'postgres.[PROJECT_REF]' for connection pooler
           DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
           
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Using database connection for project: $PROJECT_REF"
+          echo "Database connection string constructed (host: aws-0-eu-central-1.pooler.supabase.com:6543)"
       
       - name: Sync feature flags
         env:
