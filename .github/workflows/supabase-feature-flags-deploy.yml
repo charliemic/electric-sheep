@@ -187,7 +187,7 @@ jobs:
       
       - name: Link to staging project
         run: |
-          PROJECT_REF="${{ secrets.secrets.SUPABASE_PROJECT_REF }}"
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           if [ -z "$PROJECT_REF" ]; then
             echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret"
             exit 1
@@ -198,7 +198,7 @@ jobs:
         id: db-url
         run: |
           # Validate required secrets
-          PROJECT_REF="${{ secrets.secrets.SUPABASE_PROJECT_REF }}"
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
           
           if [ -z "$PROJECT_REF" ]; then
@@ -284,7 +284,7 @@ jobs:
       
       - name: Link to staging project
         run: |
-          PROJECT_REF="${{ secrets.secrets.SUPABASE_PROJECT_REF }}"
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           if [ -z "$PROJECT_REF" ]; then
             echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret"
             exit 1
@@ -295,7 +295,7 @@ jobs:
         id: db-url
         run: |
           # Validate required secrets
-          PROJECT_REF="${{ secrets.secrets.SUPABASE_PROJECT_REF }}"
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
           
           if [ -z "$PROJECT_REF" ]; then
