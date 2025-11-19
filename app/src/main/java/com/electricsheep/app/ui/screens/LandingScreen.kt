@@ -12,8 +12,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -38,17 +36,11 @@ fun LandingScreen(
 ) {
     Logger.debug("LandingScreen", "Landing screen displayed")
     
-    // Reactively observe feature flag using StateFlow
-    // This follows best practices:
-    // - Non-blocking: UI renders immediately with default value (false)
-    // - Progressive loading: Updates reactively when flags load from Supabase
-    // - Automatic cancellation: collectAsState cancels when composable leaves composition
-    val showIndicator by application.getFeatureFlagManager()
-        .getBooleanFlow(FeatureFlag.SHOW_FEATURE_FLAG_INDICATOR, defaultValue = false)
-        .collectAsState()
-    
-    // Debug logging to verify StateFlow updates
-    Logger.debug("LandingScreen", "show_feature_flag_indicator = $showIndicator")
+    // Check feature flag for indicator
+    val showIndicator = application.getFeatureFlagManager().isEnabled(
+        FeatureFlag.SHOW_FEATURE_FLAG_INDICATOR,
+        defaultValue = false
+    )
     
     // Debug-only: Show staging environment indicator
     val isDebug = BuildConfig.DEBUG
