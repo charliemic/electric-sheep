@@ -168,12 +168,11 @@ jobs:
           # Construct direct connection string using pattern from Supabase docs
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          # Use direct connection format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
-          # Resolve hostname to IPv4 to avoid IPv6 connection issues
-          HOST_IPV4=$(getent hosts db.${SUPABASE_PROJECT_ID}.supabase.co | awk '{print $1}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          # Resolve hostname to IPv4 using dig to avoid IPv6 connection issues
+          HOST_IPV4=$(dig +short -4 db.${SUPABASE_PROJECT_ID}.supabase.co | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
           if [ -n "$HOST_IPV4" ]; then
             # Use IPv4 address directly to avoid IPv6
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres?host=db.${SUPABASE_PROJECT_ID}.supabase.co"
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres"
           else
             # Fallback to hostname (may try IPv6)
             DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
@@ -230,12 +229,11 @@ jobs:
           # Construct direct connection string using pattern from Supabase docs
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          # Use direct connection format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
-          # Resolve hostname to IPv4 to avoid IPv6 connection issues
-          HOST_IPV4=$(getent hosts db.${SUPABASE_PROJECT_ID}.supabase.co | awk '{print $1}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          # Resolve hostname to IPv4 using dig to avoid IPv6 connection issues
+          HOST_IPV4=$(dig +short -4 db.${SUPABASE_PROJECT_ID}.supabase.co | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
           if [ -n "$HOST_IPV4" ]; then
             # Use IPv4 address directly to avoid IPv6
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres?host=db.${SUPABASE_PROJECT_ID}.supabase.co"
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres"
           else
             # Fallback to hostname (may try IPv6)
             DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
