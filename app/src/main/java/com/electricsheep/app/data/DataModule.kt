@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.electricsheep.app.auth.UserManager
 import com.electricsheep.app.config.ConfigBasedFeatureFlagProvider
+import com.electricsheep.app.config.Environment
+import com.electricsheep.app.config.EnvironmentManager
 import com.electricsheep.app.config.FeatureFlagManager
 import com.electricsheep.app.data.local.AppDatabase
 import com.electricsheep.app.data.local.MoodDao
@@ -27,10 +29,16 @@ object DataModule {
     /**
      * Create and configure Supabase client
      * Reads configuration from BuildConfig (populated from local.properties)
+     * Optionally uses EnvironmentManager for runtime environment selection (debug builds only)
      * 
+     * @param featureFlagManager Optional feature flag manager to check offline-only mode
+     * @param environmentManager Optional environment manager for runtime environment selection
      * @return SupabaseClient instance, or null if offline-only mode or initialization fails
      */
-    fun createSupabaseClient(featureFlagManager: FeatureFlagManager? = null): SupabaseClient? {
+    fun createSupabaseClient(
+        featureFlagManager: FeatureFlagManager? = null,
+        environmentManager: EnvironmentManager? = null
+    ): SupabaseClient? {
         // Skip Supabase initialization if offline-only mode is enabled
         if (featureFlagManager?.isOfflineOnly() == true) {
             Logger.info("DataModule", "Skipping Supabase client creation: offline-only mode enabled")
@@ -49,29 +57,38 @@ object DataModule {
         }
         
         return try {
-            // In debug builds, allow switching to staging Supabase
-            val useStaging = com.electricsheep.app.BuildConfig.USE_STAGING_SUPABASE && 
-                            com.electricsheep.app.BuildConfig.DEBUG
+            // Determine which environment to use
+            // Priority: EnvironmentManager (runtime) > BuildConfig (build-time)
+            val selectedEnvironment = if (environmentManager != null && environmentManager.isEnvironmentSwitchingAvailable()) {
+                environmentManager.getSelectedEnvironment()
+            } else {
+                // Fallback to build-time configuration
+                if (com.electricsheep.app.BuildConfig.USE_STAGING_SUPABASE && com.electricsheep.app.BuildConfig.DEBUG) {
+                    Environment.STAGING
+                } else {
+                    Environment.PRODUCTION
+                }
+            }
             
-            val finalUrl = if (useStaging) {
+            val finalUrl = if (selectedEnvironment == Environment.STAGING) {
                 val stagingUrl = com.electricsheep.app.BuildConfig.SUPABASE_STAGING_URL
                 if (stagingUrl.isNotEmpty() && stagingUrl != "\"\"") {
                     Logger.info("DataModule", "Using STAGING Supabase: $stagingUrl")
                     stagingUrl
                 } else {
-                    Logger.warn("DataModule", "USE_STAGING_SUPABASE is true but SUPABASE_STAGING_URL is not set, using production")
+                    Logger.warn("DataModule", "Staging selected but SUPABASE_STAGING_URL is not set, using production")
                     supabaseUrl
                 }
             } else {
                 supabaseUrl
             }
             
-            val finalKey = if (useStaging) {
+            val finalKey = if (selectedEnvironment == Environment.STAGING) {
                 val stagingKey = com.electricsheep.app.BuildConfig.SUPABASE_STAGING_ANON_KEY
                 if (stagingKey.isNotEmpty() && stagingKey != "\"\"") {
                     stagingKey
                 } else {
-                    Logger.warn("DataModule", "USE_STAGING_SUPABASE is true but SUPABASE_STAGING_ANON_KEY is not set, using production")
+                    Logger.warn("DataModule", "Staging selected but SUPABASE_STAGING_ANON_KEY is not set, using production")
                     supabaseKey
                 }
             } else {
