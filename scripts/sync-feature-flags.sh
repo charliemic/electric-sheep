@@ -73,7 +73,7 @@ fi
 # Validate required environment variables
 if [ -z "$SUPABASE_DB_URL" ] && [ -z "$SUPABASE_URL" ]; then
     echo -e "${RED}Error: SUPABASE_DB_URL or SUPABASE_URL must be set${NC}"
-    echo "Set SUPABASE_DB_URL (PostgreSQL connection string) or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY"
+    echo "Set SUPABASE_DB_URL (PostgreSQL connection string) or SUPABASE_URL + SUPABASE_SECRET_KEY"
     exit 1
 fi
 
@@ -115,9 +115,11 @@ SUCCESS_COUNT=0
 ERROR_COUNT=0
 
 if [ "$USE_API" = true ]; then
-    # Use PostgREST API (requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)
+    # Use PostgREST API (requires SUPABASE_URL and SUPABASE_SECRET_KEY)
+    # Note: SUPABASE_SERVICE_ROLE_KEY env var accepts both secret keys and service_role keys
     if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-        echo -e "${RED}Error: SUPABASE_SERVICE_ROLE_KEY required for API sync${NC}"
+        echo -e "${RED}Error: SUPABASE_SECRET_KEY required for API sync${NC}"
+        echo "Set SUPABASE_SECRET_KEY environment variable (or SUPABASE_SERVICE_ROLE_KEY for compatibility)"
         exit 1
     fi
     

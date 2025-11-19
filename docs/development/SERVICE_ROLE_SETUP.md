@@ -1,15 +1,17 @@
-# Supabase Service Role Key Setup
+# Supabase Secret Key Setup
 
-## What is a Service Role Key?
+## What is a Secret Key?
 
-The **Service Role Key** is a secret key that provides full access to your Supabase project, **bypassing Row-Level Security (RLS)**. It's used for:
+**Secret Keys** (`sb_secret_...`) provide full access to your Supabase project, **bypassing Row-Level Security (RLS)**. They're used for:
 
 - Server-side operations that need elevated privileges
 - Admin operations and maintenance
 - Backend services that need to access all data
-- Operations that must bypass RLS policies
+- Operations that must bypass RLS policies (e.g., CI/CD feature flag deployments)
 
-⚠️ **IMPORTANT**: Never commit service role keys to version control. Always use environment variables or secrets.
+⚠️ **IMPORTANT**: Never commit secret keys to version control. Always use environment variables or secrets.
+
+**Note**: Secret keys are preferred over JWT-based `service_role` keys per [Supabase documentation](https://supabase.com/docs/guides/api/api-keys).
 
 ## When Do You Need It?
 
@@ -34,15 +36,15 @@ The **Service Role Key** is a secret key that provides full access to your Supab
    - Click on "Settings" (gear icon) in the left sidebar
    - Click on "API" in the settings menu
 
-3. **Find Service Role Key**:
+3. **Find Secret Key**:
    - Scroll down to "Project API keys"
-   - Find the **"service_role"** key (it's the secret one)
+   - Find the **"secret"** key (starts with `sb_secret_...`)
    - Click the "eye" icon to reveal it
    - Click "Copy" to copy the key
 
 4. **Key Format**:
-   - Service role keys look like: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-   - They're JWT tokens (long strings)
+   - Secret keys start with: `sb_secret_...`
+   - They're not JWT tokens (unlike old `service_role` keys)
    - Different from Personal Access Tokens (which start with `sbp_`)
 
 ## Using Service Role Key
@@ -61,8 +63,8 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 Add to GitHub Secrets:
 1. Go to: https://github.com/charliemic/electric-sheep/settings/secrets/actions
 2. Click "New repository secret"
-3. Name: `SUPABASE_SERVICE_ROLE_KEY`
-4. Value: Your service role key
+3. For staging: Name `SUPABASE_SECRET_KEY_STAGING`, Value: Your staging secret key
+4. For production: Name `SUPABASE_SECRET_KEY`, Value: Your production secret key
 5. Click "Add secret"
 
 ### In Your App Code
@@ -103,7 +105,7 @@ val supabaseClient = createSupabaseClient(
 For this project:
 - ✅ **CLI Migrations**: Using Personal Access Token (PAT) - `SUPABASE_ACCESS_TOKEN`
 - ✅ **Android App**: Using anon key - `SUPABASE_ANON_KEY`
-- ⚠️ **Service Role**: Not currently needed (only if we add backend services)
+- ✅ **Feature Flag Deployment**: Using secret keys - `SUPABASE_SECRET_KEY_STAGING` / `SUPABASE_SECRET_KEY`
 
 ## Troubleshooting
 
