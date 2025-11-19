@@ -56,7 +56,7 @@ android {
             // Enable offline-only mode for debug builds (can be toggled)
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
             // Allow switching to staging Supabase in debug builds
-            buildConfigField("boolean", "USE_STAGING_SUPABASE", "false")
+            buildConfigField("boolean", "USE_STAGING_SUPABASE", "true")
         }
         release {
             isMinifyEnabled = false

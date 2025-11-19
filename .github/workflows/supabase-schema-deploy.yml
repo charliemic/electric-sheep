@@ -99,21 +99,35 @@ jobs:
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
       
       - name: Link to staging project
+        env:
+          # Set database password before linking (CLI needs it for verification)
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
+          # Use staging project ref if available, otherwise fall back to production or workflow input
           PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
-            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
             exit 1
+          fi
+          echo "Linking to staging project: $PROJECT_REF"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for linking"
           fi
           supabase link --project-ref "$PROJECT_REF"
       
       - name: Deploy migrations
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # Use staging password if available, otherwise fall back to production password
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for staging deployment"
           fi
+          # Deploy all pending migrations using Supabase CLI
           supabase db push
       
       - name: Verify deployment
@@ -159,11 +173,21 @@ jobs:
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
       
       - name: Link to production project
+        env:
+          # Set database password before linking (CLI needs it for verification)
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
           if [ -z "$PROJECT_REF" ]; then
-            echo "Error: No project reference found. Set SUPABASE_PROJECT_REF secret or provide via workflow_dispatch"
+            echo "ERROR: SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
             exit 1
+          fi
+          echo "Linking to production project: $PROJECT_REF"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for linking"
           fi
           supabase link --project-ref "$PROJECT_REF"
       
@@ -173,7 +197,10 @@ jobs:
         run: |
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
             echo "Warning: SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for production deployment"
           fi
+          # Deploy all pending migrations using Supabase CLI
           supabase db push
       
       - name: Verify deployment
@@ -204,20 +231,28 @@ jobs:
       
       - name: Start local Supabase
         run: |
+          # Start local Supabase instance (requires Docker)
           supabase start
       
       - name: Apply migrations
         run: |
-          # Apply all migrations to local instance
+          # Apply all migrations to local instance using Supabase CLI
+          # This recreates the database from scratch and applies all migrations
           supabase db reset
+      
+      - name: Verify migrations applied
+        run: |
+          # List all applied migrations to verify
+          supabase migration list
       
       - name: Generate migration diff
         run: |
-          # Show what would change
+          # Show what would change compared to current schema
           supabase db diff --schema public
       
       - name: Stop local Supabase
         if: always()
         run: |
+          # Always stop local Supabase, even if previous steps failed
           supabase stop
 
