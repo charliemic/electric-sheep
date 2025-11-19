@@ -166,10 +166,18 @@ jobs:
         id: db-url
         run: |
           # Construct direct connection string using pattern from Supabase docs
-          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          # Use direct connection format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
+          # Resolve hostname to IPv4 to avoid IPv6 connection issues
+          HOST_IPV4=$(getent hosts db.${SUPABASE_PROJECT_ID}.supabase.co | awk '{print $1}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -n "$HOST_IPV4" ]; then
+            # Use IPv4 address directly to avoid IPv6
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres?host=db.${SUPABASE_PROJECT_ID}.supabase.co"
+          else
+            # Fallback to hostname (may try IPv6)
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          fi
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
@@ -220,10 +228,18 @@ jobs:
         id: db-url
         run: |
           # Construct direct connection string using pattern from Supabase docs
-          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          # Use direct connection format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
+          # Resolve hostname to IPv4 to avoid IPv6 connection issues
+          HOST_IPV4=$(getent hosts db.${SUPABASE_PROJECT_ID}.supabase.co | awk '{print $1}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -n "$HOST_IPV4" ]; then
+            # Use IPv4 address directly to avoid IPv6
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres?host=db.${SUPABASE_PROJECT_ID}.supabase.co"
+          else
+            # Fallback to hostname (may try IPv6)
+            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          fi
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
