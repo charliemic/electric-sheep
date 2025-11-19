@@ -169,7 +169,8 @@ jobs:
           # Direct connections use IPv6 only, which GitHub Actions doesn't support
           # Pooler format: postgresql://postgres.[PROJECT_ID]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
           # URL-encode the password to handle special characters
-          ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
+          # Use Python's urllib.parse.quote which handles PostgreSQL connection string encoding correctly
+          ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
           
           # Get region from Supabase Management API
           # If region secret is set, use it; otherwise try to get from API
@@ -238,7 +239,8 @@ jobs:
           # Direct connections use IPv6 only, which GitHub Actions doesn't support
           # Pooler format: postgresql://postgres.[PROJECT_ID]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
           # URL-encode the password to handle special characters
-          ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
+          # Use Python's urllib.parse.quote which handles PostgreSQL connection string encoding correctly
+          ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
           
           # Get region from Supabase Management API
           # If region secret is set, use it; otherwise try to get from API
