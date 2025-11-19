@@ -162,38 +162,22 @@ jobs:
       - name: Link to staging project
         run: supabase link --project-ref $SUPABASE_PROJECT_ID
       
-      - name: Get database connection string
-        id: db-url
+      - name: Get Supabase URL
+        id: supabase-url
         run: |
-          # Use connection pooler (Supavisor) which supports IPv4
-          # Direct connections use IPv6 only, which GitHub Actions doesn't support
-          # Get connection string from Supabase Management API for correct format
-          echo "Getting connection string from Supabase API..."
-          API_RESPONSE=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}/connection-pooling")
-          
-          # Try to get pooler connection string from API
-          POOLER_CONN_STRING=$(echo "$API_RESPONSE" | jq -r '.connection_strings.session_mode // empty' 2>/dev/null)
-          
-          if [ -n "$POOLER_CONN_STRING" ] && [ "$POOLER_CONN_STRING" != "null" ]; then
-            # Replace password placeholder with actual password
-            DB_URL=$(echo "$POOLER_CONN_STRING" | sed "s|\[YOUR-PASSWORD\]|${SUPABASE_DB_PASSWORD}|g")
-            echo "Using connection string from Supabase API"
-          else
-            # Fallback: construct connection string manually
-            echo "API didn't return connection string, constructing manually..."
-            REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}" \
-              | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
-            ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
-            DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:5432/postgres"
-            echo "Using connection pooler (Session Mode) in region: $REGION"
+          # Get Supabase URL from linked project or construct from project ID
+          SUPABASE_URL=$(supabase status 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
+          if [ -z "$SUPABASE_URL" ]; then
+            # Fallback: construct from project ID
+            SUPABASE_URL="https://${SUPABASE_PROJECT_ID}.supabase.co"
           fi
-          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "Using Supabase URL: $SUPABASE_URL"
       
       - name: Sync feature flags
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
@@ -235,38 +219,22 @@ jobs:
       - name: Link to production project
         run: supabase link --project-ref $SUPABASE_PROJECT_ID
       
-      - name: Get database connection string
-        id: db-url
+      - name: Get Supabase URL
+        id: supabase-url
         run: |
-          # Use connection pooler (Supavisor) which supports IPv4
-          # Direct connections use IPv6 only, which GitHub Actions doesn't support
-          # Get connection string from Supabase Management API for correct format
-          echo "Getting connection string from Supabase API..."
-          API_RESPONSE=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}/connection-pooling")
-          
-          # Try to get pooler connection string from API
-          POOLER_CONN_STRING=$(echo "$API_RESPONSE" | jq -r '.connection_strings.session_mode // empty' 2>/dev/null)
-          
-          if [ -n "$POOLER_CONN_STRING" ] && [ "$POOLER_CONN_STRING" != "null" ]; then
-            # Replace password placeholder with actual password
-            DB_URL=$(echo "$POOLER_CONN_STRING" | sed "s|\[YOUR-PASSWORD\]|${SUPABASE_DB_PASSWORD}|g")
-            echo "Using connection string from Supabase API"
-          else
-            # Fallback: construct connection string manually
-            echo "API didn't return connection string, constructing manually..."
-            REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}" \
-              | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
-            ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
-            DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:5432/postgres"
-            echo "Using connection pooler (Session Mode) in region: $REGION"
+          # Get Supabase URL from linked project or construct from project ID
+          SUPABASE_URL=$(supabase status 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
+          if [ -z "$SUPABASE_URL" ]; then
+            # Fallback: construct from project ID
+            SUPABASE_URL="https://${SUPABASE_PROJECT_ID}.supabase.co"
           fi
-          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "Using Supabase URL: $SUPABASE_URL"
       
       - name: Sync feature flags
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
