@@ -14,7 +14,7 @@ on:
       - develop
     paths:
       - 'feature-flags/**'
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to (staging or production)'
@@ -101,7 +101,6 @@ jobs:
             fi
             
             # Check if flag has corresponding BuildConfig field
-            # Convert key to BuildConfig field name: "offline_only" -> "OFFLINE_ONLY_MODE" or "OFFLINE_ONLY_VALUE"
             CONFIG_KEY=$(echo "$KEY" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
             if [ "$VALUE_TYPE" = "boolean" ]; then
               CONFIG_FIELD="${CONFIG_KEY}_MODE"
@@ -109,9 +108,6 @@ jobs:
               CONFIG_FIELD="${CONFIG_KEY}_VALUE"
             fi
             
-            # Check if BuildConfig field exists in build.gradle.kts
-            # Look for buildConfigField with the config field name (case-insensitive)
-            # Pattern matches: buildConfigField("type", "CONFIG_FIELD", ...)
             if ! grep -qiE "buildConfigField.*[\"']${CONFIG_FIELD}[\"']" app/build.gradle.kts; then
               MISSING_CONFIG_FLAGS+=("$KEY (expected BuildConfig field: $CONFIG_FIELD)")
             fi
@@ -128,190 +124,51 @@ jobs:
             done
             echo ""
             echo "To fix: Add the corresponding buildConfigField in app/build.gradle.kts"
-            echo "Example for boolean flag 'offline_only':"
-            echo "  buildConfigField(\"boolean\", \"OFFLINE_ONLY_MODE\", \"false\")"
-            echo ""
-            echo "Example for string flag 'export_format':"
-            echo "  buildConfigField(\"String\", \"EXPORT_FORMAT_VALUE\", \"\\\"csv\\\"\")"
-            echo ""
-            echo "Example for int flag 'max_moods_per_day':"
-            echo "  buildConfigField(\"int\", \"MAX_MOODS_PER_DAY_VALUE\", \"10\")"
-            echo ""
             exit 1
           fi
           
           echo "All flags validated successfully (including BuildConfig fallback checks)"
 
-  deploy-preview:
-    name: Deploy to Staging (Preview/Test)
-    runs-on: ubuntu-latest
-    # Run on workflow_dispatch from feature branches (not main) OR when explicitly requested via PR comment
-    # This allows testing feature flags before merging without auto-deploying on every PR
-    if: (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && contains(github.event.pull_request.body, '[deploy-flags]'))
-    needs: validate-flags
-    environment:
-      name: staging
-    # This job allows testing feature flags from feature branches before merging
-    # To trigger from a PR, add [deploy-flags] to the PR description or trigger manually via workflow_dispatch
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Install yq
-        run: |
-          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-      
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      
-      - name: Verify Supabase credentials
-        run: |
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-      
-      - name: Login to Supabase
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase login --token "$SUPABASE_ACCESS_TOKEN"
-      
-      - name: Link to staging project
-        env:
-          # Set database password before linking (CLI needs it for verification)
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          # Use staging project ref if available, otherwise fall back to production
-          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
-          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-          if [ -z "$PROJECT_ID" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          echo "Linking to staging project: $PROJECT_ID"
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
-          else
-            echo "Using database password for linking"
-          fi
-          supabase link --project-ref "$PROJECT_ID"
-      
-      - name: Get Supabase URL
-        id: supabase-url
-        run: |
-          # Get Supabase URL from linked project (following Supabase CLI pattern)
-          SUPABASE_URL=$(supabase status --linked 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
-          if [ -z "$SUPABASE_URL" ]; then
-            # Fallback: construct from project ref
-            PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-            SUPABASE_URL="https://${PROJECT_ID}.supabase.co"
-          fi
-          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
-          echo "Using Supabase URL: $SUPABASE_URL"
-      
-      - name: Sync feature flags
-        env:
-          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          chmod +x scripts/sync-feature-flags.sh
-          ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
-      
-      - name: Verify deployment
-        run: |
-          echo "Feature flags deployed successfully to staging"
-          echo "This is a preview/test deployment from branch: ${{ github.ref }}"
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "PR: ${{ github.event.pull_request.html_url }}"
-          fi
-
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging' && github.ref == 'refs/heads/main')
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')
     needs: validate-flags
     environment:
       name: staging
+    # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
+    # Using existing GitHub secret names while maintaining docs pattern for env vars
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_REF_STAGING }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Install yq
+      - name: Install required tools
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
       
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
       
-      - name: Verify Supabase credentials
-        run: |
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-      
-      - name: Login to Supabase
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase login --token "$SUPABASE_ACCESS_TOKEN"
-      
       - name: Link to staging project
-        run: |
-          # Use staging project ref if available, otherwise fall back to production
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          echo "Linking to staging project: $PROJECT_REF"
-          supabase link --project-ref "$PROJECT_REF"
+        run: supabase link --project-ref $SUPABASE_PROJECT_ID
       
       - name: Get database connection string
         id: db-url
         run: |
-          # Validate required secrets
-          # Use staging project ref if available, otherwise fall back to production
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}"
-          
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-          
-          echo "Using staging project reference: $PROJECT_REF"
-          
-          # Use direct connection format (no region needed)
-          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
-          # Direct connection doesn't require region - it's implicit in the domain
-          DB_URL="postgresql://postgres:${DB_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres"
-          echo "Using direct connection (no region required)"
-          
+          # Construct direct connection string using pattern from Supabase docs
+          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
+          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Database connection string ready (masked for security)"
       
       - name: Sync feature flags
         env:
@@ -327,10 +184,16 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production' && github.ref == 'refs/heads/main')
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
     needs: validate-flags
     environment:
       name: production
+    # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
+    # Using existing GitHub secret names while maintaining docs pattern for env vars
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_REF }}
     
     steps:
       - name: Checkout code
@@ -338,68 +201,30 @@ jobs:
       
       - name: Install required tools
         run: |
-          # Install yq for YAML parsing
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
-          # Install PostgreSQL client for direct database connections
           sudo apt-get update
           sudo apt-get install -y postgresql-client
       
-      - name: Verify required secrets
-        run: |
-          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
-          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF }}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}"
-          
-          if [ -z "$PROJECT_ID" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-          
-          echo "Secrets verified - using production project: $PROJECT_ID"
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
       
       - name: Link to production project
-        env:
-          # Set database password before linking (CLI needs it for verification)
-          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
-          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
-          if [ -z "$PROJECT_ID" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
-            exit 1
-          fi
-          echo "Linking to production project: $PROJECT_ID"
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Warning: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
-          else
-            echo "Using database password for linking"
-          fi
-          supabase link --project-ref "$PROJECT_ID"
+        run: supabase link --project-ref $SUPABASE_PROJECT_ID
       
-      - name: Get Supabase URL
-        id: supabase-url
+      - name: Get database connection string
+        id: db-url
         run: |
-          # Get Supabase URL from linked project (following Supabase CLI pattern)
-          SUPABASE_URL=$(supabase status --linked 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
-          if [ -z "$SUPABASE_URL" ]; then
-            # Fallback: construct from project ref
-            PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF }}"
-            SUPABASE_URL="https://${PROJECT_ID}.supabase.co"
-          fi
-          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
-          echo "Using Supabase URL: $SUPABASE_URL"
+          # Construct direct connection string using pattern from Supabase docs
+          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
+          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
         env:
-          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
@@ -432,4 +257,3 @@ jobs:
           echo '```yaml' >> $GITHUB_STEP_SUMMARY
           yq '.flags' feature-flags/flags.yaml >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
