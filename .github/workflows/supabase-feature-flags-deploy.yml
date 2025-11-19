@@ -181,9 +181,10 @@ jobs:
               | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
           fi
           
-          # Use connection pooler with region
-          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
-          echo "Using connection pooler in region: $REGION"
+          # Use connection pooler with region (Session Mode on port 5432)
+          # Session Mode is recommended for GitHub Actions as it maintains a stable connection
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:5432/postgres"
+          echo "Using connection pooler (Session Mode) in region: $REGION"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
@@ -249,9 +250,10 @@ jobs:
               | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
           fi
           
-          # Use connection pooler with region
-          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
-          echo "Using connection pooler in region: $REGION"
+          # Use connection pooler with region (Session Mode on port 5432)
+          # Session Mode is recommended for GitHub Actions as it maintains a stable connection
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:5432/postgres"
+          echo "Using connection pooler (Session Mode) in region: $REGION"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
