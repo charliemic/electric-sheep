@@ -1,5 +1,6 @@
 package com.electricsheep.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.Settings
+import com.electricsheep.app.R
 import com.electricsheep.app.BuildConfig
 import com.electricsheep.app.ElectricSheepApplication
 import com.electricsheep.app.config.FeatureFlag
@@ -68,6 +71,19 @@ fun LandingScreen(
                     .padding(bottom = 8.dp)
             )
         }
+        
+        // Electric Sheep Logo
+        Image(
+            painter = painterResource(id = R.drawable.ic_electric_sheep_logo),
+            contentDescription = "Electric Sheep Logo",
+            modifier = Modifier
+                .size(120.dp)
+                .padding(bottom = 16.dp)
+                .semantics {
+                    contentDescription = "Electric Sheep Logo - A stylized sheep with electric lightning elements"
+                    role = Role.Image
+                }
+        )
         
         Text(
             text = "Electric Sheep",
