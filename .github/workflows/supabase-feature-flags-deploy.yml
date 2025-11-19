@@ -177,7 +177,7 @@ jobs:
       - name: Sync feature flags
         env:
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING || secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
@@ -234,7 +234,7 @@ jobs:
       - name: Sync feature flags
         env:
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
