@@ -165,18 +165,25 @@ jobs:
       - name: Get database connection string
         id: db-url
         run: |
-          # Construct direct connection string using pattern from Supabase docs
+          # Use connection pooler (Supavisor) which supports IPv4
+          # Direct connections use IPv6 only, which GitHub Actions doesn't support
+          # Pooler format: postgresql://postgres.[PROJECT_ID]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          # Resolve hostname to IPv4 using dig to avoid IPv6 connection issues
-          HOST_IPV4=$(dig +short -4 db.${SUPABASE_PROJECT_ID}.supabase.co | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-          if [ -n "$HOST_IPV4" ]; then
-            # Use IPv4 address directly to avoid IPv6
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres"
-          else
-            # Fallback to hostname (may try IPv6)
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          
+          # Get region from Supabase Management API
+          # If region secret is set, use it; otherwise try to get from API
+          REGION="${SUPABASE_REGION:-}"
+          if [ -z "$REGION" ]; then
+            echo "Getting region from Supabase API..."
+            REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}" \
+              | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
           fi
+          
+          # Use connection pooler with region
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
+          echo "Using connection pooler in region: $REGION"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
@@ -226,18 +233,25 @@ jobs:
       - name: Get database connection string
         id: db-url
         run: |
-          # Construct direct connection string using pattern from Supabase docs
+          # Use connection pooler (Supavisor) which supports IPv4
+          # Direct connections use IPv6 only, which GitHub Actions doesn't support
+          # Pooler format: postgresql://postgres.[PROJECT_ID]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
           # URL-encode the password to handle special characters
           ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
-          # Resolve hostname to IPv4 using dig to avoid IPv6 connection issues
-          HOST_IPV4=$(dig +short -4 db.${SUPABASE_PROJECT_ID}.supabase.co | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-          if [ -n "$HOST_IPV4" ]; then
-            # Use IPv4 address directly to avoid IPv6
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@${HOST_IPV4}:5432/postgres"
-          else
-            # Fallback to hostname (may try IPv6)
-            DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          
+          # Get region from Supabase Management API
+          # If region secret is set, use it; otherwise try to get from API
+          REGION="${SUPABASE_REGION:-}"
+          if [ -z "$REGION" ]; then
+            echo "Getting region from Supabase API..."
+            REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}" \
+              | jq -r '.region // "us-west-1"' 2>/dev/null || echo "us-west-1")
           fi
+          
+          # Use connection pooler with region
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_ID}:${ENCODED_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
+          echo "Using connection pooler in region: $REGION"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
