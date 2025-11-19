@@ -186,54 +186,42 @@ jobs:
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
       
       - name: Link to staging project
-        run: |
-          # Use staging project ref if available, otherwise fall back to production
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          echo "Linking to staging project: $PROJECT_REF"
-          supabase link --project-ref "$PROJECT_REF"
-      
-      - name: Get database connection string
-        id: db-url
-        run: |
-          # Validate required secrets
-          # Use staging project ref if available, otherwise fall back to production
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}"
-          
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-          
-          echo "Using staging project reference: $PROJECT_REF"
-          
-          # Construct database URL using Supabase connection pooler format
-          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres
-          # Note: The username format is 'postgres.[PROJECT_REF]' for connection pooler
-          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
-          
-          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Database connection string constructed (host: aws-0-eu-central-1.pooler.supabase.com:6543)"
-      
-      - name: Diagnose database connection and schema
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          # Set database password before linking (CLI needs it for verification)
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          chmod +x scripts/test-feature-flags-sql.sh
-          ./scripts/test-feature-flags-sql.sh || echo "Diagnostic script completed (may have found issues)"
+          # Use staging project ref if available, otherwise fall back to production
+          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
+          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          if [ -z "$PROJECT_ID" ]; then
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set"
+            exit 1
+          fi
+          echo "Linking to staging project: $PROJECT_ID"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for linking"
+          fi
+          supabase link --project-ref "$PROJECT_ID"
+      
+      - name: Get Supabase URL
+        id: supabase-url
+        run: |
+          # Get Supabase URL from linked project (following Supabase CLI pattern)
+          SUPABASE_URL=$(supabase status --linked 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
+          if [ -z "$SUPABASE_URL" ]; then
+            # Fallback: construct from project ref
+            PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+            SUPABASE_URL="https://${PROJECT_ID}.supabase.co"
+          fi
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "Using Supabase URL: $SUPABASE_URL"
       
       - name: Sync feature flags
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
@@ -316,13 +304,14 @@ jobs:
           
           echo "Using staging project reference: $PROJECT_REF"
           
-          # Construct database URL using Supabase connection pooler format
-          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres
-          # Note: The username format is 'postgres.[PROJECT_REF]' for connection pooler
-          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+          # Use direct connection format (no region needed)
+          # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+          # Direct connection doesn't require region - it's implicit in the domain
+          DB_URL="postgresql://postgres:${DB_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres"
+          echo "Using direct connection (no region required)"
           
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Database connection string constructed (host: aws-0-eu-central-1.pooler.supabase.com:6543)"
+          echo "Database connection string ready (masked for security)"
       
       - name: Sync feature flags
         env:
@@ -358,10 +347,11 @@ jobs:
       
       - name: Verify required secrets
         run: |
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
+          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF }}"
           DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}"
           
-          if [ -z "$PROJECT_REF" ]; then
+          if [ -z "$PROJECT_ID" ]; then
             echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
             exit 1
           fi
@@ -371,46 +361,45 @@ jobs:
             exit 1
           fi
           
-          echo "Secrets verified - using production project: $PROJECT_REF"
-          echo "Note: Using direct PostgreSQL connection (no Supabase CLI link required)"
+          echo "Secrets verified - using production project: $PROJECT_ID"
       
-      - name: Get database connection string
-        id: db-url
-        run: |
-          # Validate required secrets for production
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}"
-          
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD secret is not set"
-            exit 1
-          fi
-          
-          echo "Using production project reference: $PROJECT_REF"
-          
-          # Construct database URL using Supabase connection pooler format
-          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@[HOST]:[PORT]/postgres
-          # Note: The username format is 'postgres.[PROJECT_REF]' for connection pooler
-          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
-          
-          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Database connection string constructed (host: aws-0-eu-central-1.pooler.supabase.com:6543)"
-      
-      - name: Diagnose database connection and schema
+      - name: Link to production project
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          # Set database password before linking (CLI needs it for verification)
+          # Following Supabase docs pattern: https://supabase.com/docs/guides/deployment/managing-environments
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          chmod +x scripts/test-feature-flags-sql.sh
-          ./scripts/test-feature-flags-sql.sh || echo "Diagnostic script completed (may have found issues)"
+          # Production always uses SUPABASE_PROJECT_REF (no staging fallback)
+          PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          if [ -z "$PROJECT_ID" ]; then
+            echo "ERROR: SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
+            exit 1
+          fi
+          echo "Linking to production project: $PROJECT_ID"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD_PROD or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          else
+            echo "Using database password for linking"
+          fi
+          supabase link --project-ref "$PROJECT_ID"
+      
+      - name: Get Supabase URL
+        id: supabase-url
+        run: |
+          # Get Supabase URL from linked project (following Supabase CLI pattern)
+          SUPABASE_URL=$(supabase status --linked 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
+          if [ -z "$SUPABASE_URL" ]; then
+            # Fallback: construct from project ref
+            PROJECT_ID="${{ secrets.SUPABASE_PROJECT_REF }}"
+            SUPABASE_URL="https://${PROJECT_ID}.supabase.co"
+          fi
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "Using Supabase URL: $SUPABASE_URL"
       
       - name: Sync feature flags
         env:
-          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           chmod +x scripts/sync-feature-flags.sh
           ./scripts/sync-feature-flags.sh --verbose feature-flags/flags.yaml
