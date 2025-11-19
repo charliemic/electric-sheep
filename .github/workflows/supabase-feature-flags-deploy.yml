@@ -152,7 +152,7 @@ jobs:
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client jq
       
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -167,7 +167,9 @@ jobs:
         run: |
           # Construct direct connection string using pattern from Supabase docs
           # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
-          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          # URL-encode the password to handle special characters
+          ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
+          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
@@ -204,7 +206,7 @@ jobs:
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client jq
       
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -219,7 +221,9 @@ jobs:
         run: |
           # Construct direct connection string using pattern from Supabase docs
           # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
-          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          # URL-encode the password to handle special characters
+          ENCODED_PASSWORD=$(printf '%s' "$SUPABASE_DB_PASSWORD" | jq -sRr @uri)
+          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
       
       - name: Sync feature flags
