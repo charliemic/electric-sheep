@@ -76,7 +76,7 @@ fun MoodManagementScreen(
                     builder.setShowTitle(true)
                     // Use a default toolbar color (can be customized based on app theme)
                     // Note: MaterialTheme.colorScheme is not accessible in LaunchedEffect
-                    builder.setToolbarColor(0xFF6200EE.toInt()) // Material Purple 700
+                    builder.setToolbarColor(0xFF4A7C7E.toInt()) // Primary teal-blue
                     
                     val customTabsIntent = builder.build()
                     customTabsIntent.intent.setPackage(packageName)
@@ -314,7 +314,43 @@ fun MoodManagementScreen(
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             
-                            // Sign in button (email/password)
+                            // Create Account button (primary action for new users)
+                            Button(
+                                onClick = {
+                                    viewModel.signUp()
+                                    keyboardController?.hide()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription = if (isLoading) {
+                                            "Creating account, please wait"
+                                        } else {
+                                            "Create account with email and password"
+                                        }
+                                        if (isLoading) {
+                                            stateDescription = "Loading"
+                                        }
+                                    },
+                                enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .semantics { 
+                                                contentDescription = "Creating account progress"
+                                            },
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    Text("Create Account")
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Sign in button (for existing users)
                             OutlinedButton(
                                 onClick = {
                                     viewModel.signIn()
@@ -334,37 +370,7 @@ fun MoodManagementScreen(
                                     },
                                 enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
                             ) {
-                                if (isLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .size(16.dp)
-                                            .semantics { 
-                                                contentDescription = "Signing in progress"
-                                            },
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                } else {
-                                    Text("Sign In")
-                                }
-                            }
-                            
-                            // Sign up link
-                            TextButton(
-                                onClick = {
-                                    viewModel.signUp()
-                                    keyboardController?.hide()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .semantics {
-                                        contentDescription = "Create account with email and password"
-                                    },
-                                enabled = !isLoading && emailText.isNotBlank() && passwordText.isNotBlank()
-                            ) {
-                                Text(
-                                    text = "Don't have an account? Create one",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                Text("Sign In")
                             }
                         }
                     }
