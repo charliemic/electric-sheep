@@ -167,12 +167,14 @@ release_lock() {
     # Check if lock belongs to this process
     local lock_pid=$(jq -r '.pid' "$lock_file" 2>/dev/null || echo "")
     if [ "$lock_pid" != "$$" ] && [ -n "$lock_pid" ]; then
-        # Check if it's our process tree (parent process)
-        if ! kill -0 "$lock_pid" 2>/dev/null || [ "$lock_pid" != "$$" ]; then
+        # Check if the process is still running
+        if kill -0 "$lock_pid" 2>/dev/null; then
+            # Process is still running and it's not us - don't release
             echo -e "${YELLOW}⚠${NC} Lock for $device_id belongs to different process (PID: $lock_pid)" >&2
             echo -e "${BLUE}Not releasing lock${NC}" >&2
             return 0
         fi
+        # Process is not running (stale lock) - allow release
     fi
     
     rm -f "$lock_file"
