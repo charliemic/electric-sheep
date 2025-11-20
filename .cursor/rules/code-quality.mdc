@@ -1,0 +1,100 @@
+---
+alwaysApply: true
+---
+
+# Code Quality Principles
+
+## General Principles
+
+### Code Style
+- ✅ **Consistency First**: Follow existing code patterns and conventions
+- ✅ **Readability**: Write self-documenting code
+- ✅ **DRY**: Avoid duplication; extract common functionality
+- ✅ **SOLID Principles**: Apply object-oriented design principles
+- ✅ **UK English**: Use UK English spellings (analyse, colour, organise, etc.)
+
+### Before Making Changes
+1. ✅ Verify NOT on `main` branch
+2. ✅ Understand existing code and architecture
+3. ✅ Check dependencies and compatibility
+4. ✅ Review related code for consistency
+5. ✅ Consider impact on other parts of system
+
+### When Implementing Features
+- ✅ **Start Small**: Minimal viable functionality first
+- ✅ **Preserve Functionality**: Existing features must continue to work
+- ✅ **Add Tests**: Write tests alongside implementation
+- ✅ **Add Logging**: Implement appropriate logging
+- ✅ **Update Documentation**: Keep docs in sync with code
+- ✅ **Consider Accessibility**: Always implement accessibility features
+- ✅ **Use ViewModel Pattern**: For screens with business logic
+
+## Code Review Checklist
+
+### Code Quality
+- [ ] Code follows project style guidelines
+- [ ] No hardcoded values (use constants or configuration)
+- [ ] Proper error handling implemented
+- [ ] No commented-out code or debug statements
+- [ ] Meaningful variable and function names
+- [ ] Functions are focused and do one thing well
+- [ ] No magic numbers or strings
+- [ ] Proper use of design patterns where appropriate
+
+### Architecture
+- [ ] Database migrations added for schema changes
+- [ ] Library functionality used instead of custom implementations
+- [ ] ViewModel pattern used for screens with business logic
+- [ ] Authentication considered for user-scoped features
+- [ ] Data scoped to current user (userId filtering)
+
+### Testing
+- [ ] Tests added for new functionality
+- [ ] All tests pass
+- [ ] Edge cases tested
+- [ ] Error scenarios tested
+
+## Refactoring Guidelines
+
+### Before Refactoring
+- ✅ **All Tests Passing**: REQUIRED - Fix failing tests first
+- ✅ **Test Coverage**: Ensure adequate test coverage
+- ✅ **Incremental Changes**: Make small, incremental changes
+- ✅ **Preserve Behavior**: Maintain existing functionality
+- ✅ **Document Intent**: Explain why refactoring is necessary
+
+### During Refactoring
+- ✅ Run tests after each step
+- ✅ Keep tests green throughout
+- ✅ Verify behavior is preserved
+- ✅ Update tests if behavior changes (document why)
+
+## Best Practices
+
+### DO ✅
+- Follow existing code patterns
+- Write self-documenting code
+- Extract common functionality
+- Use meaningful names
+- Keep functions focused
+- Add tests for new code
+- Update documentation
+- Consider accessibility
+- Use ViewModel pattern
+- Handle errors properly
+
+### DON'T ❌
+- Don't duplicate code
+- Don't use magic numbers/strings
+- Don't hardcode values
+- Don't leave commented code
+- Don't skip tests
+- Don't ignore error handling
+- Don't break existing functionality
+- Don't skip documentation updates
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete code quality guidelines
+- `docs/architecture/` - Architecture documentation
+- `docs/development/` - Development guidelines

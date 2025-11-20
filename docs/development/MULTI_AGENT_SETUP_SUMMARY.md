@@ -146,12 +146,12 @@ Enhanced with:
 ### ✅ Branch Isolation
 - **Enforced by Cursor rules** - Agents can't work on `main`
 - **Validated by script** - Checks branch before work
-- **Clear naming** - Identifies which agent owns which branch
+- **Clear naming** - Task-based branch names
 
-### ✅ File Ownership
-- **Defined ownership** - Each agent has primary directories
+### ✅ File Coordination
 - **Shared file tracking** - Coordination required for shared files
 - **Conflict prevention** - Check before modifying
+- **File system isolation** - Git worktrees for complete isolation
 
 ### ✅ Coordination
 - **Documentation** - `AGENT_COORDINATION.md` tracks all work

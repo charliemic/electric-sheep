@@ -1,0 +1,145 @@
+---
+alwaysApply: true
+---
+
+# Testing Principles and Requirements
+
+## CRITICAL: Keep Tests Passing
+
+**Before making ANY changes:**
+1. ✅ Run tests: `./gradlew test`
+2. ✅ All tests must pass before proceeding
+3. ✅ Fix failing tests immediately - do not accumulate test failures
+4. ✅ Never commit failing tests
+
+**After making changes:**
+1. ✅ Run tests again: `./gradlew test`
+2. ✅ Fix any tests broken by your changes
+3. ✅ Add tests for new functionality
+4. ✅ Verify all tests pass before committing
+
+## Testing Strategy: Hourglass Pattern
+
+### Unit Tests (Wide Base - Maximize)
+- **Maximize Coverage**: Write unit tests for all business logic, utility functions, and pure functions
+- **Fast Execution**: Unit tests should run in milliseconds; aim for thousands of tests
+- **Tight Scoping**: Test individual functions, classes, or small components in isolation
+- **Mock External Dependencies**: Mock APIs, databases, file systems, and other external services
+- **Test Coverage**: Aim for >80% code coverage through unit tests
+
+### Integration Tests (Narrow Middle - Minimal)
+- **Minimal Use**: Use sparingly for testing component interactions that can't be tested at unit or stack level
+- **Specific Purpose**: Only when testing interactions between a few tightly-coupled components
+- **Avoid Overuse**: Prefer unit tests or higher-level stack tests over isolated integration tests
+
+### Higher-Level Stack Tests (Wide Top - Prefer)
+- **Test Full Stack**: Prefer testing on as much of the stack as practical (UI → ViewModel → Repository → Data Source)
+- **Real Components**: Use real implementations where possible (in-memory databases, test servers, etc.)
+- **End-to-End Scenarios**: Test complete user flows and business scenarios
+- **Real-World Behavior**: Ensure tests reflect actual runtime behavior and interactions
+
+## Test Requirements
+
+### When Implementing Features
+- ✅ **Add Tests**: Write tests alongside implementation, not after
+- ✅ **Test New Functionality**: Every new feature needs tests
+- ✅ **Test Edge Cases**: Test boundary conditions, null values, and error scenarios
+- ✅ **Test Error Handling**: Test error paths and failure scenarios
+
+### Test Structure (AAA Pattern)
+```kotlin
+@Test
+fun `should do something when condition is met`() {
+    // Arrange - Set up test data and dependencies
+    val dependency = MockDependency()
+    val subject = Subject(dependency)
+    
+    // Act - Execute the code being tested
+    val result = subject.doSomething()
+    
+    // Assert - Verify the expected outcome
+    assertEquals(expected, result)
+}
+```
+
+### Test Naming
+- Use descriptive test names that explain what is being tested
+- Format: `should <expected behavior> when <condition>`
+- Example: `should return error when user input is invalid`
+
+## Test Best Practices
+
+### DO ✅
+- Write tests before or alongside implementation
+- Keep tests independent and isolated
+- Use meaningful test names
+- Test edge cases and error scenarios
+- Mock external dependencies in unit tests
+- Use real implementations in stack-level tests
+- Run tests frequently during development
+- Fix failing tests immediately
+
+### DON'T ❌
+- Don't skip tests for non-trivial code
+- Don't leave tests in a failing state
+- Don't test implementation details
+- Don't create brittle tests that break on refactoring
+- Don't accumulate test failures
+- Don't commit failing tests
+
+## Refactoring with Tests
+
+**REQUIRED before refactoring:**
+1. ✅ All tests must pass
+2. ✅ If tests are failing, fix them first
+3. ✅ Run tests after each refactoring step
+4. ✅ Keep tests green throughout refactoring
+5. ✅ Tests should pass with same assertions before and after
+
+**If tests need to change during refactoring:**
+- This means behavior changed (may be intentional, but should be explicit)
+- Update tests to reflect new behavior
+- Document why behavior changed
+
+## Test Examples
+
+### Unit Test (Fast, Tight Scoping)
+```kotlin
+@Test
+fun `should return error when input is invalid`() {
+    // Arrange
+    val validator = InputValidator()
+    val invalidInput = ""
+    
+    // Act
+    val result = validator.validate(invalidInput)
+    
+    // Assert
+    assertTrue(result.isError)
+    assertEquals("Input cannot be empty", result.errorMessage)
+}
+```
+
+### Stack-Level Test (Full Stack, Real Components)
+```kotlin
+@Test
+fun `should display user profile after successful login`() = runTest {
+    // Arrange - Use real implementations where practical
+    val testDatabase = createInMemoryDatabase()
+    val repository = UserRepository(testDatabase)
+    val viewModel = UserViewModel(repository)
+    
+    // Act - Test full stack interaction
+    viewModel.login("user@example.com", "password")
+    
+    // Assert - Verify end-to-end behavior
+    val state = viewModel.uiState.value
+    assertTrue(state is UserUiState.Success)
+}
+```
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete testing guidelines
+- `docs/testing/TEST_COVERAGE.md` - Test coverage details
+- `docs/testing/FRAMEWORK_ARCHITECTURE_RECOMMENDATION.md` - Test framework architecture

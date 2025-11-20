@@ -1,0 +1,111 @@
+---
+alwaysApply: true
+---
+
+# CI/CD Principles and Requirements
+
+## CRITICAL: Verify CI Passes Before Merging
+
+**Before creating/merging PR:**
+1. ✅ Run tests locally: `./gradlew test`
+2. ✅ All tests must pass locally
+3. ✅ Verify CI pipeline passes in PR
+4. ✅ Never merge if CI checks fail
+5. ✅ Fix CI failures before requesting review
+
+## CI/CD Workflow
+
+### Local Development → CI/CD Progression
+1. **Local Builds**: `./gradlew build`
+2. **Local Testing**: `./gradlew test`
+3. **Push to Feature Branch**: CI automatically runs
+4. **Create PR**: CI runs on PR creation
+5. **Monitor CI**: Ensure all checks pass
+6. **Merge After Approval**: Only merge when CI passes
+
+### CI Pipeline Stages
+1. ✅ **Lint/Format Check**: Code style verification
+2. ✅ **Unit Tests**: All unit tests must pass
+3. ✅ **Build Debug APK**: Compile and build debug APK
+4. ✅ **Build Release AAB**: Build release Android App Bundle
+5. ✅ **Accessibility Check**: Accessibility lint verification
+
+### Required CI Checks
+- ✅ Lint checks
+- ✅ Unit tests
+- ✅ Build (debug APK)
+- ✅ Build (release AAB)
+- ✅ Accessibility checks
+
+## Branch Protection
+
+**PRs are blocked from merging if CI checks fail:**
+- Merge button disabled until all checks pass
+- Required status checks must be green
+- Cannot bypass CI checks
+
+## Before Pushing
+
+### DO ✅
+- Run tests locally: `./gradlew test`
+- Fix all failing tests
+- Ensure code compiles: `./gradlew build`
+- Check linting: `./gradlew lint`
+- Verify you're on a feature branch (not `main`)
+
+### DON'T ❌
+- Don't push failing tests
+- Don't push code that doesn't compile
+- Don't push directly to `main`
+- Don't merge PRs with failing CI
+- Don't bypass CI checks
+
+## Debugging CI Failures
+
+### Using GitHub CLI
+```bash
+# List recent workflow runs
+gh run list --branch <branch-name>
+
+# View logs for latest failed run
+gh run list --status failure --limit 1 | head -1 | awk '{print $7}' | xargs gh run view --log
+
+# Watch a running workflow
+gh run watch
+```
+
+### Common CI Issues
+- **Android SDK not found**: Check environment setup
+- **Gradle wrapper issues**: Verify gradlew permissions
+- **Lint failures**: Check lint output
+- **Build failures**: Review stack traces
+- **Test failures**: Run tests locally first
+
+### Fixing CI Failures
+1. Reproduce locally: Run same commands as CI
+2. Fix issues locally
+3. Run tests: `./gradlew test`
+4. Push fixes: CI will re-run automatically
+5. Verify CI passes before requesting review
+
+## CI/CD Best Practices
+
+### DO ✅
+- Run tests locally before pushing
+- Fix CI failures immediately
+- Monitor CI status in PR
+- Wait for CI to pass before merging
+- Use feature branches (never push to `main`)
+
+### DON'T ❌
+- Don't push code with failing tests
+- Don't merge PRs with failing CI
+- Don't bypass CI checks
+- Don't push directly to `main`
+- Don't ignore CI failures
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete CI/CD guidelines
+- `.github/workflows/build-and-test.yml` - CI workflow configuration
+- `docs/CI_CD_OPTIMIZATION.md` - CI/CD optimization details

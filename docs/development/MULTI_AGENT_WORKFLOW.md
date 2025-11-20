@@ -306,13 +306,13 @@ These files are commonly modified and require coordination:
    - Decide: sequential work or split work
 
 3. **Sequential Work** (Recommended for shared files)
-   - Agent 1 completes their changes
-   - Agent 2 pulls latest and rebases
-   - Agent 2 integrates their changes
+   - Task 1 completes their changes
+   - Task 2 pulls latest and rebases
+   - Task 2 integrates their changes
 
 4. **Split Work** (For large files)
-   - Agent 1 handles part A
-   - Agent 2 handles part B
+   - Task 1 handles part A
+   - Task 2 handles part B
    - Coordinate merge order
 
 ### If Merge Conflicts Occur
