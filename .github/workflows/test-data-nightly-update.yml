@@ -1,0 +1,137 @@
+name: Update Test Data (Nightly)
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      project_ref:
+        description: 'Supabase Project Reference ID (leave empty to use SUPABASE_PROJECT_REF_STAGING)'
+        required: false
+        type: string
+
+jobs:
+  update-test-data:
+    name: Update Test Data
+    runs-on: ubuntu-latest
+    environment:
+      name: staging  # Use staging environment for test data
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Verify token is set
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "ERROR: SUPABASE_ACCESS_TOKEN secret is not set or is empty"
+            exit 1
+          fi
+          echo "Token is set (length: $(echo -n '${{ secrets.SUPABASE_ACCESS_TOKEN }}' | wc -c))"
+      
+      - name: Login to Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "ERROR: SUPABASE_ACCESS_TOKEN environment variable is empty"
+            exit 1
+          fi
+          echo "Logging in to Supabase..."
+          supabase login --token "$SUPABASE_ACCESS_TOKEN"
+      
+      - name: Link to staging project
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          # Use staging project ref if available, otherwise fall back to production or workflow input
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+          if [ -z "$PROJECT_REF" ]; then
+            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
+            exit 1
+          fi
+          echo "Linking to project: $PROJECT_REF"
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
+          fi
+          supabase link --project-ref "$PROJECT_REF"
+      
+      - name: Ensure generate_mood_score function exists
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "Ensuring generate_mood_score function exists..."
+          supabase db execute < supabase/seed/functions/generate_mood_score.sql || {
+            echo "Warning: Failed to create function (may already exist)"
+          }
+      
+      - name: Get Supabase URL
+        id: supabase-url
+        run: |
+          # Get Supabase URL from linked project or construct from project ID
+          SUPABASE_URL=$(supabase status 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
+          if [ -z "$SUPABASE_URL" ]; then
+            # Fallback: construct from project ID
+            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            SUPABASE_URL="https://${PROJECT_REF}.supabase.co"
+          fi
+          echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "Using Supabase URL: $SUPABASE_URL"
+      
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        id: cache-apt
+        with:
+          path: /var/cache/apt
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/test-data-nightly-update.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+      
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq bc uuid-runtime || true
+      
+      - name: Add daily test data
+        env:
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          echo "Adding yesterday's mood data for test users..."
+          # Use PostgREST API version (matches feature flags pattern)
+          bash supabase/scripts/add-daily-data-postgrest.sh
+      
+      - name: Verify data update
+        run: |
+          echo "Verifying data was updated..."
+          # Query to check latest mood entries
+          supabase db execute "
+            SELECT 
+              u.email,
+              COUNT(m.id) as entry_count,
+              MAX(DATE(to_timestamp(m.timestamp / 1000))) as latest_date
+            FROM auth.users u
+            LEFT JOIN public.moods m ON m.user_id = u.id
+            WHERE u.email LIKE 'test-%@electric-sheep.test'
+            GROUP BY u.email
+            ORDER BY u.email;
+          " || echo "Warning: Could not verify data (this is non-critical)"
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Test Data Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "- **Schedule**: Daily at 2 AM UTC" >> $GITHUB_STEP_SUMMARY
+          fi
+

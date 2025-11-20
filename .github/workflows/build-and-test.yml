@@ -19,6 +19,7 @@ jobs:
       app-code: ${{ steps.filter.outputs.app-code }}
       docs: ${{ steps.filter.outputs.docs }}
       scripts: ${{ steps.filter.outputs.scripts }}
+      emulator-scripts: ${{ steps.filter.outputs.emulator-scripts }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - name: Checkout code
@@ -41,6 +42,11 @@ jobs:
               - 'README.md'
             scripts:
               - 'scripts/**'
+            emulator-scripts:
+              - 'scripts/emulator-*.sh'
+              - 'scripts/tests/**'
+              - 'docs/development/EMULATOR_MANAGEMENT*.md'
+              - 'Makefile'
             workflows:
               - '.github/workflows/**'
           list-files: shell
@@ -70,7 +76,7 @@ jobs:
 
     - name: Cache Gradle dependencies
       id: cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -80,7 +86,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Cache Android build artifacts
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
@@ -111,7 +117,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -154,7 +160,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -189,7 +195,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -253,7 +259,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -263,7 +269,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
@@ -298,7 +304,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -308,7 +314,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
@@ -320,3 +326,57 @@ jobs:
     - name: Build release AAB
       run: ./gradlew bundleRelease --stacktrace
       continue-on-error: false
+
+  # Emulator Management Scripts Tests
+  # Non-blocking: failures don't prevent merge
+  # Only runs if emulator management scripts changed
+  test-emulator-scripts:
+    needs: changes
+    # Only run if emulator scripts changed
+    if: needs.changes.outputs.emulator-scripts == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Non-blocking: don't fail the build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        id: cache-apt
+        with:
+          path: /var/cache/apt
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/build-and-test.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
+      - name: Install bats-core and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq
+
+      - name: Verify dependencies
+        run: |
+          bats --version
+          jq --version
+          bash --version
+
+      - name: Make test scripts executable
+        run: |
+          chmod +x scripts/tests/*.sh
+          chmod +x scripts/tests/*.bats
+          chmod +x scripts/emulator-*.sh
+
+      - name: Run emulator management tests
+        run: |
+          ./scripts/tests/run_tests.sh --verbose
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-script-test-results
+          path: |
+            scripts/tests/*.log
+            scripts/tests/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
