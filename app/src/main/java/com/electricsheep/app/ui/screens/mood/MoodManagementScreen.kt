@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.error
 import android.content.Intent
 import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
-import com.electricsheep.app.ui.components.MoodChart
 import com.electricsheep.app.ui.theme.Spacing
 import com.electricsheep.app.util.DateFormatter
 import com.electricsheep.app.util.Logger
@@ -510,20 +509,6 @@ fun MoodManagementScreen(
                 
                 item {
                     Spacer(modifier = Modifier.height(32.dp))
-                }
-                
-                // Mood Chart - show when user is authenticated and has mood entries
-                if (currentUser != null && moods.isNotEmpty()) {
-                    item {
-                        MoodChart(
-                            moods = moods,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    
-                    item {
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
                 }
                 
                 // Mood history section
