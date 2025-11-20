@@ -343,7 +343,17 @@ jobs:
       - name: Install bats-core
         run: |
           sudo apt-get update
-          sudo apt-get install -y bats
+          # Try Ubuntu package first, fallback to GitHub install
+          if sudo apt-get install -y bats 2>/dev/null; then
+            echo "Installed bats from Ubuntu package"
+          else
+            echo "Ubuntu package not available, installing from GitHub"
+            BATS_VERSION="1.10.0"
+            curl -sSL "https://github.com/bats-core/bats-core/archive/v${BATS_VERSION}.tar.gz" -o /tmp/bats.tar.gz
+            sudo tar -xz -C /tmp -f /tmp/bats.tar.gz
+            sudo /tmp/bats-core-${BATS_VERSION}/install.sh /usr/local
+            sudo rm -rf /tmp/bats-core-${BATS_VERSION} /tmp/bats.tar.gz
+          fi
 
       - name: Install jq
         run: |
@@ -357,12 +367,20 @@ jobs:
 
       - name: Make test scripts executable
         run: |
-          chmod +x scripts/tests/*.sh
-          chmod +x scripts/tests/*.bats
-          chmod +x scripts/emulator-*.sh
+          chmod +x scripts/tests/*.sh scripts/tests/*.bats 2>/dev/null || true
+          chmod +x scripts/emulator-*.sh 2>/dev/null || true
+          ls -la scripts/tests/ || echo "Test directory check"
+          ls -la scripts/emulator-*.sh || echo "Emulator scripts check"
 
       - name: Run emulator management tests
         run: |
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          echo "=== Test directory contents ==="
+          ls -la scripts/tests/ || echo "Test directory listing failed"
+          echo "=== Emulator scripts ==="
+          ls -la scripts/emulator-*.sh || echo "Emulator scripts listing failed"
+          echo "=== Running tests ==="
           ./scripts/tests/run_tests.sh --verbose
 
       - name: Upload test results
