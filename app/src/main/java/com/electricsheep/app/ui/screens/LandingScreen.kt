@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.Settings
@@ -40,7 +42,10 @@ import com.electricsheep.app.BuildConfig
 import com.electricsheep.app.ElectricSheepApplication
 import com.electricsheep.app.config.Environment
 import com.electricsheep.app.config.FeatureFlag
+import com.electricsheep.app.data.local.QuotePreferences
+import com.electricsheep.app.data.remote.QuoteApi
 import com.electricsheep.app.ui.components.LoadingOverlay
+import com.electricsheep.app.ui.theme.Spacing
 import com.electricsheep.app.util.Logger
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -74,6 +79,37 @@ fun LandingScreen(
 
     // Loading state for environment switching
     var isSwitchingEnvironment by rememberSaveable { mutableStateOf(false) }
+
+    // Inspirational quote preferences and state
+    val quotePreferences = remember { QuotePreferences(application) }
+    var areQuotesEnabled by rememberSaveable { mutableStateOf(quotePreferences.areQuotesEnabled()) }
+    var quoteText by rememberSaveable { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(areQuotesEnabled) {
+        if (!areQuotesEnabled) {
+            quoteText = null
+            quotePreferences.setQuotesEnabled(false)
+            return@LaunchedEffect
+        }
+
+        // Ensure preference is persisted
+        quotePreferences.setQuotesEnabled(true)
+
+        // Start from last cached quote for offline / first-load experience
+        val cached = quotePreferences.getLastQuote()
+        if (cached != null) {
+            quoteText = cached.text
+        }
+
+        try {
+            val latest = QuoteApi.fetchRandomQuote()
+            quoteText = latest.text
+            quotePreferences.setLastQuote(latest)
+        } catch (e: Exception) {
+            // Fall back to cached quote (if any) and avoid crashing the screen
+            Logger.warn("LandingScreen", "Failed to fetch inspirational quote, using cached value if available", e)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -120,34 +156,66 @@ fun LandingScreen(
                     }
                 }
             }
-        // Electric Sheep Logo
-        Image(
-            painter = painterResource(id = R.drawable.ic_electric_sheep_logo),
-            contentDescription = "Electric Sheep Logo",
-            modifier = Modifier
-                .size(120.dp)
-                .padding(bottom = 16.dp)
-                .semantics {
-                    contentDescription = "Electric Sheep Logo - A stylized sheep with electric lightning elements"
-                    role = Role.Image
+            // Electric Sheep Logo
+            Image(
+                painter = painterResource(id = R.drawable.ic_electric_sheep_logo),
+                contentDescription = "Electric Sheep Logo",
+                modifier = Modifier
+                    .size(120.dp)
+                    .padding(bottom = 16.dp)
+                    .semantics {
+                        contentDescription = "Electric Sheep Logo - A stylized sheep with electric lightning elements"
+                        role = Role.Image
+                    }
+            )
+
+            Text(
+                text = "Electric Sheep",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "Personal Utilities",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = Spacing.lg)
+            )
+
+            if (areQuotesEnabled && quoteText != null) {
+                Text(
+                    text = quoteText!!,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(bottom = Spacing.md),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            TextButton(
+                onClick = { areQuotesEnabled = !areQuotesEnabled },
+                modifier = Modifier.semantics {
+                    contentDescription = if (areQuotesEnabled) {
+                        "Hide inspirational quote"
+                    } else {
+                        "Show inspirational quote"
+                    }
+                    role = Role.Button
                 }
-        )
+            ) {
+                Text(
+                    text = if (areQuotesEnabled) "Hide inspirational quote" else "Show inspirational quote",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-        Text(
-            text = "Electric Sheep",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-            text = "Personal Utilities",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        UtilityCard(
+            UtilityCard(
             title = "Mood Management",
             description = "Track your mood throughout the day and analyse trends",
             onClick = {
