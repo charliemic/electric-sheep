@@ -247,10 +247,11 @@ jobs:
           supabase db execute "SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version;" || echo "Migrations table check completed"
       
       - name: Generate migration diff
+        # This step is now non-blocking (continue-on-error)
         run: |
           # Show what would change compared to current schema
-          # This may fail if schema is identical, which is fine for PR preview
-          supabase db diff --schema public || echo "No schema differences found (this is expected if migrations are up to date)"
+          supabase db diff --schema public
+        continue-on-error: true # Allow this step to fail without failing the job
       
       - name: Stop local Supabase
         if: always()
