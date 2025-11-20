@@ -28,6 +28,11 @@ proguard/
 # Log Files
 *.log
 
+# Test artifacts and temporary files
+/tmp/persona_test_results/
+test-automation/build/
+test-automation/.gradle/
+
 # Android Studio Navigation editor temp files
 .navigation/
 

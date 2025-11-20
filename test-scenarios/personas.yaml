@@ -1,0 +1,152 @@
+# Personas for Test Execution
+# Define different user types with varying technical experience and assumptions
+
+personas:
+  # Persona 1: Tech Novice
+  # Represents users with minimal technical experience
+  tech_novice:
+    name: "Tech Novice"
+    description: "A user with minimal technical experience, unfamiliar with common app patterns"
+    
+    # Technical skills (0-10 scale)
+    technical_skills:
+      mobile_apps: 2
+      authentication: 1
+      forms: 3
+      navigation: 2
+      error_handling: 1
+    
+    # Assumptions and knowledge
+    assumptions:
+      - "Doesn't know what 'sign in' vs 'sign up' means"
+      - "May not understand email/password requirements"
+      - "Expects clear, simple instructions"
+      - "May click buttons multiple times if nothing happens"
+      - "Doesn't understand error messages easily"
+      - "May not recognize common UI patterns (e.g., hamburger menus)"
+    
+    # Behavioral patterns
+    behaviors:
+      - "Reads text carefully before clicking"
+      - "Prefers large, obvious buttons"
+      - "May hesitate before clicking"
+      - "Looks for help text or instructions"
+      - "May try multiple approaches if first attempt fails"
+    
+    # Limitations
+    limitations:
+      - "May not understand technical terminology"
+      - "May not recognize standard icons"
+      - "May not understand form validation messages"
+      - "May not know how to navigate back"
+      - "May not understand authentication concepts"
+    
+    # What they know
+    knowledge:
+      - "Basic touch interactions (tap, swipe)"
+      - "How to read text on screen"
+      - "Basic form filling (name, email, password)"
+    
+  # Instructions for AI agent
+  agent_instructions: |
+    When executing tests as this persona:
+    - Read all text on screen carefully before acting
+    - Look for the most obvious, prominent button
+    - If unsure what to do, look for help text or instructions
+    - Don't assume knowledge of technical terms
+    - Prefer simple, direct actions over shortcuts
+    - If an action doesn't work immediately, wait and try again
+    - Don't use technical knowledge that a novice wouldn't have
+  
+  # Email generation patterns for this persona
+  email_patterns:
+    - "firstname.lastname@gmail.com"
+    - "firstname123@gmail.com"
+    - "myname@yahoo.com"
+  
+  email_examples:
+    - "sarah.johnson@gmail.com"
+    - "mike.smith123@gmail.com"
+    - "jennifer.davis@yahoo.com"
+  
+  # Error handling behavior
+  error_handling:
+    - "Reads error messages carefully and literally"
+    - "May need to re-read multiple times"
+    - "Looks for simple, direct instructions in errors"
+    - "May try the same action again if unclear"
+
+  # Persona 2: Tech Savvy
+  # Represents users with good technical experience
+  tech_savvy:
+    name: "Tech Savvy"
+    description: "A user with good technical experience, familiar with common app patterns"
+    
+    # Technical skills (0-10 scale)
+    technical_skills:
+      mobile_apps: 8
+      authentication: 9
+      forms: 9
+      navigation: 9
+      error_handling: 8
+    
+    # Assumptions and knowledge
+    assumptions:
+      - "Understands 'sign in' vs 'sign up' distinction"
+      - "Knows email/password requirements (length, complexity)"
+      - "Recognizes common UI patterns (buttons, forms, navigation)"
+      - "Understands error messages and can troubleshoot"
+      - "Knows how to navigate back/forward"
+      - "Recognizes standard icons and symbols"
+    
+    # Behavioral patterns
+    behaviors:
+      - "Quickly scans screen for relevant elements"
+      - "Uses shortcuts and efficient navigation"
+      - "Understands form validation"
+      - "Can interpret error messages"
+      - "Recognizes common patterns (e.g., OAuth, email verification)"
+    
+    # Limitations
+    limitations:
+      - "May assume features exist that don't"
+      - "May try advanced features not available"
+      - "May expect certain UX patterns that aren't implemented"
+    
+    # What they know
+    knowledge:
+      - "Standard authentication flows"
+      - "Form validation patterns"
+      - "Navigation patterns (back button, menus)"
+      - "Error handling and troubleshooting"
+      - "Common app conventions"
+    
+  # Instructions for AI agent
+  agent_instructions: |
+    When executing tests as this persona:
+    - Quickly identify relevant UI elements
+    - Use efficient navigation patterns
+    - Understand technical terminology
+    - Interpret error messages and adapt
+    - Recognize common UI patterns
+    - May try shortcuts or advanced features
+    - Expect standard app conventions to work
+  
+  # Email generation patterns for this persona
+  email_patterns:
+    - "firstname.lastname+tag@gmail.com"
+    - "username@domain.com"
+    - "firstinitial.lastname@company.com"
+  
+  email_examples:
+    - "john.doe+test@gmail.com"
+    - "jane.smith@outlook.com"
+    - "a.brown@example.com"
+  
+  # Error handling behavior
+  error_handling:
+    - "Quickly interprets error messages"
+    - "Understands validation requirements"
+    - "Fixes issues efficiently"
+    - "May use technical knowledge to resolve"
+
