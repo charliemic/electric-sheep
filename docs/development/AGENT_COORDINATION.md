@@ -32,7 +32,38 @@
 
 ## Active Work
 
-*No active work currently - add entries here as agents start tasks*
+### Task: Restore Design Work (Logos, Icons, Backgrounds)
+- **Branch**: `feature/restore-design-work`
+- **Worktree**: None (should use worktree for better isolation)
+- **Status**: In Progress
+- **Files Modified**: 
+  - `app/src/main/res/mipmap-mdpi/ic_launcher_foreground.xml`
+  - `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`
+  - `app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml`
+  - `app/src/main/res/mipmap-mdpi/ic_launcher_round.xml`
+  - `app/src/main/res/values/colors.xml`
+- **Isolation Strategy**: branch only (worktree recommended but not used)
+- **Conflicts**: None known
+- **Issue**: Working on `main` branch initially - switched to feature branch. Untracked files from other agents visible in workspace.
+
+### Task: Mood Chart Visualization
+- **Branch**: `feature/mood-chart-visualization` ✅
+- **Worktree**: None (working directly on feature branch)
+- **Status**: In Progress
+- **Files Modified**: 
+  - `app/src/main/java/com/electricsheep/app/ui/components/MoodChart.kt` ✅ Restored
+  - `app/src/main/java/com/electricsheep/app/ui/components/MoodChartDataProcessor.kt` ✅ Restored
+  - `app/src/main/java/com/electricsheep/app/data/fixtures/` ✅ Restored (test data fixtures)
+  - `app/src/main/java/com/electricsheep/app/data/repository/MoodRepositoryTestDataExtensions.kt`
+  - `app/build.gradle.kts` (Vico chart library dependencies - removed, using custom Canvas)
+- **Isolation Strategy**: ✅ **Feature branch** - `feature/mood-chart-visualization`
+- **Conflicts**: None - properly isolated on feature branch
+- **Issue**: ✅ **RESOLVED** - Files restored from `../electric-sheep-other-agent-work/` to feature branch
+- **Action Taken**: 
+  - Switched to feature branch: `feature/mood-chart-visualization`
+  - Restored files from `../electric-sheep-other-agent-work/`
+  - Files now tracked in git on proper feature branch
+  - Updated coordination doc
 
 ## Shared Files (Require Coordination)
 

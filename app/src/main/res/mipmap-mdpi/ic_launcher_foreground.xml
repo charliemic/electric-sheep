@@ -1,11 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
-    android:viewportWidth="48"
-    android:viewportHeight="48">
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- ES Monogram for Launcher Icon -->
+    <!-- Algorithm: Simple, elegant, minimal - matching sheep logo's clean aesthetic -->
+    <!-- Safe zone: 36dp (75% of 48dp icon) centered in 108dp viewport -->
+    
+    <!-- Letter "E" - Clean, bold, geometric -->
+    <!-- Left vertical bar -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M24,12L24,36M12,24L36,24"/>
+        android:fillColor="#1A3F41"
+        android:pathData="M30,24 L30,84 L38,84 L38,24 Z"/>
+    
+    <!-- Top horizontal bar -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M30,24 L56,24 L56,32 L38,32 L38,24 Z"/>
+    
+    <!-- Middle horizontal bar (shorter for elegance) -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M30,50 L50,50 L50,58 L38,58 L38,50 Z"/>
+    
+    <!-- Bottom horizontal bar -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M30,74 L56,74 L56,84 L38,84 L38,74 Z"/>
+    
+    <!-- Letter "S" - Smooth curves, simple like sheep logo -->
+    <!-- Top curve (smooth, rounded) -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M62,24
+            C68,24 74,26 76,30
+            C78,34 76,38 72,38
+            C68,38 64,36 64,32
+            C64,28 66,26 68,26
+            C70,26 72,28 72,32
+            C72,36 68,38 62,38
+            C58,38 56,36 56,32
+            C56,28 58,24 62,24 Z"/>
+    
+    <!-- Middle connecting section -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M62,38
+            L72,38
+            L72,50
+            L62,50
+            Z"/>
+    
+    <!-- Bottom curve (smooth, rounded) -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M62,50
+            C68,50 74,52 76,56
+            C78,60 76,64 72,64
+            C68,64 64,62 64,58
+            C64,54 66,52 68,52
+            C70,52 72,54 72,58
+            C72,62 68,64 62,64
+            C58,64 56,62 56,58
+            C56,54 58,50 62,50 Z"/>
+    
+    <!-- Bottom section -->
+    <path
+        android:fillColor="#1A3F41"
+        android:pathData="M62,64
+            L72,64
+            L72,84
+            L62,84
+            Z"/>
+    
 </vector>
-
