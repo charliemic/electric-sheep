@@ -155,9 +155,31 @@ Text(
 - Never hardcode colors
 - Ensure sufficient contrast ratios
 
+## Accessibility vs. Design
+
+**Accessibility Rule Focus:**
+- WCAG compliance (contrast ratios, touch targets)
+- Screen reader support (content descriptions, semantic roles)
+- Error announcements and live regions
+- Keyboard navigation
+- Programmatic accessibility (semantics, roles, state descriptions)
+
+**Design Rule Focus:**
+- Visual consistency, styling, colors, typography
+- UX principles (comprehensibility, task-orientation, holistic design)
+- Information hierarchy and visual flow
+- Component standards and patterns
+
+**Overlap:**
+- Both rules require using theme colors (accessibility for contrast compliance, design for consistency)
+- Both rules require standard spacing (accessibility for touch targets, design for consistency)
+- Both rules require clear error messages (accessibility for announcements, design for comprehensibility)
+- When implementing UI, consider both accessibility and design requirements together
+
 ## Related Documentation
 
 - `AI_AGENT_GUIDELINES.md` - Complete accessibility guidelines
 - `docs/architecture/UX_PRINCIPLES.md` - UX and accessibility principles
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md` - Typography system
+- `.cursor/rules/design.mdc` - Design and UX principles
 - `app/src/main/.../ui/components/Accessible*.kt` - Accessible component implementations
