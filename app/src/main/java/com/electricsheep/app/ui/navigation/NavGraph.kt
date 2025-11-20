@@ -11,11 +11,13 @@ import com.electricsheep.app.ui.screens.LandingScreen
 import com.electricsheep.app.ui.screens.mood.MoodManagementScreen
 import com.electricsheep.app.ui.screens.mood.MoodManagementViewModel
 import com.electricsheep.app.ui.screens.mood.MoodManagementViewModelFactory
+import com.electricsheep.app.ui.screens.trivia.TriviaScreen
 import com.electricsheep.app.util.Logger
 
 sealed class Screen(val route: String) {
     object Landing : Screen("landing")
     object MoodManagement : Screen("mood_management")
+    object Trivia : Screen("trivia")
 }
 
 @Composable
@@ -31,6 +33,10 @@ fun AppNavGraph(navController: NavHostController) {
                 onNavigateToMoodManagement = {
                     Logger.info("NavGraph", "Navigating to Mood Management screen")
                     navController.navigate(Screen.MoodManagement.route)
+                },
+                onNavigateToTrivia = {
+                    Logger.info("NavGraph", "Navigating to Trivia screen")
+                    navController.navigate(Screen.Trivia.route)
                 },
                 application = application
             )
@@ -49,6 +55,18 @@ fun AppNavGraph(navController: NavHostController) {
                 viewModel = viewModel,
                 onNavigateBack = {
                     Logger.debug("NavGraph", "Navigating back from Mood Management screen")
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Screen.Trivia.route) {
+            val context = LocalContext.current
+            val application = context.applicationContext as ElectricSheepApplication
+            
+            TriviaScreen(
+                application = application,
+                onNavigateBack = {
+                    Logger.debug("NavGraph", "Navigating back from Trivia screen")
                     navController.popBackStack()
                 }
             )

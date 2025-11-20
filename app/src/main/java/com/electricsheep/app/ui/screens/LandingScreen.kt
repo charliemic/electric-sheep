@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LandingScreen(
     onNavigateToMoodManagement: () -> Unit,
+    onNavigateToTrivia: () -> Unit,
     application: ElectricSheepApplication
 ) {
     Logger.debug("LandingScreen", "Landing screen displayed")
@@ -55,6 +56,12 @@ fun LandingScreen(
     // Check feature flag for indicator
     val showIndicator = application.getFeatureFlagManager().isEnabled(
         FeatureFlag.SHOW_FEATURE_FLAG_INDICATOR,
+        defaultValue = false
+    )
+    
+    // Check feature flag for trivia app
+    val isTriviaEnabled = application.getFeatureFlagManager().isEnabled(
+        FeatureFlag.ENABLE_TRIVIA_APP,
         defaultValue = false
     )
 
@@ -154,6 +161,24 @@ fun LandingScreen(
                     role = Role.Button
                 }
         )
+
+        // Trivia Quiz app (behind feature flag)
+        if (isTriviaEnabled) {
+            UtilityCard(
+                title = "Trivia Quiz",
+                description = "Test your knowledge with pub quiz style questions",
+                onClick = {
+                    Logger.info("LandingScreen", "User tapped Trivia Quiz utility")
+                    onNavigateToTrivia()
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .semantics {
+                        contentDescription = "Trivia Quiz utility. Test your knowledge with pub quiz style questions"
+                        role = Role.Button
+                    }
+            )
+        }
 
         // Placeholder for future utilities
         UtilityCard(

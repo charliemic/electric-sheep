@@ -21,6 +21,7 @@ android {
         // Feature flags - can be overridden per build type
         buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
         buildConfigField("boolean", "SHOW_FEATURE_FLAG_INDICATOR_MODE", "false")
+        buildConfigField("boolean", "ENABLE_TRIVIA_APP_MODE", "false")
         
         // Supabase configuration - read from local.properties
         val localPropertiesFile = rootProject.file("local.properties")
@@ -155,6 +156,11 @@ dependencies {
     
     // WorkManager for background sync
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Vico chart library for Compose
+    implementation("com.patrykandpatrick.vico:compose:1.13.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
+    implementation("com.patrykandpatrick.vico:core:1.13.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
