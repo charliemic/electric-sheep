@@ -1,0 +1,185 @@
+---
+alwaysApply: true
+---
+
+# Accessibility Principles and Requirements
+
+## CRITICAL: Always Implement Accessibility
+
+**When creating or modifying UI components:**
+1. ✅ Add content descriptions to all interactive elements
+2. ✅ Provide semantic roles for custom components
+3. ✅ Ensure touch targets meet minimum 48dp × 48dp
+4. ✅ Test with TalkBack screen reader
+5. ✅ Announce state changes (loading, errors, success) to screen readers
+
+## WCAG AA Compliance
+
+### Color Contrast
+- ✅ **Minimum 4.5:1** contrast ratio for text/background combinations
+- ✅ Use `MaterialTheme.colorScheme` colors (already compliant)
+- ✅ Never use color alone to convey information
+
+### Touch Targets
+- ✅ **Minimum 48dp × 48dp** for all interactive elements
+- ✅ Use `Modifier.size(48.dp)` or `Modifier.minimumInteractiveSize()`
+- ✅ Ensure sufficient spacing between touch targets
+
+### Screen Reader Support
+- ✅ **Content Descriptions**: All interactive elements must have descriptive content descriptions
+- ✅ **Semantic Roles**: Use appropriate semantic roles (Button, Image, etc.)
+- ✅ **State Announcements**: Announce dynamic state changes (loading, errors, success)
+- ✅ **Error Annotations**: Use `error()` semantics for error states
+- ✅ **Live Regions**: Use `liveRegion` for dynamic content updates
+
+## Component Accessibility Checklist
+
+### Buttons
+- [ ] Content description provided
+- [ ] Semantic role set (Role.Button)
+- [ ] Minimum 48dp touch target
+- [ ] Loading state announced to screen readers
+- [ ] Disabled state clearly indicated
+
+### Text Fields
+- [ ] Label always present (required for accessibility)
+- [ ] Content description provided
+- [ ] Error state announced (`error()` semantics)
+- [ ] Supporting text for hints or errors
+- [ ] Keyboard type appropriate (Email, Number, etc.)
+
+### Images
+- [ ] Content description for meaningful images
+- [ ] `contentDescription = null` only for decorative images
+- [ ] Semantic role set (Role.Image)
+
+### Cards
+- [ ] Content description if clickable
+- [ ] Semantic role if interactive
+- [ ] Clear indication of interactivity
+
+### Error Messages
+- [ ] Live region for dynamic announcements
+- [ ] Error semantics (`error()` annotation)
+- [ ] Clear, actionable error messages
+- [ ] Sufficient color contrast
+
+## Implementation Examples
+
+### Accessible Button
+```kotlin
+Button(
+    onClick = { /* ... */ },
+    modifier = Modifier
+        .semantics {
+            role = Role.Button
+            contentDescription = "Sign in with Google"
+        }
+        .minimumInteractiveSize() // Ensures 48dp minimum
+) {
+    Text("Sign in with Google")
+}
+```
+
+### Accessible Text Field
+```kotlin
+OutlinedTextField(
+    value = email,
+    onValueChange = { /* ... */ },
+    label = { Text("Email") }, // Required for accessibility
+    isError = hasError,
+    supportingText = if (hasError) {
+        { Text("Invalid email address") }
+    } else null,
+    modifier = Modifier.semantics {
+        if (hasError) {
+            error("Invalid email address")
+        }
+    }
+)
+```
+
+### Accessible Error Message
+```kotlin
+Text(
+    text = errorMessage,
+    color = MaterialTheme.colorScheme.error,
+    modifier = Modifier.semantics {
+        error(errorMessage)
+        liveRegion = LiveRegionMode.Polite
+        contentDescription = "Error: $errorMessage"
+    }
+)
+```
+
+## Use Accessible Components
+
+**Prefer using existing accessible components:**
+- `AccessibleButton` - Button with built-in accessibility
+- `AccessibleTextField` - Text field with error handling
+- `AccessibleCard` - Card with consistent styling
+- `AccessibleErrorMessage` - Error message with live regions
+- `AccessibleScreen` - Screen wrapper with proper semantics
+
+**Location:** `app/src/main/.../ui/components/Accessible*.kt`
+
+## Testing Accessibility
+
+### Manual Testing
+1. ✅ Enable TalkBack screen reader
+2. ✅ Navigate through UI using screen reader
+3. ✅ Verify all interactive elements are announced
+4. ✅ Verify state changes are announced
+5. ✅ Verify error messages are announced
+
+### Automated Testing
+- Use accessibility testing tools
+- Check touch target sizes
+- Verify color contrast ratios
+- Test with accessibility services enabled
+
+## Design System Compliance
+
+### Spacing
+- Use `Spacing` object for consistent spacing
+- Follow Material Design 3 8dp grid system
+- Ensure sufficient spacing between interactive elements
+
+### Typography
+- Minimum 16sp for body text (WCAG recommendation)
+- Proper line heights (1.5x font size)
+- Sufficient letter spacing for clarity
+
+### Colors
+- Always use `MaterialTheme.colorScheme` colors
+- Never hardcode colors
+- Ensure sufficient contrast ratios
+
+## Accessibility vs. Design
+
+**Accessibility Rule Focus:**
+- WCAG compliance (contrast ratios, touch targets)
+- Screen reader support (content descriptions, semantic roles)
+- Error announcements and live regions
+- Keyboard navigation
+- Programmatic accessibility (semantics, roles, state descriptions)
+
+**Design Rule Focus:**
+- Visual consistency, styling, colors, typography
+- UX principles (comprehensibility, task-orientation, holistic design)
+- Information hierarchy and visual flow
+- Component standards and patterns
+
+**Overlap:**
+- Both rules require using theme colors (accessibility for contrast compliance, design for consistency)
+- Both rules require standard spacing (accessibility for touch targets, design for consistency)
+- Both rules require clear error messages (accessibility for announcements, design for comprehensibility)
+- When implementing UI, consider both accessibility and design requirements together
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete accessibility guidelines
+- `docs/architecture/UX_PRINCIPLES.md` - UX and accessibility principles
+- `docs/architecture/TYPOGRAPHY_SYSTEM.md` - Typography system
+- `.cursor/rules/design.mdc` - Design and UX principles
+- `app/src/main/.../ui/components/Accessible*.kt` - Accessible component implementations

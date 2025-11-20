@@ -1,0 +1,86 @@
+---
+alwaysApply: true
+---
+
+# Logging Principles and Requirements
+
+## CRITICAL: Always Use Centralized Logger
+
+**When implementing features:**
+1. ✅ Use `com.electricsheep.app.util.Logger` (centralized utility)
+2. ✅ Choose appropriate log level
+3. ✅ Include descriptive tags (component/class name)
+4. ✅ Include relevant context in messages
+5. ✅ Never log sensitive data (passwords, tokens, PII)
+
+## Log Level Guidelines
+
+### VERBOSE
+- **Use for**: Very detailed diagnostic information, variable values during development
+- **Example**: `Logger.verbose("ComponentName", "Processing item: $itemId")`
+- **Production**: Typically disabled
+
+### DEBUG
+- **Use for**: Development debugging, UI state changes, component lifecycle
+- **Example**: `Logger.debug("ScreenName", "Screen displayed")`
+- **Production**: Typically disabled
+
+### INFO
+- **Use for**: Important application flow events, user actions, successful operations
+- **Example**: `Logger.info("ScreenName", "User navigated to settings")`
+- **Production**: Should be enabled for monitoring
+
+### WARN
+- **Use for**: Recoverable errors, deprecated API usage, fallback scenarios
+- **Example**: `Logger.warn("NetworkService", "API call failed, using cached data")`
+- **Production**: Should be enabled
+
+### ERROR
+- **Use for**: Exceptions, failures, errors that need attention
+- **Example**: `Logger.error("DatabaseService", "Failed to save data", exception)`
+- **Production**: Always enabled
+
+## Logging Implementation
+
+### Use Centralized Logger
+```kotlin
+// Good: Use centralized Logger utility
+import com.electricsheep.app.util.Logger
+
+Logger.info("UserRepository", "User loaded successfully: $userId")
+Logger.error("ApiService", "Network request failed", networkException)
+```
+
+### Include Context
+```kotlin
+// Good: Include relevant context
+Logger.debug("UserRepository", "Loading user: $userId")
+Logger.info("ScreenName", "User action: $action, result: $result")
+```
+
+### Log Exceptions
+```kotlin
+// Good: Log exceptions with context
+try {
+    val result = operation()
+} catch (e: Exception) {
+    Logger.error("ComponentName", "Operation failed: context", e)
+}
+```
+
+## Logging Checklist
+
+- [ ] Use centralized Logger utility
+- [ ] Choose appropriate log level
+- [ ] Include descriptive tags (component/class name)
+- [ ] Include relevant context
+- [ ] Never log sensitive data
+- [ ] Log important user actions (INFO)
+- [ ] Log errors and exceptions (ERROR with throwable)
+- [ ] Log warnings for unusual conditions (WARN)
+- [ ] Consider log volume (avoid excessive logging)
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete logging guidelines
+- `com.electricsheep.app.util.Logger` - Logger utility implementation

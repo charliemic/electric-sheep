@@ -1,0 +1,105 @@
+---
+alwaysApply: true
+---
+
+# Security Principles and Requirements
+
+## CRITICAL: Security Requirements
+
+**When implementing features:**
+1. ✅ Validate and sanitize user input
+2. ✅ Verify user authentication before accessing user-scoped data
+3. ✅ Verify data ownership (userId matches current user)
+4. ✅ Never trust client-provided user IDs
+5. ✅ Never commit secrets, API keys, or credentials
+
+## Authentication
+
+### User Authentication
+- ✅ **Always verify authentication** before accessing user-scoped data
+- ✅ Use `UserManager.requireUserId()` or check `UserManager.isAuthenticated`
+- ✅ Handle unauthenticated states gracefully (show sign-in UI, disable features)
+- ✅ Never trust client-provided user IDs - always use current authenticated user's ID
+
+### Data Scoping
+- ✅ **Scope all data to current user**: Add `userId` to data models
+- ✅ **Filter queries by userId**: All queries must filter by current user's ID
+- ✅ **Verify ownership**: Check `userId` matches current user before operations
+- ✅ **Prevent cross-user access**: Never allow access to other users' data
+
+## Authorization
+
+### Data Access Control
+- ✅ Verify user permissions before sensitive operations
+- ✅ Verify data ownership before allowing access/modification
+- ✅ Filter all queries by `userId` to prevent cross-user data access
+- ✅ Validate `userId` in repository methods before database operations
+
+## Secrets Management
+
+### DO ✅
+- Store secrets in environment variables
+- Use secure storage (GitHub Secrets, CI/CD secrets)
+- Use separate keystores for debug and release
+- Keep dependencies updated to patch vulnerabilities
+
+### DON'T ❌
+- Never commit secrets or credentials
+- Never hardcode API keys
+- Never commit keystore files or passwords
+- Never expose sensitive information in error messages
+
+## Security Checklist
+
+### Input Validation
+- [ ] User input validated and sanitized
+- [ ] SQL injection prevented (use parameterized queries)
+- [ ] XSS prevention (sanitize output)
+
+### Authentication & Authorization
+- [ ] User authentication verified before data access
+- [ ] Data ownership verified (userId matches current user)
+- [ ] All queries filter by userId
+- [ ] Unauthenticated states handled gracefully
+
+### Secrets & Configuration
+- [ ] No hardcoded secrets or credentials
+- [ ] API keys stored securely
+- [ ] Keystores stored securely
+- [ ] Dependencies up-to-date
+
+### Error Handling
+- [ ] Error messages don't leak sensitive information
+- [ ] Proper error handling implemented
+- [ ] Security headers configured
+
+## Implementation Examples
+
+### Verify Authentication
+```kotlin
+// Good: Verify authentication before accessing user data
+val userId = userManager.requireUserId() // Throws if not authenticated
+val userData = repository.getUserData(userId)
+```
+
+### Verify Data Ownership
+```kotlin
+// Good: Verify ownership before allowing modification
+val currentUserId = userManager.requireUserId()
+if (data.userId != currentUserId) {
+    throw UnauthorizedException("Cannot modify other user's data")
+}
+```
+
+### Filter by User ID
+```kotlin
+// Good: Always filter queries by userId
+@Query("SELECT * FROM moods WHERE userId = :userId")
+suspend fun getMoodsByUserId(userId: String): List<Mood>
+```
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete security guidelines
+- `docs/architecture/AUTHENTICATION.md` - Authentication architecture
+- `docs/architecture/DATA_LAYER_ARCHITECTURE.md` - Data layer security

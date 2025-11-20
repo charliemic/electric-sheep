@@ -1,0 +1,155 @@
+---
+alwaysApply: true
+---
+
+# Branch Isolation and Multi-Agent Workflow Rules
+
+## CRITICAL: Never Work on Main Branch
+
+**Before making ANY changes, you MUST:**
+
+1. **Check current branch:**
+   ```bash
+   git status
+   # or
+   git branch
+   ```
+
+2. **If on `main` branch, IMMEDIATELY create a feature branch:**
+   ```bash
+   git checkout -b feature/<task-description>
+   # Or use git worktree for file system isolation:
+   # git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   ```
+
+3. **Never commit directly to `main`** - All changes must go through feature branches.
+
+## Branch Naming Convention
+
+**Required format:** `<type>/<task-description>`
+
+**Types:**
+- `feature/` - New functionality
+- `fix/` - Bug fixes  
+- `refactor/` - Code refactoring
+- `docs/` - Documentation only
+- `test/` - Test improvements
+
+**Examples:**
+- ✅ `feature/test-helpers`
+- ✅ `feature/env-switch`
+- ✅ `fix/login-bug`
+- ✅ `refactor/component-cleanup`
+- ❌ `feature/my-feature` (too vague - be descriptive)
+- ❌ `test-helpers` (missing type prefix)
+
+**Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
+
+## File System Isolation (RECOMMENDED)
+
+**For complete file system isolation, use git worktrees:**
+
+```bash
+# Create isolated worktree
+git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+cd ../electric-sheep-<task-name>
+# Work in complete isolation
+```
+
+**Benefits:**
+- Complete file system isolation
+- No conflicts with other agents
+- Easy cleanup after merge
+
+## Pre-Work Checklist (MANDATORY)
+
+Before starting any work, you MUST:
+
+1. ✅ **Verify NOT on main branch** - Check `git status`
+2. ✅ **Create feature branch** - Use proper naming convention
+3. ✅ **Consider file system isolation** - Use git worktree if working on shared files
+4. ✅ **Pull latest main** - `git pull origin main`
+5. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
+6. ✅ **Document your work** - Update coordination doc with your planned changes
+
+## File Coordination
+
+**Before modifying files, check coordination:**
+
+**Shared files (require coordination):**
+- `app/.../ui/screens/LandingScreen.kt`
+- `app/.../ElectricSheepApplication.kt`
+- `app/.../data/DataModule.kt`
+- `app/build.gradle.kts`, `build.gradle.kts`
+
+**If modifying shared files:**
+1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
+2. Document your changes in coordination doc
+3. Consider using git worktree for isolation
+4. Coordinate with other agents if needed
+
+## Workflow Enforcement
+
+**When user asks you to make changes:**
+
+1. **First, check branch:**
+   ```bash
+   git branch --show-current
+   ```
+
+2. **If on main, STOP and create branch:**
+   ```bash
+   git checkout -b feature/<task-description>
+   # Or for file system isolation:
+   # git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   ```
+
+3. **Before modifying files, check coordination:**
+   - Read `docs/development/AGENT_COORDINATION.md`
+   - Verify no conflicts with other agents
+   - Document your planned changes
+   - Consider git worktree if modifying shared files
+
+4. **After work, update coordination doc:**
+   - Mark work as "In Progress" or "Complete"
+   - List files you modified
+
+## Commit Rules
+
+**Before committing:**
+
+1. ✅ Verify you're on a feature branch (not `main`)
+2. ✅ Use descriptive commit messages
+3. ✅ Keep commits atomic (one logical change)
+4. ✅ Run tests if applicable
+
+**Commit message format:**
+```
+<type>: <description>
+
+[optional body]
+```
+
+**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+## Error Prevention
+
+**If you detect these conditions, STOP and fix:**
+
+- ❌ User is on `main` branch → Create feature branch immediately
+- ❌ Branch name doesn't follow convention → Rename branch
+- ❌ Modifying shared file without coordination → Check coordination doc first
+- ❌ Tests failing → Fix tests before proceeding
+- ❌ Uncommitted work on `main` → Move to feature branch
+- ❌ File system conflicts → Use git worktree for isolation
+
+## Multi-Agent Coordination
+
+**Always:**
+- Check `docs/development/AGENT_COORDINATION.md` before starting
+- Document your work in coordination doc
+- Update coordination doc when work status changes
+- Coordinate if files overlap with other agents
+- Use git worktree for file system isolation when needed
+
+**See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines

@@ -1,0 +1,103 @@
+---
+alwaysApply: true
+---
+
+# Error Handling Principles
+
+## Error Handling Requirements
+
+**When implementing features:**
+1. ✅ Handle errors gracefully without crashing
+2. ✅ Provide user-friendly error messages
+3. ✅ Log errors with sufficient context
+4. ✅ Use appropriate error types
+5. ✅ Follow error conversion strategies
+
+## Error Handling Principles
+
+### Fail Fast
+- ✅ Detect errors as early as possible
+- ✅ Validate input before processing
+- ✅ Check preconditions before operations
+
+### Graceful Degradation
+- ✅ Handle errors without crashing
+- ✅ Provide fallback behavior when possible
+- ✅ Show user-friendly error messages
+- ✅ Allow users to recover from errors
+
+### Error Types
+- ✅ Use specific error types (validation, network, system, etc.)
+- ✅ Convert between error types appropriately
+- ✅ Follow [Error Conversion Strategies](../docs/architecture/ERROR_CONVERSION_STRATEGIES.md)
+
+## Error Handling Patterns
+
+### Result Pattern
+```kotlin
+// Good: Use Result type for operations that can fail
+fun loadData(): Result<Data> {
+    return try {
+        val data = apiService.getData()
+        Result.success(data)
+    } catch (e: NetworkException) {
+        Result.failure(NetworkError("Failed to load data"))
+    }
+}
+```
+
+### Exception Handling
+```kotlin
+// Good: Specific error handling with logging
+try {
+    val result = apiCall()
+    return Success(result)
+} catch (e: NetworkException) {
+    Logger.error("ApiService", "Network error", e)
+    return Error("Please check your internet connection")
+} catch (e: ValidationException) {
+    Logger.warn("Validation", "Validation failed", e)
+    return Error("Invalid input: ${e.message}")
+} catch (e: Exception) {
+    Logger.error("ApiService", "Unexpected error", e)
+    return Error("An unexpected error occurred")
+}
+```
+
+## Logging Errors
+
+### Log Levels for Errors
+- **ERROR**: Exceptions, failures, unrecoverable conditions
+- **WARN**: Recoverable errors, fallback scenarios
+- **INFO**: Important flow events, successful operations
+
+### Error Logging
+```kotlin
+// Good: Log errors with context
+try {
+    val result = operation()
+} catch (e: Exception) {
+    Logger.error("ComponentName", "Operation failed: context", e)
+    // Handle error
+}
+```
+
+## User-Facing Error Messages
+
+### DO ✅
+- Provide clear, actionable error messages
+- Explain what went wrong
+- Suggest how to fix the issue
+- Use user-friendly language
+
+### DON'T ❌
+- Don't expose technical details to users
+- Don't leak sensitive information
+- Don't use technical jargon
+- Don't blame the user
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Complete error handling guidelines
+- `docs/architecture/ERROR_HANDLING.md` - Error handling architecture
+- `docs/architecture/ERROR_CONVERSION_STRATEGIES.md` - Error conversion strategies

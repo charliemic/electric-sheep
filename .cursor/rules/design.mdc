@@ -1,0 +1,255 @@
+---
+alwaysApply: true
+---
+
+# Design and UX Principles
+
+## CRITICAL: Always Consider UX and Design
+
+**When creating or modifying UI components:**
+1. ✅ Ensure comprehensibility - users should understand what they can do
+2. ✅ Follow task-oriented design - every screen has a clear primary task
+3. ✅ Maintain holistic design ecosystem - consistent across the app
+4. ✅ Use design system components and standards
+5. ✅ Consider user experience flow and information hierarchy
+
+## Core UX Principles
+
+### Comprehensibility
+- ✅ **Clear Purpose**: Every screen and component should have a clear, understandable purpose
+- ✅ **Intuitive Navigation**: Users should understand where they are and how to navigate
+- ✅ **Clear Affordances**: Buttons look clickable, inputs look editable, cards look interactive
+- ✅ **Minimal Cognitive Load**: Reduce decision points, use familiar patterns
+- ✅ **Progressive Disclosure**: Show essential information first, details on demand
+
+### Task-Orientation
+- ✅ **Primary Task First**: Most important action/input is most prominent
+- ✅ **Clear Information Hierarchy**: Headings, body text, and metadata are visually distinct
+- ✅ **Contextual Actions**: Actions appear where they're needed
+- ✅ **Feedback on Actions**: Loading states, success/error messages are clear and timely
+
+### Holistic Design Ecosystem
+- ✅ **Visual Consistency**: Same patterns used consistently across the app
+- ✅ **Component Reusability**: Common patterns extracted into reusable components
+- ✅ **Design System Compliance**: All styling follows established design system
+- ✅ **Cohesive Experience**: Users should feel like they're using one cohesive app
+
+## Design System Standards
+
+### Spacing
+- ✅ **Use Standard Spacing Scale**: Always use `Spacing` object values
+- ✅ **Consistent Application**: 
+  - Card padding: `Spacing.md` (16.dp)
+  - Section spacing: `Spacing.lg` (24.dp)
+  - Screen edge padding: `Spacing.md` (16.dp)
+  - Element gaps: `Spacing.sm` (8.dp) or `Spacing.md` (16.dp)
+  - Icon to text: `Spacing.xs` (4.dp)
+- ✅ **Never Hardcode Spacing**: Use `Spacing` object, not magic numbers
+
+**Location:** `app/src/main/.../ui/theme/Spacing.kt`
+
+### Colors
+- ✅ **Always Use Theme Colors**: All colors must come from `MaterialTheme.colorScheme`
+- ✅ **Semantic Color Usage**:
+  - Primary actions: `primary` / `onPrimary`
+  - Primary containers: `primaryContainer` / `onPrimaryContainer`
+  - Secondary actions: `secondary` / `onSecondary`
+  - Error states: `error` / `onError`, `errorContainer` / `onErrorContainer`
+  - Text colors: `onSurface` (primary), `onSurfaceVariant` (secondary)
+- ✅ **Never Hardcode Colors**: Use theme colors, not hardcoded color values
+- ✅ **Color Independence**: Never use color alone to convey information (see accessibility rule)
+
+**Location:** `app/src/main/.../ui/theme/Color.kt`, `app/src/main/.../ui/theme/Theme.kt`
+
+### Typography
+- ✅ **Use Material 3 Typography Scale**: Use `MaterialTheme.typography` styles
+- ✅ **Typography Hierarchy**:
+  - Screen titles: `headlineMedium` with `FontWeight.Bold`
+  - Section headings: `titleLarge` with `FontWeight.Bold`
+  - Card titles: `titleLarge` with `FontWeight.Bold`
+  - Body text: `bodyMedium` for primary, `bodySmall` for secondary
+  - Metadata: `bodySmall` with `onSurfaceVariant` color
+- ✅ **Consistent Application**: Same text styles for same content types across the app
+
+**Location:** `app/src/main/.../ui/theme/Type.kt`
+
+### Component Standards
+
+#### Buttons
+- ✅ **Consistent Width**: All buttons on same screen should have consistent width
+- ✅ **Primary Action Prominence**: Primary action should be visually most prominent
+- ✅ **Standard Patterns**:
+  - Primary: `Button` (filled) for main actions
+  - Secondary: `OutlinedButton` for alternative actions
+  - Tertiary: `TextButton` for links, toggles
+- ✅ **Loading States**: Replace text with indicator, don't show both
+
+#### Text Fields
+- ✅ **Consistent Width**: All fields in a form should have same width
+- ✅ **Standard Pattern**: Use `OutlinedTextField` with label, placeholder, supporting text
+- ✅ **Error Handling**: Use `isError` and `supportingText` for error messages
+- ✅ **Validation Feedback**: Immediate feedback when possible
+
+#### Cards
+- ✅ **Standard Elevation**: 
+  - Primary content: `4.dp`
+  - Standard content: `2.dp`
+  - Subtle containers: `1.dp`
+- ✅ **Standard Padding**: `Spacing.md` (16.dp) standard, `Spacing.lg` (20.dp) for more content
+- ✅ **Standard Shape**: `RoundedCornerShape(16.dp)` for standard cards
+
+#### Icons
+- ✅ **Standard Sizes**: 
+  - Small: 16dp (inline with small text)
+  - Medium: 20dp (standard, with body text)
+  - Large: 24dp (standalone, prominent)
+- ✅ **Theme Colors**: Use theme colors, typically `onSurface` or `onSurfaceVariant`
+
+## Screen Layout Standards
+
+### Standard Screen Structure
+1. **Top Bar**: Navigation, title, primary actions
+2. **Content Area**: 
+   - Primary content first (task-oriented)
+   - Secondary information below
+   - Lists/collections at bottom
+3. **Padding**: 
+   - Screen edges: `Spacing.md` (16.dp)
+   - Section separation: `Spacing.lg` (24.dp) or `Spacing.xl` (32.dp)
+
+### Content Flow
+- ✅ **Primary Task First**: Most important action/input at top
+- ✅ **Progressive Disclosure**: Collapsible sections for secondary options
+- ✅ **Clear Hierarchy**: Visual weight matches importance
+- ✅ **Consistent Alignment**: Center for focused tasks, start for lists
+
+## Use Design System Components
+
+**Prefer using existing design system components:**
+- `AccessibleButton` - Button with consistent styling and accessibility
+- `AccessibleTextField` - Text field with consistent styling and error handling
+- `AccessibleCard` - Card with consistent elevation/padding
+- `AccessibleScreen` - Screen wrapper with consistent structure
+- `LoadingIndicator` - Consistent loading indicator
+
+**Location:** `app/src/main/.../ui/components/Accessible*.kt`
+
+## Design Checklist
+
+### Before Creating/Modifying UI
+- [ ] Primary task clearly defined and prominent
+- [ ] Information hierarchy is clear (headings, body, metadata)
+- [ ] Spacing uses standard `Spacing` object values
+- [ ] Colors come from `MaterialTheme.colorScheme`
+- [ ] Typography follows hierarchy standards
+- [ ] Buttons have consistent width on same screen
+- [ ] Text fields have consistent width in same form
+- [ ] Cards use standard elevation/padding
+- [ ] Icons use standard sizes and theme colors
+- [ ] Component patterns match existing app patterns
+- [ ] Visual consistency maintained with rest of app
+
+### UX Considerations
+- [ ] Screen purpose is clear and comprehensible
+- [ ] Navigation is intuitive
+- [ ] Actions are contextual and appear where needed
+- [ ] Feedback is clear and timely (loading, success, errors)
+- [ ] Cognitive load is minimized
+- [ ] Progressive disclosure used for complex information
+
+## Implementation Examples
+
+### Good: Consistent Button Group
+```kotlin
+Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+    Button(
+        onClick = { /* primary action */ },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("Primary Action")
+    }
+    OutlinedButton(
+        onClick = { /* secondary action */ },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("Secondary Action")
+    }
+}
+```
+
+### Good: Consistent Form with Standard Spacing
+```kotlin
+Column(
+    verticalArrangement = Arrangement.spacedBy(Spacing.md)
+) {
+    OutlinedTextField(
+        value = email,
+        onValueChange = { /* ... */ },
+        label = { Text("Email") },
+        modifier = Modifier.fillMaxWidth(),
+        // ... other props
+    )
+    OutlinedTextField(
+        value = password,
+        onValueChange = { /* ... */ },
+        label = { Text("Password") },
+        modifier = Modifier.fillMaxWidth(),
+        // ... other props
+    )
+}
+```
+
+### Bad: Inconsistent Spacing
+```kotlin
+// Don't mix different spacing values without reason
+Column {
+    Text("Title")
+    Spacer(Modifier.height(8.dp))  // Use Spacing.sm instead
+    Text("Subtitle")
+    Spacer(Modifier.height(24.dp))  // Use Spacing.lg instead
+    Text("Content")
+}
+```
+
+### Bad: Hardcoded Colors
+```kotlin
+// Don't hardcode colors - use theme
+Text(
+    text = "Error",
+    color = Color(0xFFC85A4A)  // Use MaterialTheme.colorScheme.error instead
+)
+```
+
+### Bad: Inconsistent Button Widths
+```kotlin
+// Don't mix button widths on same screen
+Button(modifier = Modifier.fillMaxWidth(0.8f)) { /* ... */ }
+OutlinedButton(modifier = Modifier.fillMaxWidth()) { /* ... */ }
+```
+
+## Design vs. Accessibility
+
+**Design Rule Focus:**
+- Visual consistency, styling, colors, typography
+- UX principles (comprehensibility, task-orientation, holistic design)
+- Information hierarchy and visual flow
+- Component standards and patterns
+
+**Accessibility Rule Focus:**
+- WCAG compliance (contrast ratios, touch targets)
+- Screen reader support (content descriptions, semantic roles)
+- Error announcements and live regions
+- Keyboard navigation
+
+**Overlap:**
+- Both rules require using theme colors (design for consistency, accessibility for contrast)
+- Both rules require standard spacing (design for consistency, accessibility for touch targets)
+- Both rules require clear error messages (design for comprehensibility, accessibility for announcements)
+
+## Related Documentation
+
+- `docs/architecture/UX_PRINCIPLES.md` - Complete UX design principles and standards
+- `docs/architecture/TYPOGRAPHY_SYSTEM.md` - Typography system details
+- `docs/architecture/ICON_LOGO_DESIGN.md` - Icon and logo design principles
+- `app/src/main/.../ui/theme/` - Design system implementation (Spacing, Color, Type, Theme)
+- `app/src/main/.../ui/components/Accessible*.kt` - Design system components

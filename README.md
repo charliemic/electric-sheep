@@ -15,8 +15,46 @@ Android app for personal utilities, starting with mood management.
 ### Installation
 
 1. Clone the repository
-2. Install Android SDK (see [Android SDK Setup](#android-sdk-setup))
-3. Run `./gradlew build` to verify setup
+2. Install Java 17 (see [Java Setup](#java-setup))
+3. Install Android SDK (see [Android SDK Setup](#android-sdk-setup))
+4. Run `./gradlew build` to verify setup
+
+### Java Setup
+
+**macOS (using Homebrew):**
+```bash
+# Install Java 17
+brew install openjdk@17
+
+# Set JAVA_HOME for current session
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+
+# Or use the helper script (recommended)
+source scripts/setup-env.sh
+```
+
+**macOS (permanent setup):**
+See [Zsh Configuration Guide](docs/development/ZSH_CONFIGURATION.md) for a complete, robust `.zshrc` setup that automatically configures Java 17, Android SDK, and all required paths.
+
+Quick setup - add to your `~/.zshrc`:
+```bash
+# Java 17 for Electric Sheep
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+```
+
+**Quick Setup (all environment variables):**
+```bash
+# Source the environment setup script
+source scripts/setup-env.sh
+```
+
+**Verify Java version:**
+```bash
+java -version  # Should show version 17.x
+echo $JAVA_HOME  # Should point to Java 17 installation
+```
+
+**Note**: All development scripts (`dev-reload.sh`, `continuous-build.sh`, etc.) automatically detect and use Java 17 if available.
 
 ### Android SDK Setup
 
