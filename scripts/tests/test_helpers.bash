@@ -44,9 +44,16 @@ get_script_dir() {
     # BATS_TEST_DIRNAME is the test file path (e.g., /path/to/scripts/tests/test_file.bats)
     # We need to get the scripts/ directory (parent of tests/)
     if [ -n "$BATS_TEST_DIRNAME" ]; then
-        # Get directory of test file (scripts/tests/), then go up one level
+        # Get directory of test file (scripts/tests/), then go up one level to scripts/
         local test_dir="$(dirname "$BATS_TEST_DIRNAME")"
-        echo "$(cd "$test_dir/.." && pwd)"
+        local scripts_dir="$(cd "$test_dir/.." && pwd)"
+        # Verify we got the right directory by checking if it contains the scripts
+        if [ -f "$scripts_dir/emulator-lock-manager.sh" ]; then
+            echo "$scripts_dir"
+        else
+            # Fallback: try to find scripts directory from test file location
+            echo "$(cd "$(dirname "$BATS_TEST_DIRNAME")/.." && pwd)"
+        fi
     else
         # Fallback: assume we're in scripts/tests/ and go up one level
         echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
