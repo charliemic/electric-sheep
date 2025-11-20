@@ -26,9 +26,40 @@ fun main(args: Array<String>) {
     
     val task = getArg("task") ?: "Sign up and add mood value"
     val context = getArg("context")
-    val deviceName = getArg("device") ?: "emulator-5554"
+    
+    // Acquire emulator using discovery service if not provided
+    val deviceName = getArg("device") ?: run {
+        try {
+            val discoveryScript = File("../scripts/emulator-discovery.sh")
+            if (!discoveryScript.exists()) {
+                logger.warn("Discovery script not found, falling back to default device")
+                "emulator-5554"
+            } else {
+                val process = ProcessBuilder("bash", discoveryScript.absolutePath, "acquire")
+                    .directory(File(".."))
+                    .redirectErrorStream(true)
+                    .start()
+                val result = process.inputStream.bufferedReader().readText().trim()
+                val exitCode = process.waitFor()
+                if (exitCode == 0 && result.isNotEmpty()) {
+                    logger.info("Acquired emulator via discovery service: $result")
+                    result
+                } else {
+                    logger.warn("Discovery service failed, falling back to default device")
+                    "emulator-5554"
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to acquire emulator via discovery service: ${e.message}, using default")
+            "emulator-5554"
+        }
+    }
+    
     val appiumUrl = getArg("appium-url") ?: "http://localhost:4723"
     val aiApiKey = getArg("ai-api-key") ?: System.getenv("OPENAI_API_KEY")
+    
+    // Track acquired device for cleanup
+    val acquiredDevice = if (getArg("device") == null) deviceName else null
     
     logger.info("Starting test automation")
     logger.info("  Task: $task")
@@ -75,6 +106,22 @@ fun main(args: Array<String>) {
         }
     } finally {
         driverManager.quitDriver(driver)
+        
+        // Release emulator lock if we acquired it
+        if (acquiredDevice != null) {
+            try {
+                val discoveryScript = File("../scripts/emulator-discovery.sh")
+                if (discoveryScript.exists()) {
+                    val process = ProcessBuilder("bash", discoveryScript.absolutePath, "release", acquiredDevice)
+                        .directory(File(".."))
+                        .start()
+                    process.waitFor()
+                    logger.info("Released emulator lock: $acquiredDevice")
+                }
+            } catch (e: Exception) {
+                logger.warn("Failed to release emulator lock: ${e.message}")
+            }
+        }
     }
 }
 

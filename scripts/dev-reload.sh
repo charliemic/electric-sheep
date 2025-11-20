@@ -40,16 +40,22 @@ if [ ! -f "$ADB" ]; then
     ADB="adb"  # Fallback to system adb
 fi
 
-# Check if emulator is running (ensure one is available)
-echo -e "${BLUE}Checking for connected device...${NC}"
-DEVICE=$(./scripts/get-device-id.sh 2>/dev/null || ./scripts/emulator-manager.sh ensure 2>/dev/null || echo "")
+# Acquire emulator with locking (automatic discovery and acquisition)
+echo -e "${BLUE}Acquiring emulator for this agent...${NC}"
 
-if [ -z "$DEVICE" ]; then
-    echo -e "${YELLOW}⚠ No device connected. Starting emulator...${NC}"
-    DEVICE=$(./scripts/emulator-manager.sh ensure)
-fi
+# Cleanup function to release lock on exit
+cleanup() {
+    if [ -n "$ACQUIRED_DEVICE" ]; then
+        ./scripts/emulator-discovery.sh release "$ACQUIRED_DEVICE" > /dev/null 2>&1 || true
+    fi
+}
+trap cleanup EXIT INT TERM
 
-echo -e "${GREEN}✓${NC} Device found: $DEVICE"
+# Acquire emulator using discovery service
+DEVICE=$(./scripts/emulator-discovery.sh acquire)
+ACQUIRED_DEVICE="$DEVICE"
+
+echo -e "${GREEN}✓${NC} Device acquired: $DEVICE"
 
 # Clean build (optional, can be skipped for faster iteration)
 if [ "$1" == "--clean" ]; then
