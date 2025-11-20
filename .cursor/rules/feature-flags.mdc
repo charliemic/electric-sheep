@@ -1,0 +1,133 @@
+# Feature Flags Principles and Requirements
+
+## CRITICAL: Always Use Feature Flags for New Features
+
+**When implementing new features:**
+1. ✅ Add feature flag to `feature-flags/flags.yaml`
+2. ✅ Add feature flag constant to `app/src/main/.../config/FeatureFlag.kt`
+3. ✅ Check feature flag before showing/accessing feature
+4. ✅ Use staging environment for initial testing
+5. ✅ Provide sensible default values (typically `false` for new features)
+
+## Feature Flag Workflow
+
+### 1. Define Feature Flag
+
+**Add to `feature-flags/flags.yaml`:**
+```yaml
+flags:
+  - key: enable_trivia_app
+    value_type: boolean
+    boolean_value: false  # Default: disabled
+    enabled: true
+    description: "Enable trivia/pub quiz app feature"
+    segment_id: null
+    user_id: null
+```
+
+**Add constant to `app/src/main/.../config/FeatureFlag.kt`:**
+```kotlin
+object FeatureFlag {
+    const val ENABLE_TRIVIA_APP = "enable_trivia_app"
+}
+```
+
+### 2. Check Feature Flag in Code
+
+**In Screens/Components:**
+```kotlin
+val featureFlagManager = (application as ElectricSheepApplication).featureFlagManager
+val isTriviaEnabled = featureFlagManager.isEnabled(
+    FeatureFlag.ENABLE_TRIVIA_APP,
+    defaultValue = false
+)
+
+if (isTriviaEnabled) {
+    // Show trivia feature
+}
+```
+
+**In ViewModels:**
+```kotlin
+class TriviaViewModel(
+    private val featureFlagManager: FeatureFlagManager
+) {
+    init {
+        if (!featureFlagManager.isEnabled(FeatureFlag.ENABLE_TRIVIA_APP, defaultValue = false)) {
+            throw IllegalStateException("Trivia app is not enabled")
+        }
+    }
+}
+```
+
+### 3. Staging Environment Testing
+
+**For initial testing:**
+- ✅ Set flag to `true` in staging environment only
+- ✅ Test feature thoroughly in staging
+- ✅ Keep flag `false` in production until ready
+- ✅ Use environment-specific flag values if needed
+
+## Feature Flag Best Practices
+
+### DO ✅
+- Always add feature flags for new major features
+- Use descriptive flag keys (e.g., `enable_trivia_app`, not `trivia`)
+- Provide sensible default values (typically `false` for new features)
+- Check flags before accessing feature code
+- Test with flag both enabled and disabled
+- Document flag purpose in `flags.yaml` description
+- Use staging environment for initial testing
+
+### DON'T ❌
+- Don't skip feature flags for new features
+- Don't use vague flag names
+- Don't hardcode feature availability
+- Don't forget to check flags in all entry points
+- Don't enable flags in production without testing in staging
+
+## Feature Flag Types
+
+### Boolean Flags
+- **Use for**: Enable/disable features
+- **Example**: `enable_trivia_app`
+- **Default**: `false` (feature disabled)
+
+### String Flags
+- **Use for**: Configuration values
+- **Example**: `trivia_difficulty_level` = "medium"
+- **Default**: Empty string or sensible default
+
+### Integer Flags
+- **Use for**: Numeric configuration
+- **Example**: `max_questions_per_quiz` = 10
+- **Default**: 0 or sensible default
+
+## Feature Flag Lifecycle
+
+1. **Development**: Flag added, default `false`
+2. **Staging Testing**: Flag enabled in staging, tested thoroughly
+3. **Production Rollout**: Flag enabled in production after staging validation
+4. **Cleanup**: Flag removed after feature is stable and no longer needed
+
+## Staging vs Production
+
+**Staging Environment:**
+- Use for initial feature testing
+- Enable flags for testing
+- Validate feature behavior
+- Test with real users (if applicable)
+
+**Production Environment:**
+- Keep flags disabled until staging validation
+- Enable gradually (canary, percentage rollout)
+- Monitor feature performance
+- Disable quickly if issues arise
+
+## Related Documentation
+
+- `docs/architecture/FEATURE_FLAGS.md` - Feature flags architecture
+- `docs/architecture/FEATURE_FLAGS_IMPLEMENTATION.md` - Implementation details
+- `docs/architecture/FEATURE_FLAGS_FALLBACK.md` - Fallback strategy
+- `feature-flags/flags.yaml` - Feature flag definitions
+- `app/src/main/.../config/FeatureFlag.kt` - Feature flag constants

@@ -1,0 +1,23 @@
+# Python dependencies for Electric Sheep test automation video annotation
+# 
+# Installation:
+#   pip install -r requirements.txt
+#
+# Python Version:
+#   Python 3.11+ or 3.12+ is required (3.12.11 recommended)
+#
+# With pyenv (optional, for version management):
+#   pyenv install 3.12.11
+#   pyenv local 3.12.11
+#   pip install -r requirements.txt
+#
+# With Homebrew Python (current setup):
+#   python3 -m pip install -r requirements.txt
+
+# Video processing and annotation
+moviepy>=1.0.3          # Video editing and annotation
+Pillow>=10.0.0           # Image processing (required by moviepy)
+
+# Optional: For better performance
+# numpy>=1.24.0           # Already a dependency of moviepy, but can be explicitly installed
+

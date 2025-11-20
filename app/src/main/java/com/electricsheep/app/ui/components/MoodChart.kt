@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
+import com.electricsheep.app.ui.components.ChartDataPoint
 import com.electricsheep.app.ui.theme.Spacing
 import java.time.Instant
 import java.time.LocalDate

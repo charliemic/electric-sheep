@@ -5,74 +5,60 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- ES Monogram for Launcher Icon -->
-    <!-- Algorithm: Simple, elegant, minimal - matching sheep logo's clean aesthetic -->
+    <!-- Abstract Launcher Icon - Conceptually Aligned with Sheep Logo -->
+    <!-- Following prompt history (later prompts take preference): -->
+    <!-- Prompt 3: "design language for both", "colours to be more similar", "better suited for vector paths", "link to the concept" -->
+    <!-- Prompt 4: "Less of the electric focus", "reference to philip k dick's novel", "calm", "abstract, not concrete entity" -->
+    <!-- Prompt 5: "looks like pants - use same themes but different version" -->
+    <!-- Themes: Dreams, pastoral calm, flowing consciousness, layers of reality -->
+    <!-- Design: Simplified cloud-like shape matching sheep logo's flowing curves -->
+    <!-- Colors: Same teal-blue (#4A7C7E) as sheep logo for consistency (Prompt 3: "colours to be more similar") -->
     <!-- Safe zone: 36dp (75% of 48dp icon) centered in 108dp viewport -->
     
-    <!-- Letter "E" - Clean, bold, geometric -->
-    <!-- Left vertical bar -->
+    <!-- Main cloud-like shape (conceptual, abstract - like sheep logo's body) -->
+    <!-- Flowing curves representing calm, pastoral, dream-like state -->
+    <!-- Same aesthetic as sheep logo but simplified for small icon size -->
+    <!-- Using same teal-blue color as sheep logo body for consistency -->
     <path
-        android:fillColor="#1A3F41"
-        android:pathData="M30,24 L30,84 L38,84 L38,24 Z"/>
+        android:fillColor="#4A7C7E"
+        android:pathData="M54,78
+            C42,78 33,72 27,66
+            C21,60 18,54 18,48
+            C18,42 21,36 27,30
+            C33,24 42,18 54,18
+            C66,18 75,24 81,30
+            C87,36 90,42 90,48
+            C90,54 87,60 81,66
+            C75,72 66,78 54,78 Z"/>
     
-    <!-- Top horizontal bar -->
+    <!-- Inner consciousness layer (like DreamSymbol's inner circle) -->
+    <!-- Represents: Core consciousness, present moment -->
+    <!-- Smaller, more defined - creates depth and calm -->
+    <!-- Using same teal-blue for consistency -->
     <path
-        android:fillColor="#1A3F41"
-        android:pathData="M30,24 L56,24 L56,32 L38,32 L38,24 Z"/>
+        android:fillColor="#4A7C7E"
+        android:pathData="M54,66
+            C48,66 42,63 39,60
+            C36,57 36,54 36,51
+            C36,48 36,45 39,42
+            C42,39 48,36 54,36
+            C60,36 66,39 69,42
+            C72,45 72,48 72,51
+            C72,54 72,57 69,60
+            C66,63 60,66 54,66 Z"/>
     
-    <!-- Middle horizontal bar (shorter for elegance) -->
+    <!-- Subtle energy accent (abstract, not literal lightning) -->
+    <!-- Warm amber - EXACTLY matches sheep logo's lightning color (#D4885A) -->
+    <!-- Represents: Subtle consciousness flow, not aggressive "electric" (Prompt 4: "Less of the electric focus") -->
+    <!-- Positioned like sheep logo's lightning but more abstract and subtle -->
     <path
-        android:fillColor="#1A3F41"
-        android:pathData="M30,50 L50,50 L50,58 L38,58 L38,50 Z"/>
-    
-    <!-- Bottom horizontal bar -->
-    <path
-        android:fillColor="#1A3F41"
-        android:pathData="M30,74 L56,74 L56,84 L38,84 L38,74 Z"/>
-    
-    <!-- Letter "S" - Smooth curves, simple like sheep logo -->
-    <!-- Top curve (smooth, rounded) -->
-    <path
-        android:fillColor="#1A3F41"
-        android:pathData="M62,24
-            C68,24 74,26 76,30
-            C78,34 76,38 72,38
-            C68,38 64,36 64,32
-            C64,28 66,26 68,26
-            C70,26 72,28 72,32
-            C72,36 68,38 62,38
-            C58,38 56,36 56,32
-            C56,28 58,24 62,24 Z"/>
-    
-    <!-- Middle connecting section -->
-    <path
-        android:fillColor="#1A3F41"
-        android:pathData="M62,38
-            L72,38
-            L72,50
-            L62,50
-            Z"/>
-    
-    <!-- Bottom curve (smooth, rounded) -->
-    <path
-        android:fillColor="#1A3F41"
-        android:pathData="M62,50
-            C68,50 74,52 76,56
-            C78,60 76,64 72,64
-            C68,64 64,62 64,58
-            C64,54 66,52 68,52
-            C70,52 72,54 72,58
-            C72,62 68,64 62,64
-            C58,64 56,62 56,58
-            C56,54 58,50 62,50 Z"/>
-    
-    <!-- Bottom section -->
-    <path
-        android:fillColor="#1A3F41"
-        android:pathData="M62,64
-            L72,64
-            L72,84
-            L62,84
-            Z"/>
+        android:fillColor="#D4885A"
+        android:fillAlpha="0.5"
+        android:pathData="M54,24
+            C50,24 48,30 50,36
+            C52,42 56,48 60,51
+            C64,54 68,51 70,45
+            C72,39 70,33 66,30
+            C62,27 58,24 54,24 Z"/>
     
 </vector>
