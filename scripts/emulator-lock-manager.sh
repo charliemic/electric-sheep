@@ -169,7 +169,10 @@ release_lock() {
     if [ "$lock_pid" != "$$" ] && [ -n "$lock_pid" ]; then
         # In test mode (TEST_LOCK_DIR set), allow release regardless of PID
         # In production, only allow release if process is not running (stale lock)
-        if [ -z "$TEST_LOCK_DIR" ] && [ -z "$EMULATOR_LOCK_DIR" ] || [ "$EMULATOR_LOCK_DIR" != "$TEST_LOCK_DIR" ]; then
+        if [ -n "$TEST_LOCK_DIR" ] && [ "$EMULATOR_LOCK_DIR" = "$TEST_LOCK_DIR" ]; then
+            # Test mode - allow release
+            : # No-op, continue to release
+        else
             # Production mode: check if process is still running
             if kill -0 "$lock_pid" 2>/dev/null; then
                 # Process is still running and it's not us - don't release
@@ -177,8 +180,8 @@ release_lock() {
                 echo -e "${BLUE}Not releasing lock${NC}" >&2
                 return 0
             fi
+            # Process is not running (stale lock) - allow release
         fi
-        # Test mode or stale lock - allow release
     fi
     
     rm -f "$lock_file"
