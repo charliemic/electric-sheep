@@ -1,0 +1,254 @@
+---
+alwaysApply: true
+---
+
+# Emulator Workflow and Development Tools
+
+## CRITICAL: Emulator Management
+
+**When developing or testing:**
+1. ✅ Use emulator management scripts for consistent workflow
+2. ✅ Check device status before running tests or builds
+3. ✅ Clean up emulators when done to free resources
+4. ✅ Use device ID helpers instead of hardcoding device IDs
+
+## Emulator Management Scripts
+
+### Primary Script: `emulator-manager.sh`
+
+**Location:** `scripts/emulator-manager.sh`
+
+**Commands:**
+- `./scripts/emulator-manager.sh start [avd-name]` - Start emulator (creates if needed)
+- `./scripts/emulator-manager.sh stop [device-id]` - Stop running emulator
+- `./scripts/emulator-manager.sh list` - List available AVDs
+- `./scripts/emulator-manager.sh running` - List running emulators
+- `./scripts/emulator-manager.sh clean [device-id]` - Wipe emulator data (factory reset)
+- `./scripts/emulator-manager.sh status` - Show current device status
+- `./scripts/emulator-manager.sh ensure` - Ensure emulator is running (start if needed)
+
+**Examples:**
+```bash
+# Start default emulator
+./scripts/emulator-manager.sh start
+
+# Start specific AVD
+./scripts/emulator-manager.sh start electric_sheep_dev
+
+# Check status
+./scripts/emulator-manager.sh status
+
+# Stop emulator
+./scripts/emulator-manager.sh stop
+
+# Wipe emulator data
+./scripts/emulator-manager.sh clean
+```
+
+### Device ID Helper: `get-device-id.sh`
+
+**Location:** `scripts/get-device-id.sh`
+
+**Usage:**
+```bash
+# Get current device ID (exits with error if none)
+DEVICE=$(./scripts/get-device-id.sh)
+```
+
+**Use in scripts:**
+- Always use this helper instead of hardcoding `emulator-5554`
+- Handles device detection automatically
+- Works with any connected device (emulator or physical)
+
+## Development Workflow
+
+### Starting Development Session
+
+**Option 1: Manual Start**
+```bash
+# 1. Start emulator
+./scripts/emulator-manager.sh start
+
+# 2. Build and install
+./scripts/dev-reload.sh
+```
+
+**Option 2: Automatic (Recommended)**
+```bash
+# dev-reload.sh automatically ensures emulator is running
+./scripts/dev-reload.sh
+```
+
+### During Development
+
+**Quick Reload:**
+```bash
+# Standard reload (build, install, launch)
+./scripts/dev-reload.sh
+
+# Clean build
+./scripts/dev-reload.sh --clean
+
+# Fresh start (clear app data)
+./scripts/dev-reload.sh --fresh
+```
+
+**Check Device Status:**
+```bash
+./scripts/emulator-manager.sh status
+```
+
+**View Logs:**
+```bash
+# Real-time logs
+adb logcat | grep -i electric
+
+# Or use device ID
+DEVICE=$(./scripts/get-device-id.sh)
+adb -s "$DEVICE" logcat | grep -i electric
+```
+
+### Testing Workflow
+
+**Before Running Tests:**
+1. ✅ Ensure emulator is running: `./scripts/emulator-manager.sh ensure`
+2. ✅ Check device status: `./scripts/emulator-manager.sh status`
+3. ✅ Get device ID: `DEVICE=$(./scripts/get-device-id.sh)`
+
+**Running Tests:**
+```bash
+# Get device ID
+DEVICE=$(./scripts/get-device-id.sh)
+
+# Run test automation
+./test-automation/gradlew test --device-id="$DEVICE"
+
+# Or use test scripts
+./scripts/execute-test-with-logging.sh <test-name> "$DEVICE"
+```
+
+**After Testing:**
+- Clean emulator if needed: `./scripts/emulator-manager.sh clean`
+- Stop emulator to free resources: `./scripts/emulator-manager.sh stop`
+
+## Common Workflows
+
+### Fresh Start (Clean Emulator)
+```bash
+# 1. Stop emulator
+./scripts/emulator-manager.sh stop
+
+# 2. Start fresh
+./scripts/emulator-manager.sh start
+
+# 3. Clean build and install
+./scripts/dev-reload.sh --clean --fresh
+```
+
+### Quick Iteration
+```bash
+# Just reload (emulator stays running)
+./scripts/dev-reload.sh
+```
+
+### Multiple Emulators
+```bash
+# List available AVDs
+./scripts/emulator-manager.sh list
+
+# Start specific AVD
+./scripts/emulator-manager.sh start my_custom_avd
+
+# List running emulators
+./scripts/emulator-manager.sh running
+```
+
+### Debugging
+```bash
+# Check device status
+./scripts/emulator-manager.sh status
+
+# View logs
+DEVICE=$(./scripts/get-device-id.sh)
+adb -s "$DEVICE" logcat | grep -i electric
+
+# Access database
+adb shell
+run-as com.electricsheep.app
+cd /data/data/com.electricsheep.app/databases
+sqlite3 electric_sheep_database
+```
+
+## Best Practices
+
+### DO ✅
+- Use `emulator-manager.sh` for all emulator operations
+- Use `get-device-id.sh` instead of hardcoding device IDs
+- Check device status before running tests
+- Clean emulator data when testing migrations or fresh installs
+- Stop emulators when done to free system resources
+- Use `ensure` command to automatically start emulator if needed
+
+### DON'T ❌
+- Don't hardcode device IDs like `emulator-5554` in scripts
+- Don't manually manage emulator lifecycle (use scripts)
+- Don't leave emulators running unnecessarily
+- Don't assume a specific device ID is available
+
+## Integration with Other Scripts
+
+### Updated Scripts
+- `dev-reload.sh` - Now automatically ensures emulator is running
+- All scripts should use `get-device-id.sh` for device detection
+
+### Test Automation
+- Test scripts should accept device ID as parameter
+- Use `get-device-id.sh` as default if not provided
+- Example: `./scripts/execute-test-with-logging.sh <test-name> "$DEVICE"`
+
+## Troubleshooting
+
+### No Device Found
+```bash
+# Check status
+./scripts/emulator-manager.sh status
+
+# Ensure emulator is running
+./scripts/emulator-manager.sh ensure
+
+# List running devices
+./scripts/emulator-manager.sh running
+```
+
+### Emulator Won't Start
+```bash
+# Check available AVDs
+./scripts/emulator-manager.sh list
+
+# Try creating new emulator
+./scripts/emulator-manager.sh start electric_sheep_dev
+
+# Check Android SDK
+echo $ANDROID_HOME
+```
+
+### Device Not Detected
+```bash
+# Check ADB connection
+adb devices
+
+# Restart ADB server
+adb kill-server
+adb start-server
+
+# Check device status
+./scripts/emulator-manager.sh status
+```
+
+## Related Documentation
+
+- `scripts/emulator-manager.sh` - Main emulator management script
+- `scripts/get-device-id.sh` - Device ID helper
+- `scripts/dev-reload.sh` - Development reload script
+- `README.md` - General development setup
+- `docs/testing/` - Testing documentation
