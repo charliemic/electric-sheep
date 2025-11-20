@@ -9,6 +9,8 @@
 
 No changes are required to CI/CD workflows, build scripts, or utility tools when using git worktrees.
 
+✅ **`local.properties` is automatically symlinked** from the main repository to new worktrees.
+
 ## Why Worktrees Work Seamlessly
 
 ### 1. Same Directory Structure
@@ -32,6 +34,21 @@ electric-sheep/                    (main repo)
 ```
 
 **Result:** All relative paths work identically in worktrees.
+
+### 3. Local Configuration Files
+
+**`local.properties` is automatically symlinked** from the main repository to worktrees:
+
+- ✅ Created automatically when worktree is created via `create-worktree.sh`
+- ✅ Symlinked (not copied) - changes in main repo are reflected in worktree
+- ✅ Single source of truth - credentials managed in one place
+- ✅ Works with Gradle build system - reads from symlinked file
+
+**Manual Setup (if needed):**
+```bash
+# From worktree directory
+ln -s ../electric-sheep/local.properties local.properties
+```
 
 ### 2. Scripts Use Relative Path Resolution
 

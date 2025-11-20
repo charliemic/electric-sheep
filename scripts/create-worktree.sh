@@ -39,6 +39,25 @@ else
     git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME"
 fi
 
+# Symlink local.properties from main repo if it exists
+MAIN_LOCAL_PROPERTIES="$MAIN_REPO/local.properties"
+WORKTREE_LOCAL_PROPERTIES="$WORKTREE_DIR/local.properties"
+
+if [ -f "$MAIN_LOCAL_PROPERTIES" ]; then
+    if [ -f "$WORKTREE_LOCAL_PROPERTIES" ]; then
+        echo "⚠️  local.properties already exists in worktree, skipping symlink"
+    else
+        # Create relative symlink from worktree to main repo
+        # Calculate relative path from worktree to main repo
+        RELATIVE_PATH=$(realpath --relative-to="$WORKTREE_DIR" "$MAIN_LOCAL_PROPERTIES" 2>/dev/null || \
+                       python3 -c "import os; print(os.path.relpath('$MAIN_LOCAL_PROPERTIES', '$WORKTREE_DIR'))")
+        ln -s "$RELATIVE_PATH" "$WORKTREE_LOCAL_PROPERTIES"
+        echo "✅ Symlinked local.properties from main repo"
+    fi
+else
+    echo "ℹ️  No local.properties found in main repo (this is normal if not configured)"
+fi
+
 echo ""
 echo "✅ Worktree created: $WORKTREE_DIR"
 echo ""

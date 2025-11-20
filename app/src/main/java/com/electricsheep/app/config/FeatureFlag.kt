@@ -17,6 +17,12 @@ object FeatureFlag {
      */
     const val SHOW_FEATURE_FLAG_INDICATOR = "show_feature_flag_indicator"
     
+    /**
+     * Enable trivia/pub quiz app feature.
+     * When enabled, users can access the trivia app to answer questions and track performance.
+     */
+    const val ENABLE_TRIVIA_APP = "enable_trivia_app"
+    
     // Add more feature flags here as needed
     // const val ENABLE_MOOD_ANALYTICS = "enable_mood_analytics"
     // const val ENABLE_EXPORT = "enable_export"
