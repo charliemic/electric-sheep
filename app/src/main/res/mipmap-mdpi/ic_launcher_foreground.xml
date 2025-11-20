@@ -1,11 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
-    android:viewportWidth="48"
-    android:viewportHeight="48">
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Abstract Launcher Icon - Perfect Circle Design -->
+    <!-- Following prompt history (later prompts take preference): -->
+    <!-- Prompt 3: "design language for both", "colours to be more similar", "better suited for vector paths", "link to the concept" -->
+    <!-- Prompt 4: "Less of the electric focus", "reference to philip k dick's novel", "calm", "abstract, not concrete entity" -->
+    <!-- Prompt 5: "looks like pants - use same themes but different version" -->
+    <!-- Themes: Dreams, pastoral calm, flowing consciousness, layers of reality -->
+    <!-- Design: Perfect circle with inner layer and subtle accent -->
+    <!-- Colors: Same teal-blue (#4A7C7E) as logo for consistency -->
+    <!-- Safe zone: 36dp (75% of 48dp icon) centered in 108dp viewport -->
+    
+    <!-- Main circle (perfect circle, centered) -->
+    <!-- Represents: Pastoral calm, outer consciousness -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M24,12L24,36M12,24L36,24"/>
+        android:fillColor="#4A7C7E"
+        android:pathData="M54,18
+            A36,36 0 1,1 54,90
+            A36,36 0 1,1 54,18 Z"/>
+    
+    <!-- Inner consciousness layer (smaller circle) -->
+    <!-- Represents: Core consciousness, present moment -->
+    <!-- Creates depth and calm -->
+    <path
+        android:fillColor="#4A7C7E"
+        android:pathData="M54,45
+            A9,9 0 1,1 54,63
+            A9,9 0 1,1 54,45 Z"/>
+    
+    <!-- Subtle energy accent (abstract, not literal) -->
+    <!-- Warm amber - matches logo's accent color -->
+    <!-- Represents: Subtle consciousness flow, not aggressive "electric" -->
+    <!-- Circular segment accent -->
+    <path
+        android:fillColor="#D4885A"
+        android:fillAlpha="0.5"
+        android:pathData="M54,18
+            A18,18 0 0,1 68,30
+            A4.5,4.5 0 0,1 64,34.5
+            A13.5,13.5 0 0,1 54,27
+            Z"/>
+    
 </vector>
-
