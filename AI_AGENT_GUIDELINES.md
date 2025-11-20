@@ -422,7 +422,7 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 
 ### ⚠️ CRITICAL: Never Work on Main Branch
 
-**IMPORTANT**: This repository does not have branch protection rules enabled (free private repository limitation). Therefore, **AI agents must NEVER work directly on the `main` branch**.
+**IMPORTANT**: This repository has branch protection rules enabled (as of 2025-11-20). **AI agents must NEVER work directly on the `main` branch**.
 
 **Required Workflow:**
 1. **Always create a feature branch** before making any changes
@@ -430,12 +430,14 @@ To enforce that PRs cannot be merged if tests fail, configure branch protection 
 3. **Always push to feature branches** - never push directly to `main`
 4. **Create Pull Requests** for all changes, even small fixes
 5. **Verify CI passes** before requesting review
+6. **Code owner review required** - CODEOWNERS file requires review from repository owner
 
 **Why This Matters:**
-- Without branch protection, direct commits to `main` bypass all CI/CD checks
+- Branch protection prevents direct pushes to `main`
 - Feature branches ensure CI runs before code reaches `main`
 - Pull requests provide visibility and review opportunity
-- This is the only way to ensure code quality in a free private repository
+- Code owner review ensures quality and security
+- CI/CD checks must pass before merging
 
 **If you find yourself on `main` branch:**
 ```bash

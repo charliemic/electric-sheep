@@ -1,0 +1,7 @@
+# Code Owners
+# This file defines who is automatically requested for review when changes are made
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# All files - require review from repository owner
+* @charliemic
+
