@@ -13,7 +13,8 @@ on:
       - main
       - develop
     paths:
-      - 'supabase/**'
+      - 'supabase/migrations/**'
+      - '.github/workflows/supabase-schema-deploy.yml'
   workflow_dispatch: # Allow manual triggering
     inputs:
       project_ref:
