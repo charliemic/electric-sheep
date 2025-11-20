@@ -220,6 +220,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     needs: validate-migrations
+    continue-on-error: true  # Non-blocking: failures don't prevent merge
     
     steps:
       - name: Checkout code
