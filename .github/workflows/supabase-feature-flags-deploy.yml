@@ -174,8 +174,24 @@ jobs:
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
           echo "Using Supabase URL: $SUPABASE_URL"
       
+      - name: Construct database connection string
+        id: db-url
+        run: |
+          # Construct database connection string for direct PostgreSQL connection
+          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
+          # Note: Using pooler mode (port 6543) for better connection management
+          # If direct connection fails, script will fall back to PostgREST API
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_STAGING }}"
+          # Default to eu-central-1 region (adjust if your project is in different region)
+          REGION="eu-central-1"
+          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "Using database connection string (pooler mode)"
+      
       - name: Sync feature flags
         env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
@@ -231,8 +247,24 @@ jobs:
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
           echo "Using Supabase URL: $SUPABASE_URL"
       
+      - name: Construct database connection string
+        id: db-url
+        run: |
+          # Construct database connection string for direct PostgreSQL connection
+          # Format: postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
+          # Note: Using pooler mode (port 6543) for better connection management
+          # If direct connection fails, script will fall back to PostgREST API
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+          DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD }}"
+          # Default to eu-central-1 region (adjust if your project is in different region)
+          REGION="eu-central-1"
+          DB_URL="postgresql://postgres.${PROJECT_REF}:${DB_PASSWORD}@aws-0-${REGION}.pooler.supabase.com:6543/postgres"
+          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+          echo "Using database connection string (pooler mode)"
+      
       - name: Sync feature flags
         env:
+          SUPABASE_DB_URL: ${{ steps.db-url.outputs.db_url }}
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |

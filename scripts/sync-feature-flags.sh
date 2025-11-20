@@ -176,22 +176,50 @@ EOF
 )
         fi
         
-        # Upsert using PostgREST
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        # Upsert using PostgREST: Try PATCH (update) first, then POST (insert) if not found
+        # This is more reliable than using POST with merge-duplicates
+        PATCH_RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -H "Prefer: resolution=merge-duplicates" \
+            -H "Prefer: return=representation" \
             -d "$JSON_PAYLOAD" \
             "$SUPABASE_URL/rest/v1/feature_flags?key=eq.$KEY")
         
-        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-        if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
-            echo -e "${GREEN}✓ Synced: $KEY${NC}"
+        PATCH_HTTP_CODE=$(echo "$PATCH_RESPONSE" | tail -n1)
+        
+        if [ "$PATCH_HTTP_CODE" = "200" ] || [ "$PATCH_HTTP_CODE" = "204" ]; then
+            # Update successful
+            echo -e "${GREEN}✓ Updated: $KEY${NC}"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        elif [ "$PATCH_HTTP_CODE" = "404" ]; then
+            # Flag doesn't exist, try to insert
+            if [ "$VERBOSE" = "true" ]; then
+                echo -e "${YELLOW}Flag $KEY not found, attempting insert...${NC}"
+            fi
+            
+            POST_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Content-Type: application/json" \
+                -H "Prefer: return=representation" \
+                -d "$JSON_PAYLOAD" \
+                "$SUPABASE_URL/rest/v1/feature_flags")
+            
+            POST_HTTP_CODE=$(echo "$POST_RESPONSE" | tail -n1)
+            
+            if [ "$POST_HTTP_CODE" = "201" ]; then
+                echo -e "${GREEN}✓ Inserted: $KEY${NC}"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+                echo -e "${RED}✗ Failed to insert: $KEY (HTTP $POST_HTTP_CODE)${NC}"
+                echo "$POST_RESPONSE" | head -n-1
+                ERROR_COUNT=$((ERROR_COUNT + 1))
+            fi
         else
-            echo -e "${RED}✗ Failed: $KEY (HTTP $HTTP_CODE)${NC}"
-            echo "$RESPONSE" | head -n-1
+            # PATCH failed with unexpected error
+            echo -e "${RED}✗ Failed to update: $KEY (HTTP $PATCH_HTTP_CODE)${NC}"
+            echo "$PATCH_RESPONSE" | head -n-1
             ERROR_COUNT=$((ERROR_COUNT + 1))
         fi
     done
