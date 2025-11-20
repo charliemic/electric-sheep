@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.error
 import android.content.Intent
 import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
-import com.electricsheep.app.ui.components.MoodChart
 import com.electricsheep.app.ui.theme.Spacing
 import com.electricsheep.app.util.DateFormatter
 import com.electricsheep.app.util.Logger
