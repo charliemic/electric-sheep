@@ -7,6 +7,19 @@ load 'test_helpers.bash'
 setup() {
     setup_test_env
     SCRIPT_DIR="$(get_script_dir)"
+    # Debug: verify path resolution
+    if [ ! -f "$SCRIPT_DIR/emulator-lock-manager.sh" ]; then
+        echo "ERROR: get_script_dir returned: $SCRIPT_DIR" >&2
+        echo "BATS_TEST_DIRNAME: ${BATS_TEST_DIRNAME:-not set}" >&2
+        echo "Looking for: $SCRIPT_DIR/emulator-lock-manager.sh" >&2
+        # Try alternative: use absolute path from test file location
+        local test_dir="$(dirname "$BATS_TEST_DIRNAME")"
+        local alt_scripts_dir="$(cd "$test_dir/.." && pwd)"
+        echo "Alternative path: $alt_scripts_dir" >&2
+        if [ -f "$alt_scripts_dir/emulator-lock-manager.sh" ]; then
+            SCRIPT_DIR="$alt_scripts_dir"
+        fi
+    fi
     DISCOVERY="$SCRIPT_DIR/emulator-discovery.sh"
     LOCK_MANAGER="$SCRIPT_DIR/emulator-lock-manager.sh"
 }
