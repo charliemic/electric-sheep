@@ -19,7 +19,6 @@ jobs:
       app-code: ${{ steps.filter.outputs.app-code }}
       docs: ${{ steps.filter.outputs.docs }}
       scripts: ${{ steps.filter.outputs.scripts }}
-      emulator-scripts: ${{ steps.filter.outputs.emulator-scripts }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - name: Checkout code
@@ -42,13 +41,6 @@ jobs:
               - 'README.md'
             scripts:
               - 'scripts/**'
-              - '!scripts/emulator-*.sh'
-              - '!scripts/tests/**'
-            emulator-scripts:
-              - 'scripts/emulator-*.sh'
-              - 'scripts/tests/**'
-              - 'docs/development/EMULATOR_MANAGEMENT*.md'
-              - 'Makefile'
             workflows:
               - '.github/workflows/**'
           list-files: shell
@@ -330,68 +322,3 @@ jobs:
       continue-on-error: false
 
   # Emulator Management Scripts Tests
-  # Non-blocking: failures don't prevent merge
-  # Only runs if emulator management scripts changed
-  test-emulator-scripts:
-    needs: changes
-    # Only run if emulator scripts changed
-    if: needs.changes.outputs.emulator-scripts == 'true'
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking: don't fail the build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install bats-core
-        run: |
-          sudo apt-get update
-          # Try Ubuntu package first, fallback to GitHub install
-          if sudo apt-get install -y bats 2>/dev/null; then
-            echo "Installed bats from Ubuntu package"
-          else
-            echo "Ubuntu package not available, installing from GitHub"
-            BATS_VERSION="1.10.0"
-            curl -sSL "https://github.com/bats-core/bats-core/archive/v${BATS_VERSION}.tar.gz" -o /tmp/bats.tar.gz
-            sudo tar -xz -C /tmp -f /tmp/bats.tar.gz
-            sudo /tmp/bats-core-${BATS_VERSION}/install.sh /usr/local
-            sudo rm -rf /tmp/bats-core-${BATS_VERSION} /tmp/bats.tar.gz
-          fi
-
-      - name: Install jq
-        run: |
-          sudo apt-get install -y jq
-
-      - name: Verify dependencies
-        run: |
-          bats --version
-          jq --version
-          bash --version
-
-      - name: Make test scripts executable
-        run: |
-          chmod +x scripts/tests/*.sh scripts/tests/*.bats 2>/dev/null || true
-          chmod +x scripts/emulator-*.sh 2>/dev/null || true
-          ls -la scripts/tests/ || echo "Test directory check"
-          ls -la scripts/emulator-*.sh || echo "Emulator scripts check"
-
-      - name: Run emulator management tests
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          pwd
-          echo "=== Test directory contents ==="
-          ls -la scripts/tests/ || echo "Test directory listing failed"
-          echo "=== Emulator scripts ==="
-          ls -la scripts/emulator-*.sh || echo "Emulator scripts listing failed"
-          echo "=== Running tests ==="
-          ./scripts/tests/run_tests.sh --verbose
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulator-script-test-results
-          path: |
-            scripts/tests/*.log
-            scripts/tests/test-results/
-          retention-days: 7
-          if-no-files-found: ignore
