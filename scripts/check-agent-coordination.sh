@@ -53,30 +53,75 @@ fi
 if [ -n "$MODIFIED_FILES" ]; then
     echo "=== Shared File Check ==="
     
-    SHARED_FILES=(
-        "app/.*/ui/screens/LandingScreen.kt"
-        "app/.*/ElectricSheepApplication.kt"
-        "app/.*/data/DataModule.kt"
-        "app/build.gradle.kts"
-        "build.gradle.kts"
+    # HIGH RISK patterns (MUST use worktree)
+    HIGH_RISK_PATTERNS=(
+        "app/.*/ui/screens/.*Screen\.kt"
+        "app/.*/ui/screens/.*ViewModel\.kt"
+        "app/.*/ui/navigation/.*\.kt"
+        "app/.*/.*Application\.kt"
+        "app/.*/.*Module\.kt"
+        ".*\.gradle\.kts"
+        "gradle\.properties"
+        "settings\.gradle\.kts"
+    )
+    
+    # MEDIUM-HIGH RISK patterns (Should use worktree)
+    MEDIUM_HIGH_RISK_PATTERNS=(
+        "app/.*/ui/components/.*\.kt"
+        "app/.*/.*Manager\.kt"
+        "app/.*/.*Provider\.kt"
+    )
+    
+    # MEDIUM RISK patterns (Consider worktree)
+    MEDIUM_RISK_PATTERNS=(
+        "app/.*/data/repository/.*Repository\.kt"
+        "app/.*/ui/theme/.*\.kt"
+        "app/.*/config/.*\.kt"
+        "app/.*/.*Factory\.kt"
+        "app/.*/MainActivity\.kt"
     )
     
     # Check each modified file
     for file in $MODIFIED_FILES; do
-        is_shared=false
+        risk_level="none"
         
-        # Check if shared file
-        for pattern in "${SHARED_FILES[@]}"; do
+        # Check HIGH RISK patterns (MUST use worktree)
+        for pattern in "${HIGH_RISK_PATTERNS[@]}"; do
             if [[ "$file" =~ $pattern ]]; then
-                echo "⚠️  SHARED FILE: $file"
-                echo "   This file requires coordination - check $COORDINATION_DOC"
-                echo "   Consider using git worktree for file system isolation"
-                is_shared=true
+                echo "🔴 HIGH RISK: $file"
+                echo "   ⚠️  MUST use worktree - check $COORDINATION_DOC"
+                echo "   This file pattern requires worktree isolation (no exceptions)"
+                risk_level="high"
                 break
             fi
         done
         
-        if [ "$is_shared" = false ]; then
+        # Check MEDIUM-HIGH RISK patterns (Should use worktree)
+        if [ "$risk_level" = "none" ]; then
+            for pattern in "${MEDIUM_HIGH_RISK_PATTERNS[@]}"; do
+                if [[ "$file" =~ $pattern ]]; then
+                    echo "🟡 MEDIUM-HIGH RISK: $file"
+                    echo "   ⚠️  Should use worktree - check $COORDINATION_DOC"
+                    echo "   Consider using git worktree for file system isolation"
+                    risk_level="medium-high"
+                    break
+                fi
+            done
+        fi
+        
+        # Check MEDIUM RISK patterns (Consider worktree)
+        if [ "$risk_level" = "none" ]; then
+            for pattern in "${MEDIUM_RISK_PATTERNS[@]}"; do
+                if [[ "$file" =~ $pattern ]]; then
+                    echo "🟠 MEDIUM RISK: $file"
+                    echo "   💡 Consider worktree - check $COORDINATION_DOC"
+                    risk_level="medium"
+                    break
+                fi
+            done
+        fi
+        
+        if [ "$risk_level" = "none" ]; then
             echo "✅ $file"
         fi
     done
