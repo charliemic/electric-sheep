@@ -511,19 +511,6 @@ fun MoodManagementScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
                 
-                // Mood Chart - show when user is authenticated and has mood entries
-                if (currentUser != null && moods.isNotEmpty()) {
-                    item {
-                        MoodChart(
-                            moods = moods,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    
-                    item {
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-                }
                 
                 // Mood history section
                 item {
