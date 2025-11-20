@@ -58,6 +58,8 @@ android {
             buildConfigField("boolean", "OFFLINE_ONLY_MODE", "false")
             // Allow switching to staging Supabase in debug builds
             buildConfigField("boolean", "USE_STAGING_SUPABASE", "true")
+            // Enable trivia app in debug builds for testing
+            buildConfigField("boolean", "ENABLE_TRIVIA_APP_MODE", "true")
         }
         release {
             isMinifyEnabled = false
