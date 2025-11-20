@@ -185,6 +185,25 @@ SELECT * FROM moods;
 ./gradlew lint
 ```
 
+### Emulator Management Scripts Testing
+
+The emulator management scripts have their own test suite using Bats:
+
+```bash
+# Quick start (checks dependencies and runs tests)
+./scripts/tests/setup.sh
+./scripts/tests/run_tests.sh
+
+# Or see the quick start guide
+cat scripts/tests/QUICKSTART.md
+```
+
+**Prerequisites:** `bats-core` and `jq` (setup script will help install these)
+
+For complete testing documentation, see:
+- [Emulator Management Testing Guide](docs/development/EMULATOR_MANAGEMENT_TESTING.md)
+- [Test Quick Start](scripts/tests/QUICKSTART.md)
+
 ## CI/CD
 
 The project uses GitHub Actions for CI/CD:

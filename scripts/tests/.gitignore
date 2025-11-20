@@ -1,0 +1,9 @@
+# Test artifacts
+*.tmp
+*.log
+test_output/
+test_results/
+
+# Temporary lock directories (created during tests)
+/tmp/electric-sheep-emulator-locks-test-*
+

@@ -6,12 +6,16 @@
 #
 # Commands:
 #   start [avd-name]     - Start an emulator (creates if needed)
-#   stop [device-id]      - Stop a running emulator
+#   stop [device-id]     - Stop a running emulator
 #   list                  - List available AVDs
 #   running               - List running emulators
 #   clean [device-id]     - Wipe emulator data (factory reset)
 #   status                - Show current device status
 #   ensure                - Ensure an emulator is running (start if needed)
+#   acquire               - Acquire emulator with locking (calls discovery)
+#   release [device-id]   - Release emulator lock
+#   pool-status           - Show all emulators and their lock status
+#   cleanup-locks         - Clean up stale lock files
 
 set -e
 
@@ -320,6 +324,73 @@ ensure_running() {
     start_emulator
 }
 
+# Acquire emulator with locking (calls discovery service)
+acquire_with_lock() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local discovery_script="$script_dir/emulator-discovery.sh"
+    
+    if [ ! -f "$discovery_script" ]; then
+        echo -e "${RED}✗${NC} Discovery service not found: $discovery_script" >&2
+        exit 1
+    fi
+    
+    "$discovery_script" acquire
+}
+
+# Release emulator lock
+release_lock() {
+    local device_id="${1:-}"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local discovery_script="$script_dir/emulator-discovery.sh"
+    
+    if [ ! -f "$discovery_script" ]; then
+        echo -e "${RED}✗${NC} Discovery service not found: $discovery_script" >&2
+        exit 1
+    fi
+    
+    "$discovery_script" release "$device_id"
+}
+
+# Show pool status (all emulators and locks)
+show_pool_status() {
+    echo -e "${BLUE}Emulator Pool Status${NC}"
+    echo ""
+    
+    # List all AVDs
+    echo -e "${BLUE}Available AVDs:${NC}"
+    list_avds
+    echo ""
+    
+    # List running emulators
+    echo -e "${BLUE}Running Emulators:${NC}"
+    list_running
+    echo ""
+    
+    # List locks
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local lock_manager="$script_dir/emulator-lock-manager.sh"
+    
+    if [ -f "$lock_manager" ]; then
+        echo -e "${BLUE}Lock Status:${NC}"
+        "$lock_manager" list
+    else
+        echo -e "${YELLOW}⚠${NC} Lock manager not found" >&2
+    fi
+}
+
+# Clean up stale locks
+cleanup_locks() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local lock_manager="$script_dir/emulator-lock-manager.sh"
+    
+    if [ ! -f "$lock_manager" ]; then
+        echo -e "${RED}✗${NC} Lock manager not found: $lock_manager" >&2
+        exit 1
+    fi
+    
+    "$lock_manager" cleanup
+}
+
 # Main
 find_android_sdk
 
@@ -347,6 +418,18 @@ case "$COMMAND" in
     ensure)
         ensure_running
         ;;
+    acquire)
+        acquire_with_lock
+        ;;
+    release)
+        release_lock "${2:-}"
+        ;;
+    pool-status)
+        show_pool_status
+        ;;
+    cleanup-locks)
+        cleanup_locks
+        ;;
     *)
         echo -e "${BLUE}Emulator Manager - Electric Sheep${NC}"
         echo ""
@@ -360,6 +443,10 @@ case "$COMMAND" in
         echo "  clean [device-id]    Wipe emulator data (factory reset)"
         echo "  status               Show current device status"
         echo "  ensure               Ensure an emulator is running (start if needed)"
+        echo "  acquire              Acquire emulator with locking (calls discovery)"
+        echo "  release [device-id]  Release emulator lock"
+        echo "  pool-status          Show all emulators and their lock status"
+        echo "  cleanup-locks        Clean up stale lock files"
         echo ""
         exit 1
         ;;

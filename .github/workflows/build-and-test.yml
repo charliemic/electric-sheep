@@ -320,3 +320,5 @@ jobs:
     - name: Build release AAB
       run: ./gradlew bundleRelease --stacktrace
       continue-on-error: false
+
+  # Emulator Management Scripts Tests

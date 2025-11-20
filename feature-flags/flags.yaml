@@ -21,6 +21,15 @@ flags:
     segment_id: null
     user_id: null
 
+  # Trivia/Pub Quiz App: Enable trivia app feature
+  - key: enable_trivia_app
+    value_type: boolean
+    boolean_value: true
+    enabled: true
+    description: "Enable trivia/pub quiz app feature. Allows users to answer trivia questions and track their performance."
+    segment_id: null
+    user_id: null
+
   # Example: Future feature flags
   # - key: enable_mood_analytics
   #   value_type: boolean

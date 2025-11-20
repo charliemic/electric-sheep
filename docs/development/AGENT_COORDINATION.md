@@ -32,57 +32,44 @@
 
 ## Active Work
 
-### Task: Restore Design Work (Logos, Icons, Backgrounds)
-- **Branch**: `feature/restore-design-work`
-- **Worktree**: None (should use worktree for better isolation)
+### Task: Emulator Management Architecture
+- **Branch**: `feature/emulator-management-architecture`
+- **Worktree**: `../electric-sheep-emulator-management` ✅ **Using worktree for isolation**
+- **Status**: Complete ✅
+- **Files Modified**: 
+  - `docs/development/EMULATOR_MANAGEMENT_ARCHITECTURE.md` (architecture design)
+  - `docs/development/EMULATOR_SCRIPT_REVIEW.md` (script review and migration plan)
+  - `docs/development/EMULATOR_MANAGEMENT_IMPLEMENTATION.md` (implementation details)
+  - `docs/development/EMULATOR_MANAGEMENT_TESTING.md` (testing guide)
+  - `docs/development/EMULATOR_MANAGEMENT_ONBOARDING.md` (onboarding guide)
+  - `docs/development/CI_CD_EMULATOR_TESTS.md` (CI/CD integration)
+  - `scripts/emulator-lock-manager.sh` (lock management)
+  - `scripts/emulator-discovery.sh` (discovery service)
+  - `scripts/emulator-manager.sh` (enhanced with locking)
+  - `scripts/dev-reload.sh` (updated to use discovery)
+  - `scripts/run-persona-test-with-video.sh` (updated to use discovery)
+  - `test-automation/src/main/kotlin/.../Main.kt` (updated to use discovery)
+  - `scripts/tests/**` (test suite with Bats)
+  - `.github/workflows/build-and-test.yml` (CI/CD integration)
+  - `Makefile` (convenience commands)
+  - `README.md` (updated with testing section)
+- **Isolation Strategy**: ✅ **Git worktree** - Complete file system isolation
+- **Conflicts**: None - working in isolated worktree
+- **Purpose**: Design and implement emulator management architecture to prevent multi-agent conflicts
+- **Merged**: Pending PR
+
+### Task: Feature Flag Sync Script Improvements
+- **Branch**: `fix/feature-flag-sync-upsert-isolated`
+- **Worktree**: `../electric-sheep-feature-flag-sync` ✅ **Using worktree for isolation**
 - **Status**: In Progress
 - **Files Modified**: 
-  - `app/src/main/res/mipmap-mdpi/ic_launcher_foreground.xml`
-  - `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`
-  - `app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml`
-  - `app/src/main/res/mipmap-mdpi/ic_launcher_round.xml`
-  - `app/src/main/res/values/colors.xml`
-- **Isolation Strategy**: branch only (worktree recommended but not used)
-- **Conflicts**: None known
-- **Issue**: Working on `main` branch initially - switched to feature branch. Untracked files from other agents visible in workspace.
-
-### Task: Mood Chart Visualization
-- **Branch**: `feature/mood-chart-visualization` ✅
-- **Worktree**: None (working directly on feature branch)
-- **Status**: In Progress
-- **Files Modified**: 
-  - `app/src/main/java/com/electricsheep/app/ui/components/MoodChart.kt` ✅ Restored
-  - `app/src/main/java/com/electricsheep/app/ui/components/MoodChartDataProcessor.kt` ✅ Restored
-  - `app/src/main/java/com/electricsheep/app/data/fixtures/` ✅ Restored (test data fixtures)
-  - `app/src/main/java/com/electricsheep/app/data/repository/MoodRepositoryTestDataExtensions.kt`
-  - `app/build.gradle.kts` (Vico chart library dependencies - removed, using custom Canvas)
-- **Isolation Strategy**: ✅ **Feature branch** - `feature/mood-chart-visualization`
-- **Conflicts**: None - properly isolated on feature branch
-- **Issue**: ✅ **RESOLVED** - Files restored from `../electric-sheep-other-agent-work/` to feature branch
-- **Action Taken**: 
-  - Switched to feature branch: `feature/mood-chart-visualization`
-  - Restored files from `../electric-sheep-other-agent-work/`
-  - Files now tracked in git on proper feature branch
-  - Updated coordination doc
-
-### Task: Trivia Screen Implementation
-- **Branch**: `feature/trivia-screen` ✅
-- **Worktree**: `../electric-sheep-trivia` ✅ **ISOLATED**
-- **Status**: Ready for agent assignment
-- **Files Modified**: 
-  - `app/src/main/java/com/electricsheep/app/ui/screens/trivia/TriviaScreen.kt` ✅ Restored
-  - `app/src/main/java/com/electricsheep/app/data/model/Question.kt` ✅ Restored
-  - `app/src/main/java/com/electricsheep/app/data/model/QuizAnswer.kt` ✅ Restored
-  - `app/src/main/java/com/electricsheep/app/data/model/QuizSession.kt` ✅ Restored
-- **Isolation Strategy**: ✅ **git worktree** - `../electric-sheep-trivia` (complete file system isolation)
-- **Conflicts**: None - properly isolated in separate worktree
-- **Issue**: ✅ **RESOLVED** - Files restored from `../electric-sheep-other-agent-work/` to isolated worktree
-- **Action Taken**: 
-  - Created feature branch: `feature/trivia-screen`
-  - Created git worktree: `../electric-sheep-trivia`
-  - Restored trivia files from `../electric-sheep-other-agent-work/`
-  - Files ready for agent to continue work
-- **Note**: Worktree is ready for trivia screen agent to take over
+  - `scripts/sync-feature-flags.sh` (upsert handling improvements)
+  - `.github/workflows/supabase-feature-flags-deploy.yml` (DB connection support)
+  - `feature-flags/flags.yaml` (enable_trivia_app flag)
+  - `app/build.gradle.kts` (BuildConfig field)
+- **Isolation Strategy**: ✅ **Git worktree** - Complete file system isolation
+- **Conflicts**: None - working in isolated worktree
+- **Purpose**: Fix feature flag sync script to properly handle upserts and verify enable_trivia_app flag deployment
 
 ## Shared Files (Require Coordination)
 

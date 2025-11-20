@@ -11,7 +11,14 @@
 set -e
 
 SCENARIO_NAME="${1:-signup-and-mood-entry}"
-DEVICE_ID="${2:-emulator-5554}"
+# Use discovery service if device ID not provided, otherwise use provided device
+if [ -z "$2" ]; then
+    DEVICE_ID=$(./scripts/emulator-discovery.sh acquire)
+    ACQUIRED_DEVICE="$DEVICE_ID"
+else
+    DEVICE_ID="$2"
+    ACQUIRED_DEVICE=""
+fi
 OUTPUT_DIR="/tmp/persona_test_results/${SCENARIO_NAME}_$(date +%Y%m%d_%H%M%S)"
 
 mkdir -p "$OUTPUT_DIR"
@@ -293,6 +300,10 @@ main() {
 cleanup() {
     log "🧹 Cleaning up..."
     adb -s "$DEVICE_ID" shell killall screenrecord 2>/dev/null || true
+    # Release emulator lock if we acquired it
+    if [ -n "$ACQUIRED_DEVICE" ]; then
+        ./scripts/emulator-discovery.sh release "$ACQUIRED_DEVICE" > /dev/null 2>&1 || true
+    fi
 }
 trap cleanup EXIT
 

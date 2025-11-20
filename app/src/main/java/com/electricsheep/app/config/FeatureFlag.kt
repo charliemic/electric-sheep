@@ -18,8 +18,8 @@ object FeatureFlag {
     const val SHOW_FEATURE_FLAG_INDICATOR = "show_feature_flag_indicator"
     
     /**
-     * Enables the Trivia Quiz app feature.
-     * When enabled, shows the Trivia Quiz option on the landing page.
+     * Enable trivia/pub quiz app feature.
+     * When enabled, users can access the trivia app to answer questions and track performance.
      */
     const val ENABLE_TRIVIA_APP = "enable_trivia_app"
     
