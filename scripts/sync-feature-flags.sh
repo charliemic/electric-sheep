@@ -97,10 +97,10 @@ if [ "$USE_API" = false ] && [ -n "$SUPABASE_DB_URL" ]; then
     CONNECTION_EXIT=$?
     set -u
     if [ $CONNECTION_EXIT -ne 0 ]; then
-        echo -e "${RED}✗ Database connection failed${NC}"
-        echo -e "${RED}Error: $CONNECTION_TEST${NC}"
-        echo -e "${YELLOW}DB URL format: postgresql://user:password@host:port/database${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠ Database connection failed, falling back to PostgREST API${NC}"
+        echo -e "${YELLOW}Error: $CONNECTION_TEST${NC}"
+        echo -e "${YELLOW}Using PostgREST API instead...${NC}"
+        USE_API=true
     else
         echo -e "${GREEN}✓ Database connection successful${NC}"
     fi
