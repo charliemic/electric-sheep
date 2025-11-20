@@ -1,0 +1,138 @@
+---
+alwaysApply: true
+---
+
+# Branch Isolation and Multi-Agent Workflow Rules
+
+## CRITICAL: Never Work on Main Branch
+
+**Before making ANY changes, you MUST:**
+
+1. **Check current branch:**
+   ```bash
+   git status
+   # or
+   git branch
+   ```
+
+2. **If on `main` branch, IMMEDIATELY create a feature branch:**
+   ```bash
+   git checkout -b feature/<agent-id>-<feature-name>
+   ```
+
+3. **Never commit directly to `main`** - All changes must go through feature branches.
+
+## Branch Naming Convention
+
+**Required format:** `<type>/<agent-id>-<short-description>`
+
+**Types:**
+- `feature/` - New functionality
+- `fix/` - Bug fixes  
+- `refactor/` - Code refactoring
+- `docs/` - Documentation only
+- `test/` - Test improvements
+
+**Agent IDs (examples):**
+- `agent-1` or `test-framework` - Test Framework & Automation
+- `agent-2` or `env-config` - Environment & Configuration
+- `agent-3` or `design-system` - Design System & UI
+- `agent-4` or `data-layer` - Data Layer & Business Logic
+
+**Examples:**
+- ✅ `feature/agent-1-test-helpers`
+- ✅ `feature/test-framework-async-fixes`
+- ✅ `fix/agent-2-env-switch-bug`
+- ❌ `feature/my-feature` (missing agent ID)
+- ❌ `test-helpers` (missing type prefix)
+
+## Pre-Work Checklist (MANDATORY)
+
+Before starting any work, you MUST:
+
+1. ✅ **Verify NOT on main branch** - Check `git status`
+2. ✅ **Create feature branch** - Use proper naming convention
+3. ✅ **Pull latest main** - `git pull origin main`
+4. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
+5. ✅ **Document your work** - Update coordination doc with your planned changes
+
+## File Ownership Rules
+
+**Before modifying files, check ownership:**
+
+- **Agent 1 (Test Framework):** `scripts/test-*.sh`, `test-automation/`, `docs/testing/`
+- **Agent 2 (Environment):** `app/.../config/`, `docs/development/` (env-related)
+- **Agent 3 (Design/UI):** `app/.../ui/components/`, `app/.../ui/theme/`, `docs/architecture/`
+- **Agent 4 (Data Layer):** `app/.../data/repositories/`, `app/.../data/models/`
+
+**Shared files (require coordination):**
+- `app/.../ui/screens/LandingScreen.kt`
+- `app/.../ElectricSheepApplication.kt`
+- `app/.../data/DataModule.kt`
+- `app/build.gradle.kts`, `build.gradle.kts`
+
+**If modifying shared files:**
+1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
+2. Document your changes in coordination doc
+3. Coordinate with other agents if needed
+
+## Workflow Enforcement
+
+**When user asks you to make changes:**
+
+1. **First, check branch:**
+   ```bash
+   git branch --show-current
+   ```
+
+2. **If on main, STOP and create branch:**
+   ```bash
+   git checkout -b feature/<agent-id>-<feature-name>
+   ```
+
+3. **Before modifying files, check coordination:**
+   - Read `docs/development/AGENT_COORDINATION.md`
+   - Verify no conflicts with other agents
+   - Document your planned changes
+
+4. **After work, update coordination doc:**
+   - Mark work as "In Progress" or "Complete"
+   - List files you modified
+
+## Commit Rules
+
+**Before committing:**
+
+1. ✅ Verify you're on a feature branch (not `main`)
+2. ✅ Use descriptive commit messages
+3. ✅ Keep commits atomic (one logical change)
+4. ✅ Run tests if applicable
+
+**Commit message format:**
+```
+<type>: <description>
+
+[optional body]
+```
+
+**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+## Error Prevention
+
+**If you detect these conditions, STOP and fix:**
+
+- ❌ User is on `main` branch → Create feature branch immediately
+- ❌ Branch name doesn't follow convention → Rename branch
+- ❌ Modifying shared file without coordination → Check coordination doc first
+- ❌ Tests failing → Fix tests before proceeding
+- ❌ Uncommitted work on `main` → Move to feature branch
+
+## Multi-Agent Coordination
+
+**Always:**
+- Check `docs/development/AGENT_COORDINATION.md` before starting
+- Document your work in coordination doc
+- Update coordination doc when work status changes
+- Coordinate if files overlap with other agents
+
+**See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines

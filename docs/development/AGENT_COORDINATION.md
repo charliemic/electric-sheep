@@ -3,6 +3,17 @@
 **Last Updated**: 2025-11-19  
 **Purpose**: Track which agents are working on which files to prevent conflicts
 
+**How to Use:**
+1. Before starting work, check this document for conflicts
+2. Add your work entry with branch name and files you'll modify
+3. Update status as you progress (In Progress → Complete)
+4. Remove entry after merge
+
+**Quick Check:**
+```bash
+./scripts/check-agent-coordination.sh
+```
+
 ## Current Work Status
 
 ### Agent 1: Test Framework Improvements
