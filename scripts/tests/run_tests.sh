@@ -123,7 +123,21 @@ else
     # Run all tests
     echo -e "${BLUE}Running all tests...${NC}"
     echo ""
-    bats $VERBOSE "$SCRIPT_DIR"/*.bats
+    
+    # Find all .bats files
+    TEST_FILES=("$SCRIPT_DIR"/*.bats)
+    
+    if [ ! -e "${TEST_FILES[0]}" ]; then
+        echo -e "${RED}❌ No test files found in $SCRIPT_DIR${NC}"
+        exit 1
+    fi
+    
+    # Run each test file
+    for test_file in "${TEST_FILES[@]}"; do
+        if [ -f "$test_file" ]; then
+            bats $VERBOSE "$test_file"
+        fi
+    done
 fi
 
 TEST_EXIT_CODE=$?
