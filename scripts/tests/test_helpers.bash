@@ -41,17 +41,39 @@ mock_git_worktree() {
 
 # Get script directory
 get_script_dir() {
-    # BATS_TEST_DIRNAME is the test file path (e.g., /path/to/scripts/tests/test_file.bats)
-    # We need to get the scripts/ directory (parent of tests/)
-    if [ -n "$BATS_TEST_DIRNAME" ]; then
-        # Get directory of test file (scripts/tests/), then go up one level to scripts/
+    # Try multiple methods to find the scripts directory
+    # Method 1: Use BATS_TEST_DIRNAME if set (absolute path)
+    if [ -n "$BATS_TEST_DIRNAME" ] && [ "${BATS_TEST_DIRNAME#/}" != "$BATS_TEST_DIRNAME" ]; then
+        # Absolute path - get directory of test file, then go up one level
         local test_dir="$(dirname "$BATS_TEST_DIRNAME")"
         local scripts_dir="$(cd "$test_dir/.." && pwd)"
-        echo "$scripts_dir"
-    else
-        # Fallback: assume we're in scripts/tests/ and go up one level
-        echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+        if [ -f "$scripts_dir/emulator-lock-manager.sh" ]; then
+            echo "$scripts_dir"
+            return
+        fi
     fi
+    
+    # Method 2: Use BATS_TEST_DIRNAME if set (relative path)
+    if [ -n "$BATS_TEST_DIRNAME" ]; then
+        # Relative path - resolve from current directory
+        local test_dir="$(dirname "$BATS_TEST_DIRNAME")"
+        local scripts_dir="$(cd "$test_dir/.." && pwd)"
+        if [ -f "$scripts_dir/emulator-lock-manager.sh" ]; then
+            echo "$scripts_dir"
+            return
+        fi
+    fi
+    
+    # Method 3: Use test_helpers.bash location (most reliable)
+    local helpers_dir="$(dirname "${BASH_SOURCE[0]}")"
+    local scripts_dir="$(cd "$helpers_dir/.." && pwd)"
+    if [ -f "$scripts_dir/emulator-lock-manager.sh" ]; then
+        echo "$scripts_dir"
+        return
+    fi
+    
+    # Method 4: Fallback - assume we're in scripts/tests/
+    echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 }
 
 # Load script as library (for testing functions)
