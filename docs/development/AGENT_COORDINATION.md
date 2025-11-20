@@ -32,7 +32,18 @@
 
 ## Active Work
 
-*No active work currently - add entries here as agents start tasks*
+### Task: Feature Flag Sync Script Improvements
+- **Branch**: `fix/feature-flag-sync-upsert-isolated`
+- **Worktree**: `../electric-sheep-feature-flag-sync` ✅ **Using worktree for isolation**
+- **Status**: In Progress
+- **Files Modified**: 
+  - `scripts/sync-feature-flags.sh` (upsert handling improvements)
+  - `.github/workflows/supabase-feature-flags-deploy.yml` (DB connection support)
+  - `feature-flags/flags.yaml` (enable_trivia_app flag)
+  - `app/build.gradle.kts` (BuildConfig field)
+- **Isolation Strategy**: ✅ **Git worktree** - Complete file system isolation
+- **Conflicts**: None - working in isolated worktree
+- **Purpose**: Fix feature flag sync script to properly handle upserts and verify enable_trivia_app flag deployment
 
 ## Shared Files (Require Coordination)
 
