@@ -29,8 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,14 +103,17 @@ fun LandingScreen(
             quoteText = cached.text
         }
 
-        try {
-            val latest = QuoteApi.fetchRandomQuote()
-            quoteText = latest.text
-            quotePreferences.setLastQuote(latest)
-        } catch (e: Exception) {
-            // Fall back to cached quote (if any) and avoid crashing the screen
-            Logger.warn("LandingScreen", "Failed to fetch inspirational quote, using cached value if available", e)
-        }
+        // Fetch fresh quote using Result pattern
+        QuoteApi.fetchRandomQuote()
+            .onSuccess { quote ->
+                quoteText = quote.text
+                quotePreferences.setLastQuote(quote)
+            }
+            .onFailure { error ->
+                // Fall back to cached quote (if any) and avoid crashing the screen
+                Logger.warn("LandingScreen", "Failed to fetch inspirational quote, using cached value if available", error)
+                // quoteText already set from cache above, or remains null
+            }
     }
 
     Box(
@@ -183,18 +188,25 @@ fun LandingScreen(
                 modifier = Modifier.padding(bottom = Spacing.lg)
             )
 
-            if (areQuotesEnabled && quoteText != null) {
-                Text(
-                    text = quoteText!!,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(bottom = Spacing.md),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
+            // Display quote with safe call (no force unwrap)
+            if (areQuotesEnabled) {
+                quoteText?.let { text ->
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(bottom = Spacing.md)
+                            .semantics {
+                                liveRegion = LiveRegionMode.Polite
+                                contentDescription = "Inspirational quote: $text"
+                            },
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
             TextButton(

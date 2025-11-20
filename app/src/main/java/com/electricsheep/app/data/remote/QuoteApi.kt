@@ -1,6 +1,7 @@
 package com.electricsheep.app.data.remote
 
 import com.electricsheep.app.data.model.InspirationalQuote
+import com.electricsheep.app.error.NetworkError
 import com.electricsheep.app.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,9 +26,9 @@ object QuoteApi {
     /**
      * Fetch a random inspirational quote from the remote API.
      *
-     * @throws IOException if the network request fails or the response is invalid.
+     * @return Result containing InspirationalQuote on success, or NetworkError on failure
      */
-    suspend fun fetchRandomQuote(): InspirationalQuote = withContext(Dispatchers.IO) {
+    suspend fun fetchRandomQuote(): Result<InspirationalQuote> = withContext(Dispatchers.IO) {
         val url = URL(QUOTE_URL)
         val connection = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
@@ -38,7 +39,11 @@ object QuoteApi {
         try {
             val responseCode = connection.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw IOException("Unexpected response code: $responseCode")
+                val error = NetworkError.fromException(
+                    IOException("Unexpected response code: $responseCode")
+                )
+                error.log(TAG, "Failed to fetch quote - HTTP $responseCode")
+                return@withContext Result.failure(error)
             }
 
             val body = connection.inputStream.bufferedReader().use(BufferedReader::readText)
@@ -47,7 +52,11 @@ object QuoteApi {
             // [ { "q": "<quote>", "a": "<author>", "h": "<html>" } ]
             val jsonArray = org.json.JSONArray(body)
             if (jsonArray.length() == 0) {
-                throw IOException("Empty quote array")
+                val error = NetworkError.Unknown(
+                    IOException("Empty quote array")
+                )
+                error.log(TAG, "Empty response from quote API")
+                return@withContext Result.failure(error)
             }
 
             val first = jsonArray.getJSONObject(0)
@@ -55,7 +64,11 @@ object QuoteApi {
             val author = first.optString("a").trim()
 
             if (quote.isEmpty()) {
-                throw IOException("Quote content is empty")
+                val error = NetworkError.Unknown(
+                    IOException("Quote content is empty")
+                )
+                error.log(TAG, "Quote content is empty")
+                return@withContext Result.failure(error)
             }
 
             val combined = if (author.isNotEmpty()) {
@@ -64,14 +77,13 @@ object QuoteApi {
                 quote
             }
 
-            InspirationalQuote(text = combined)
+            Result.success(InspirationalQuote(text = combined))
         } catch (e: Exception) {
-            Logger.warn(TAG, "Failed to fetch inspirational quote", e)
-            throw e
+            val networkError = NetworkError.fromException(e)
+            networkError.log(TAG, "Failed to fetch inspirational quote")
+            Result.failure(networkError)
         } finally {
             connection.disconnect()
         }
     }
 }
-
-
