@@ -28,7 +28,9 @@ TEST_FILE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --verbose|-v)
-            VERBOSE="--verbose"
+            # Ubuntu bats 1.10.0 doesn't support --verbose
+            # Use --show-output-of-passing-tests for similar functionality
+            VERBOSE="--show-output-of-passing-tests"
             shift
             ;;
         --setup)
