@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -24,6 +26,7 @@ import androidx.compose.ui.semantics.error
 import android.content.Intent
 import com.electricsheep.app.config.MoodConfig
 import com.electricsheep.app.data.model.Mood
+import com.electricsheep.app.ui.theme.Spacing
 import com.electricsheep.app.util.DateFormatter
 import com.electricsheep.app.util.Logger
 import kotlinx.coroutines.launch
@@ -144,9 +147,34 @@ fun MoodManagementScreen(
                     }
                 },
                 actions = {
-                    // Show logout button if user is authenticated
+                    // Show user info and logout if authenticated
                     if (currentUser != null) {
-                        TextButton(
+                        // Compact user info - email with Person icon
+                        // Placed in top bar for minimal intrusion
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = Spacing.sm)
+                                .semantics {
+                                    contentDescription = "Signed in as ${currentUser!!.email}"
+                                },
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = currentUser!!.email,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        // Logout button - compact icon button
+                        IconButton(
                             onClick = {
                                 Logger.info("MoodManagementScreen", "User tapped logout")
                                 viewModel.signOut()
@@ -155,7 +183,10 @@ fun MoodManagementScreen(
                                 contentDescription = "Sign out from current account"
                             }
                         ) {
-                            Text("Logout")
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = null // Handled by parent IconButton
+                            )
                         }
                     }
                 }
@@ -480,40 +511,6 @@ fun MoodManagementScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
                 
-                // User info section - moved below input for better flow
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Signed in as:",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = currentUser!!.email,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            currentUser!!.displayName?.let { displayName ->
-                                Text(
-                                    text = displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
                 
                 // Mood history section
                 item {
