@@ -20,6 +20,7 @@ jobs:
       app-code: ${{ steps.filter.outputs.app-code }}
       docs: ${{ steps.filter.outputs.docs }}
       scripts: ${{ steps.filter.outputs.scripts }}
+      emulator-scripts: ${{ steps.filter.outputs.emulator-scripts }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - name: Checkout code
@@ -42,6 +43,11 @@ jobs:
               - 'README.md'
             scripts:
               - 'scripts/**'
+            emulator-scripts:
+              - 'scripts/emulator-*.sh'
+              - 'scripts/tests/**'
+              - 'docs/development/EMULATOR_MANAGEMENT*.md'
+              - 'Makefile'
             workflows:
               - '.github/workflows/**'
           list-files: shell
@@ -71,7 +77,7 @@ jobs:
 
     - name: Cache Gradle dependencies
       id: cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -81,7 +87,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Cache Android build artifacts
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
@@ -112,7 +118,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -155,7 +161,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -190,7 +196,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -254,7 +260,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -264,7 +270,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
@@ -299,7 +305,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -309,7 +315,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.android/build-cache
