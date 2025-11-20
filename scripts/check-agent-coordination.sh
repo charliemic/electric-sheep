@@ -26,8 +26,8 @@ echo ""
 # Check branch naming convention
 if [[ ! "$CURRENT_BRANCH" =~ ^(feature|fix|refactor|docs|test)/ ]]; then
     echo "⚠️  WARNING: Branch name doesn't follow convention"
-    echo "   Expected format: <type>/<agent-id>-<description>"
-    echo "   Example: feature/agent-1-test-helpers"
+    echo "   Expected format: <type>/<task-description>"
+    echo "   Example: feature/test-helpers"
     echo ""
 fi
 
@@ -49,15 +49,9 @@ else
     echo ""
 fi
 
-# Check modified files against ownership rules
+# Check modified files for shared files
 if [ -n "$MODIFIED_FILES" ]; then
-    echo "=== File Ownership Check ==="
-    
-    # Define ownership patterns
-    AGENT_1_PATTERNS=("scripts/test-" "test-automation/" "docs/testing/")
-    AGENT_2_PATTERNS=("app/.*/config/" "docs/development/")
-    AGENT_3_PATTERNS=("app/.*/ui/components/" "app/.*/ui/theme/" "docs/architecture/")
-    AGENT_4_PATTERNS=("app/.*/data/repositories/" "app/.*/data/models/")
+    echo "=== Shared File Check ==="
     
     SHARED_FILES=(
         "app/.*/ui/screens/LandingScreen.kt"
@@ -70,64 +64,20 @@ if [ -n "$MODIFIED_FILES" ]; then
     # Check each modified file
     for file in $MODIFIED_FILES; do
         is_shared=false
-        is_owned=false
         
         # Check if shared file
         for pattern in "${SHARED_FILES[@]}"; do
             if [[ "$file" =~ $pattern ]]; then
                 echo "⚠️  SHARED FILE: $file"
                 echo "   This file requires coordination - check $COORDINATION_DOC"
+                echo "   Consider using git worktree for file system isolation"
                 is_shared=true
                 break
             fi
         done
         
-        # Check ownership if not shared
         if [ "$is_shared" = false ]; then
-            # Check Agent 1 patterns
-            for pattern in "${AGENT_1_PATTERNS[@]}"; do
-                if [[ "$file" =~ $pattern ]]; then
-                    is_owned=true
-                    break
-                fi
-            done
-            
-            # Check Agent 2 patterns
-            if [ "$is_owned" = false ]; then
-                for pattern in "${AGENT_2_PATTERNS[@]}"; do
-                    if [[ "$file" =~ $pattern ]]; then
-                        is_owned=true
-                        break
-                    fi
-                done
-            fi
-            
-            # Check Agent 3 patterns
-            if [ "$is_owned" = false ]; then
-                for pattern in "${AGENT_3_PATTERNS[@]}"; do
-                    if [[ "$file" =~ $pattern ]]; then
-                        is_owned=true
-                        break
-                    fi
-                done
-            fi
-            
-            # Check Agent 4 patterns
-            if [ "$is_owned" = false ]; then
-                for pattern in "${AGENT_4_PATTERNS[@]}"; do
-                    if [[ "$file" =~ $pattern ]]; then
-                        is_owned=true
-                        break
-                    fi
-                done
-            fi
-            
-            if [ "$is_owned" = true ]; then
-                echo "✅ $file (owned by agent based on pattern)"
-            else
-                echo "⚠️  UNKNOWN OWNERSHIP: $file"
-                echo "   Verify this file is in your ownership area"
-            fi
+            echo "✅ $file"
         fi
     done
     echo ""
@@ -142,6 +92,9 @@ if [ -f "$COORDINATION_DOC" ]; then
 else
     echo "⚠️  Coordination doc: Not found (create it if needed)"
 fi
+echo ""
+echo "💡 For file system isolation, use:"
+echo "   ./scripts/create-worktree.sh <task-name>"
 echo ""
 echo "For complete guidelines, see: docs/development/MULTI_AGENT_WORKFLOW.md"
 

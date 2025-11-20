@@ -5,20 +5,20 @@
 
 ## Overview
 
-This document defines the standard workflow for multiple AI agents working simultaneously on this codebase. Following these guidelines prevents conflicts, ensures code quality, and maintains a clean git history.
+This document defines the standard workflow for multiple AI agents working simultaneously on this codebase. **Agents are ephemeral** - each agent works on a specific task and then completes. Following these guidelines prevents conflicts, ensures code quality, and maintains a clean git history.
 
 ## Core Principles
 
 ### 1. Branch Isolation (MANDATORY)
 - **Never work on `main` branch** - Always create a feature branch
-- **One agent per branch** - Each agent works on their own feature branch
-- **Branch naming**: `feature/<agent-id>-<feature-name>` or `feature/<agent-id>-<short-description>`
-- **Example**: `feature/agent-1-test-helpers`, `feature/agent-2-env-switch`, `feature/agent-3-design-system`
+- **One task per branch** - Each agent works on their own feature branch for a specific task
+- **Branch naming**: `feature/<task-description>` or `<type>/<task-description>`
+- **Example**: `feature/test-helpers`, `feature/env-switch`, `feature/design-system`
 
-### 2. File Ownership
-- Each agent has primary ownership of specific directories
-- Shared files require coordination (see [File Ownership](#file-ownership))
-- Document file changes in `AGENT_COORDINATION.md` before starting
+### 2. File System Isolation (RECOMMENDED)
+- **Git Worktrees** - Use separate working directories for complete isolation
+- **Workspace Separation** - Use separate directory clones if needed
+- **Coordination** - Always check coordination doc before starting
 
 ### 3. Coordination Before Conflict
 - Check `AGENT_COORDINATION.md` before starting work
@@ -30,28 +30,136 @@ This document defines the standard workflow for multiple AI agents working simul
 - Rebase feature branch on `main` before major work
 - Resolve conflicts immediately, not at merge time
 
+## File System Isolation Strategies
+
+### Strategy 1: Git Worktrees (RECOMMENDED)
+
+**Git worktrees allow multiple working directories for the same repository, each on a different branch.**
+
+#### Benefits
+- ✅ Complete file system isolation - each agent has their own directory
+- ✅ No branch switching needed - each worktree is on its own branch
+- ✅ Same repository - shared git history and objects
+- ✅ Easy cleanup - just remove the worktree directory
+
+#### Setup
+
+1. **Create a worktree for your feature branch:**
+   ```bash
+   # From main repository
+   git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   ```
+
+2. **Work in the new directory:**
+   ```bash
+   cd ../electric-sheep-<task-name>
+   # Now you're in an isolated directory on your feature branch
+   ```
+
+3. **List worktrees:**
+   ```bash
+   git worktree list
+   ```
+
+4. **Remove worktree when done:**
+   ```bash
+   # From main repository
+   git worktree remove ../electric-sheep-<task-name>
+   # Or just delete the directory and run:
+   git worktree prune
+   ```
+
+#### Example
+```bash
+# Agent working on test helpers
+git worktree add ../electric-sheep-test-helpers -b feature/test-helpers
+cd ../electric-sheep-test-helpers
+# Work on test helpers in isolation
+
+# Another agent working on design system
+git worktree add ../electric-sheep-design-system -b feature/design-system
+cd ../electric-sheep-design-system
+# Work on design system in isolation
+```
+
+#### Best Practices
+- Use descriptive directory names: `electric-sheep-<task-name>`
+- Create worktree from main repository (not from another worktree)
+- Remove worktrees after merge to keep things clean
+- Each worktree should be on a different branch
+
+### Strategy 2: Separate Repository Clones
+
+**For complete isolation, clone the repository to separate directories.**
+
+#### Setup
+
+1. **Clone to separate directory:**
+   ```bash
+   git clone <repo-url> ../electric-sheep-<task-name>
+   cd ../electric-sheep-<task-name>
+   git checkout -b feature/<task-name>
+   ```
+
+2. **Work in isolation:**
+   - Each clone is completely independent
+   - No file system conflicts possible
+   - More disk space required
+
+3. **Sync and merge:**
+   - Push branch from clone
+   - Create PR from branch
+   - Merge via main repository
+
+#### When to Use
+- When you need complete isolation
+- When working on large refactors
+- When multiple agents need to modify the same files simultaneously
+
+### Strategy 3: Branch-Based Isolation (Current Default)
+
+**Use git branches with coordination - works but requires careful coordination.**
+
+#### Setup
+- Each agent creates a feature branch
+- All work in same directory
+- Must coordinate through `AGENT_COORDINATION.md`
+
+#### Limitations
+- ⚠️ File system conflicts possible if agents modify same files
+- ⚠️ Requires careful coordination
+- ⚠️ Branch switching can be error-prone
+
+#### When to Use
+- When tasks don't overlap
+- When coordination is easy
+- When disk space is limited
+
 ## Workflow Steps
 
 ### Phase 1: Pre-Work Setup (REQUIRED)
 
 **Before making ANY changes:**
 
-1. **Check Current Branch**
+1. **Choose Isolation Strategy**
+   - **Recommended**: Git worktree for file system isolation
+   - **Alternative**: Separate clone for complete isolation
+   - **Fallback**: Branch-based with coordination
+
+2. **If Using Git Worktree:**
    ```bash
-   git status
-   # Must NOT be on 'main'
+   # From main repository
+   git checkout main
+   git pull origin main
+   git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   cd ../electric-sheep-<task-name>
    ```
 
-2. **Pull Latest Main**
+3. **If Using Branch-Based:**
    ```bash
    git checkout main
    git pull origin main
-   ```
-
-3. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/<agent-id>-<feature-name>
-   # Example: git checkout -b feature/agent-1-test-helpers
+   git checkout -b feature/<task-name>
    ```
 
 4. **Check Coordination Document**
@@ -63,6 +171,7 @@ This document defines the standard workflow for multiple AI agents working simul
    - Add your work entry to `AGENT_COORDINATION.md`
    - List files you'll modify
    - Set status to "In Progress"
+   - Note your isolation strategy (worktree/clone/branch)
 
 ### Phase 2: During Work
 
@@ -75,7 +184,7 @@ This document defines the standard workflow for multiple AI agents working simul
 
 2. **Push Regularly**
    ```bash
-   git push -u origin feature/<agent-id>-<feature-name>
+   git push -u origin feature/<task-name>
    # Use -u on first push, then just git push
    ```
    - This backs up your work
@@ -103,9 +212,7 @@ This document defines the standard workflow for multiple AI agents working simul
 
 1. **Final Sync with Main**
    ```bash
-   git checkout main
-   git pull origin main
-   git checkout feature/<agent-id>-<feature-name>
+   git fetch origin
    git rebase origin/main
    ```
 
@@ -133,78 +240,58 @@ This document defines the standard workflow for multiple AI agents working simul
 
 **After PR is approved and merged:**
 
-1. **Delete Local Branch**
+1. **If Using Git Worktree:**
+   ```bash
+   # From main repository
+   cd /path/to/main/repo
+   git worktree remove ../electric-sheep-<task-name>
+   # Or if directory already deleted:
+   git worktree prune
+   ```
+
+2. **If Using Branch-Based:**
    ```bash
    git checkout main
    git pull origin main
-   git branch -d feature/<agent-id>-<feature-name>
+   git branch -d feature/<task-name>
    ```
 
-2. **Update Coordination Document**
+3. **Update Coordination Document**
    - Mark work as "Complete"
    - Note merge date and PR number
 
-3. **Notify Other Agents** (if applicable)
-   - Document any shared file changes
-   - Note any breaking changes
-
 4. **Clean Up Remote Branch**
    - Remote branch is usually auto-deleted on merge
-   - If not: `git push origin --delete feature/<agent-id>-<feature-name>`
+   - If not: `git push origin --delete feature/<task-name>`
 
-## File Ownership
+## File Coordination
 
-### Agent 1: Test Framework & Automation
-**Primary Ownership:**
-- `scripts/test-*.sh`
-- `test-automation/`
-- `docs/testing/`
-- `test-scenarios/`
+### Shared Files (Require Coordination)
 
-**Shared (Requires Coordination):**
-- `app/src/test/` (if modifying app tests)
-- `docs/` (if creating new test docs)
+These files are commonly modified and require coordination:
 
-### Agent 2: Environment & Configuration
-**Primary Ownership:**
-- `app/src/main/.../config/`
-- `docs/development/` (environment-related)
-- `gradle.properties` (environment config)
-
-**Shared (Requires Coordination):**
-- `app/src/main/.../ElectricSheepApplication.kt`
-- `app/src/main/.../data/DataModule.kt`
-- `app/src/main/.../ui/screens/` (if adding env indicators)
-
-### Agent 3: Design System & UI
-**Primary Ownership:**
-- `app/src/main/.../ui/components/`
-- `app/src/main/.../ui/theme/`
-- `docs/architecture/` (design-related)
-- `app/src/main/res/` (design assets)
-
-**Shared (Requires Coordination):**
-- `app/src/main/.../ui/screens/` (all screen files)
-- `docs/architecture/` (if other agents add architecture docs)
-
-### Agent 4: Data Layer & Business Logic
-**Primary Ownership:**
-- `app/src/main/.../data/repositories/`
-- `app/src/main/.../data/models/`
-- `app/src/main/.../data/local/`
-- `app/src/main/.../data/remote/`
-
-**Shared (Requires Coordination):**
-- `app/src/main/.../data/DataModule.kt`
-- `app/src/main/.../ui/screens/` (if modifying ViewModels)
-
-### Shared Files (ALWAYS Require Coordination)
 - `app/src/main/.../ui/screens/LandingScreen.kt`
 - `app/src/main/.../ElectricSheepApplication.kt`
 - `app/src/main/.../data/DataModule.kt`
 - `app/build.gradle.kts`
 - `build.gradle.kts`
 - `gradle.properties`
+
+### Coordination Process
+
+1. **Check Before Modifying**
+   - Read `AGENT_COORDINATION.md`
+   - See if another agent is working on the file
+
+2. **Document Your Work**
+   - Add entry to coordination doc
+   - List files you'll modify
+   - Note your isolation strategy
+
+3. **If Conflict Detected**
+   - Coordinate with other agent
+   - Decide: sequential work or split work
+   - Update coordination doc with plan
 
 ## Conflict Resolution
 
@@ -251,7 +338,7 @@ This document defines the standard workflow for multiple AI agents working simul
 
 ### Format
 ```
-<type>/<agent-id>-<short-description>
+<type>/<task-description>
 ```
 
 ### Types
@@ -261,20 +348,20 @@ This document defines the standard workflow for multiple AI agents working simul
 - `docs/` - Documentation only
 - `test/` - Test improvements
 
-### Agent IDs
-- `agent-1` - Test Framework
-- `agent-2` - Environment/Config
-- `agent-3` - Design/UI
-- `agent-4` - Data Layer
-- Or use descriptive names: `test-framework`, `env-config`, `design-system`, `data-layer`
-
 ### Examples
-- ✅ `feature/agent-1-test-helpers`
-- ✅ `feature/test-framework-async-fixes`
-- ✅ `fix/agent-2-env-switch-bug`
-- ✅ `refactor/agent-3-component-cleanup`
-- ❌ `feature/my-feature` (missing agent ID)
+- ✅ `feature/test-helpers`
+- ✅ `feature/env-switch`
+- ✅ `fix/login-bug`
+- ✅ `refactor/component-cleanup`
+- ✅ `docs/api-documentation`
+- ❌ `feature/my-feature` (too vague)
 - ❌ `test-helpers` (missing type prefix)
+
+### Best Practices
+- Use descriptive task names
+- Keep names short but clear
+- Use kebab-case (lowercase with hyphens)
+- Avoid agent-specific identifiers (agents are ephemeral)
 
 ## Cursor Rules Enforcement
 
@@ -290,48 +377,48 @@ Cursor rules are configured to enforce branch isolation. See `.cursor/rules/bran
 
 ### Coordination Check Script
 ```bash
-# scripts/check-agent-coordination.sh
+./scripts/check-agent-coordination.sh
 # Checks if current branch follows convention
 # Warns if modifying shared files
 ```
 
-### Branch Validation
+### Git Worktree Helper Script
 ```bash
-# scripts/validate-branch.sh
-# Validates branch name and current state
-# Ensures not on main branch
+# scripts/create-worktree.sh (to be created)
+# Creates a worktree for a new feature branch
 ```
 
 ## Best Practices
 
 ### DO ✅
 - Always create feature branch before work
+- Use git worktree for file system isolation when possible
 - Check coordination doc before starting
 - Commit and push frequently
 - Sync with main regularly
 - Test in isolation
 - Document your changes
 - Update coordination doc
+- Remove worktrees after merge
 
 ### DON'T ❌
 - Work directly on `main` branch
-- Modify files without checking ownership
+- Modify files without checking coordination
 - Force push to shared branches
 - Ignore merge conflicts
 - Leave tests failing
 - Skip coordination documentation
 - Work on overlapping files without coordination
+- Leave worktrees after merge
 
 ## Troubleshooting
 
 ### "I'm on main branch!"
 ```bash
 # Immediately create feature branch
-git checkout -b feature/<agent-id>-<feature-name>
-# Stash any changes if needed
-git stash
-git checkout -b feature/<agent-id>-<feature-name>
-git stash pop
+git checkout -b feature/<task-name>
+# Or create worktree
+git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
 ```
 
 ### "Another agent modified my file!"
@@ -354,6 +441,12 @@ git push --force-with-lease
 2. Check if other agent is actively working on it
 3. Coordinate timing (sequential work)
 4. Or split the work (different parts of file)
+5. Consider using git worktree for complete isolation
+
+### "File system conflicts with another agent!"
+1. **Use git worktree** - Complete file system isolation
+2. **Or use separate clone** - Maximum isolation
+3. **Or coordinate timing** - Sequential work on shared files
 
 ## Success Metrics
 
@@ -364,7 +457,7 @@ A successful multi-agent workflow should have:
 - ✅ All tests passing before merge
 - ✅ Clean git history
 - ✅ No duplicate work
-- ✅ Clear ownership boundaries
+- ✅ File system isolation when needed
 
 ## Related Documentation
 
@@ -375,9 +468,9 @@ A successful multi-agent workflow should have:
 
 ## Updates
 
-### 2025-11-19: Initial Guidelines
-- Created comprehensive multi-agent workflow
-- Defined file ownership rules
-- Established coordination process
-- Added conflict resolution strategies
-
+### 2025-11-19: Updated for Ephemeral Agents
+- Removed agent-specific ownership rules
+- Added file system isolation strategies (git worktrees)
+- Updated branch naming to be task-based
+- Focused on coordination through coordination doc
+- Added git worktree setup and cleanup instructions

@@ -9,44 +9,63 @@
 git status
 
 # 2. If on main, create feature branch IMMEDIATELY
-git checkout -b feature/<agent-id>-<feature-name>
+git checkout -b feature/<task-name>
 
-# 3. Pull latest main
-git checkout main && git pull origin main && git checkout feature/<agent-id>-<feature-name>
+# 3. OR use git worktree for file system isolation (RECOMMENDED)
+./scripts/create-worktree.sh <task-name>
 
-# 4. Check coordination
+# 4. Pull latest main
+git checkout main && git pull origin main && git checkout feature/<task-name>
+
+# 5. Check coordination
 ./scripts/check-agent-coordination.sh
 ```
 
+## File System Isolation (RECOMMENDED)
+
+**Use git worktrees for complete file system isolation:**
+
+```bash
+# Create isolated worktree
+./scripts/create-worktree.sh test-helpers
+cd ../electric-sheep-test-helpers
+# Work in complete isolation - no file system conflicts!
+```
+
+**Benefits:**
+- ✅ Complete file system isolation
+- ✅ No conflicts with other agents
+- ✅ Each agent has their own directory
+- ✅ Easy cleanup after merge
+
 ## Branch Naming
 
-**Format:** `<type>/<agent-id>-<description>`
+**Format:** `<type>/<task-description>`
 
 **Examples:**
-- `feature/agent-1-test-helpers`
-- `fix/agent-2-env-bug`
-- `refactor/agent-3-component-cleanup`
+- `feature/test-helpers`
+- `feature/env-switch`
+- `fix/login-bug`
+- `refactor/component-cleanup`
 
-## File Ownership
+**Note:** Agents are ephemeral - names describe tasks, not agents.
 
-| Agent | Owns |
-|-------|------|
-| **Agent 1** (Test) | `scripts/test-*.sh`, `test-automation/`, `docs/testing/` |
-| **Agent 2** (Env) | `app/.../config/`, `docs/development/` (env-related) |
-| **Agent 3** (Design) | `app/.../ui/components/`, `app/.../ui/theme/`, `docs/architecture/` |
-| **Agent 4** (Data) | `app/.../data/repositories/`, `app/.../data/models/` |
+## Shared Files (Require Coordination)
 
-**Shared Files (coordinate first):**
+These files commonly need coordination:
 - `app/.../ui/screens/LandingScreen.kt`
 - `app/.../ElectricSheepApplication.kt`
 - `app/.../data/DataModule.kt`
 - `app/build.gradle.kts`, `build.gradle.kts`
+
+**Solution:** Use git worktree when modifying shared files!
 
 ## Workflow Checklist
 
 ### Before Starting
 - [ ] On feature branch (not `main`)
 - [ ] Branch name follows convention
+- [ ] Consider git worktree for isolation
 - [ ] Pulled latest `main`
 - [ ] Checked `AGENT_COORDINATION.md`
 - [ ] Documented your work in coordination doc
@@ -64,20 +83,33 @@ git checkout main && git pull origin main && git checkout feature/<agent-id>-<fe
 - [ ] Documentation updated
 - [ ] Coordination doc updated to "Complete"
 
+### After Merge
+- [ ] Remove worktree (if used): `git worktree remove ../electric-sheep-<task-name>`
+- [ ] Delete local branch: `git branch -d feature/<task-name>`
+
 ## Quick Commands
 
 ```bash
 # Check coordination
 ./scripts/check-agent-coordination.sh
 
+# Create isolated worktree
+./scripts/create-worktree.sh <task-name>
+
 # Sync with main
 git fetch origin && git rebase origin/main
 
 # Create feature branch
-git checkout -b feature/<agent-id>-<feature-name>
+git checkout -b feature/<task-name>
 
 # Push branch
-git push -u origin feature/<agent-id>-<feature-name>
+git push -u origin feature/<task-name>
+
+# List worktrees
+git worktree list
+
+# Remove worktree
+git worktree remove ../electric-sheep-<task-name>
 ```
 
 ## Cursor Rules
@@ -86,7 +118,7 @@ Cursor automatically enforces:
 - ✅ Branch check before changes
 - ✅ Branch naming convention
 - ✅ Coordination doc check
-- ✅ File ownership warnings
+- ✅ File system isolation reminders
 
 See: `.cursor/rules/branching.mdc`
 
@@ -95,4 +127,3 @@ See: `.cursor/rules/branching.mdc`
 - **Full Guidelines:** `docs/development/MULTI_AGENT_WORKFLOW.md`
 - **Coordination:** `docs/development/AGENT_COORDINATION.md`
 - **Evaluation:** `docs/development/MULTI_AGENT_WORKFLOW_EVALUATION.md`
-
