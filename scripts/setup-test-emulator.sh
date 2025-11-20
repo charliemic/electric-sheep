@@ -144,10 +144,15 @@ fi
 echo -e "${GREEN}✓${NC} Device: $DEVICE"
 echo ""
 
-# Set Java 17 if available
-if [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
+# Set Java 17 if available (Mac-native tool)
+if JAVA_HOME_17=$(/usr/libexec/java_home -v 17 2>/dev/null); then
+    export JAVA_HOME="$JAVA_HOME_17"
+    echo -e "${GREEN}✓${NC} Using Java 17: $JAVA_HOME"
+elif [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
     export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
-    echo -e "${GREEN}✓${NC} Using Java 17"
+    echo -e "${GREEN}✓${NC} Using Java 17: $JAVA_HOME"
+else
+    echo -e "${YELLOW}⚠${NC} Java 17 not found. Build may fail with Java 24+"
 fi
 
 # Build the app

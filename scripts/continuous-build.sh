@@ -15,8 +15,10 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}🔄 Electric Sheep - Continuous Build${NC}"
 echo ""
 
-# Set Java 17 if available
-if [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
+# Set Java 17 if available (Mac-native tool)
+if JAVA_HOME_17=$(/usr/libexec/java_home -v 17 2>/dev/null); then
+    export JAVA_HOME="$JAVA_HOME_17"
+elif [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
     export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
 fi
 
