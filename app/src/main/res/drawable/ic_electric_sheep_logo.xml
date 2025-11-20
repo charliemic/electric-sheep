@@ -5,43 +5,38 @@
     android:viewportWidth="120"
     android:viewportHeight="120">
     
-    <!-- Electric Sheep Logo - Circular Abstract Design with Concentric Circles -->
+    <!-- Electric Sheep Logo - Circular Abstract Design -->
     <!-- Same conceptual approach as launcher icon, but perfect circle -->
     <!-- Conceptual, abstract design - calm, pastoral, consciousness layers -->
     
-    <!-- Main circle (perfect circle, centered at 60,60) -->
+    <!-- Main circle (perfect circle, centered) -->
     <!-- Represents: Pastoral calm, outer consciousness -->
-    <!-- Slightly more blue: #4A7C8E -->
     <path
-        android:fillColor="#4A7C8E"
+        android:fillColor="#4A7C7E"
         android:pathData="M60,20
             A40,40 0 1,1 60,100
             A40,40 0 1,1 60,20 Z"/>
     
-    <!-- Concentric circles in center - perfectly centered at (60,60) -->
-    <!-- Outer concentric circle (warm amber - more contrasting) -->
+    <!-- Inner consciousness layer (smaller circle) -->
+    <!-- Represents: Core consciousness, present moment -->
+    <!-- Creates depth and calm -->
+    <path
+        android:fillColor="#4A7C7E"
+        android:pathData="M60,50
+            A10,10 0 1,1 60,70
+            A10,10 0 1,1 60,50 Z"/>
+    
+    <!-- Subtle energy accent (abstract, not literal) -->
+    <!-- Warm amber - matches launcher icon's accent color -->
+    <!-- Represents: Subtle consciousness flow, not aggressive "electric" -->
+    <!-- Circular segment accent -->
     <path
         android:fillColor="#D4885A"
-        android:fillAlpha="0.7"
-        android:pathData="M60,50
-            A15,15 0 1,1 60,80
-            A15,15 0 1,1 60,50 Z"/>
-    
-    <!-- Middle concentric circle (lighter blue-teal - more blue hint) -->
-    <!-- #6A9CAE - more blue -->
-    <path
-        android:fillColor="#6A9CAE"
-        android:fillAlpha="0.9"
-        android:pathData="M60,55
-            A10,10 0 1,1 60,75
-            A10,10 0 1,1 60,55 Z"/>
-    
-    <!-- Inner concentric circle (solid blue-teal, core consciousness) -->
-    <!-- #4A7C8E - more blue, perfectly centered -->
-    <path
-        android:fillColor="#4A7C8E"
-        android:pathData="M60,58
-            A7,7 0 1,1 60,72
-            A7,7 0 1,1 60,58 Z"/>
+        android:fillAlpha="0.5"
+        android:pathData="M60,20
+            A20,20 0 0,1 75,35
+            A5,5 0 0,1 70,40
+            A15,15 0 0,1 60,30
+            Z"/>
     
 </vector>

@@ -5,55 +5,44 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Abstract Launcher Icon - Perfect Circle Design with Concentric Circles -->
-    <!-- Matches logo design exactly, scaled for 108dp viewport -->
+    <!-- Abstract Launcher Icon - Perfect Circle Design -->
     <!-- Following prompt history (later prompts take preference): -->
     <!-- Prompt 3: "design language for both", "colours to be more similar", "better suited for vector paths", "link to the concept" -->
     <!-- Prompt 4: "Less of the electric focus", "reference to philip k dick's novel", "calm", "abstract, not concrete entity" -->
     <!-- Prompt 5: "looks like pants - use same themes but different version" -->
     <!-- Themes: Dreams, pastoral calm, flowing consciousness, layers of reality -->
-    <!-- Design: Perfect circle with perfectly centered concentric circles (matches logo) -->
-    <!-- Colors: Slightly more blue teal for consistency -->
+    <!-- Design: Perfect circle with inner layer and subtle accent -->
+    <!-- Colors: Same teal-blue (#4A7C7E) as logo for consistency -->
     <!-- Safe zone: 36dp (75% of 48dp icon) centered in 108dp viewport -->
     
-    <!-- Main circle (perfect circle, centered at 54,54) -->
+    <!-- Main circle (perfect circle, centered) -->
     <!-- Represents: Pastoral calm, outer consciousness -->
-    <!-- Slightly more blue: #4A7C8E (matches logo) -->
-    <!-- Scaled: 120dp logo -> 108dp icon (90% scale) -->
     <path
-        android:fillColor="#4A7C8E"
+        android:fillColor="#4A7C7E"
         android:pathData="M54,18
             A36,36 0 1,1 54,90
             A36,36 0 1,1 54,18 Z"/>
     
-    <!-- Concentric circles in center - perfectly centered at (54,54) -->
-    <!-- Matches logo proportions exactly (scaled 90%) -->
-    <!-- Outer concentric circle (warm amber - more contrasting) -->
-    <!-- Scaled: 15 radius -> 13.5 radius (90% of 15) -->
+    <!-- Inner consciousness layer (smaller circle) -->
+    <!-- Represents: Core consciousness, present moment -->
+    <!-- Creates depth and calm -->
+    <path
+        android:fillColor="#4A7C7E"
+        android:pathData="M54,45
+            A9,9 0 1,1 54,63
+            A9,9 0 1,1 54,45 Z"/>
+    
+    <!-- Subtle energy accent (abstract, not literal) -->
+    <!-- Warm amber - matches logo's accent color -->
+    <!-- Represents: Subtle consciousness flow, not aggressive "electric" -->
+    <!-- Circular segment accent -->
     <path
         android:fillColor="#D4885A"
-        android:fillAlpha="0.7"
-        android:pathData="M54,45
-            A13.5,13.5 0 1,1 54,72
-            A13.5,13.5 0 1,1 54,45 Z"/>
-    
-    <!-- Middle concentric circle (lighter blue-teal - more blue hint) -->
-    <!-- #6A9CAE - more blue (matches logo) -->
-    <!-- Scaled: 10 radius -> 9 radius (90% of 10) -->
-    <path
-        android:fillColor="#6A9CAE"
-        android:fillAlpha="0.9"
-        android:pathData="M54,49.5
-            A9,9 0 1,1 54,67.5
-            A9,9 0 1,1 54,49.5 Z"/>
-    
-    <!-- Inner concentric circle (solid blue-teal, core consciousness) -->
-    <!-- #4A7C8E - more blue, perfectly centered (matches logo) -->
-    <!-- Scaled: 7 radius -> 6.3 radius (90% of 7) -->
-    <path
-        android:fillColor="#4A7C8E"
-        android:pathData="M54,52.2
-            A6.3,6.3 0 1,1 54,64.8
-            A6.3,6.3 0 1,1 54,52.2 Z"/>
+        android:fillAlpha="0.5"
+        android:pathData="M54,18
+            A18,18 0 0,1 68,30
+            A4.5,4.5 0 0,1 64,34.5
+            A13.5,13.5 0 0,1 54,27
+            Z"/>
     
 </vector>
