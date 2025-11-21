@@ -82,6 +82,7 @@
 - ✅ Tests passing
 - ✅ Documentation updated
 - ✅ Create/update PR
+- ✅ **Verify clean state** (see Step 4)
 - ✅ Archive agent
 - ✅ **Branch ready for merge** (you'll merge later)
 
@@ -89,28 +90,62 @@
 - ✅ All current work committed
 - ✅ Create handover document
 - ✅ Add to handover queue
+- ✅ **Verify clean state** (see Step 4)
 - ✅ Archive agent
 - ✅ **New agent will pick up from handover**
 
-#### Step 4: Archive Agent
+#### Step 4: Verify Clean State (REQUIRED BEFORE ARCHIVE)
 
-**When you hit "archive":**
+**CRITICAL: Do NOT archive until state is clean!**
 
-1. **Verify work is committed:**
+**Run this verification checklist:**
+
+1. **Check working directory:**
    ```bash
-   git status  # Should be clean
+   git status
    ```
+   - ✅ Should show "nothing to commit, working tree clean"
+   - ❌ If uncommitted changes: Commit them first
 
-2. **Push branch (if not already):**
+2. **Check branch is pushed:**
    ```bash
-   git push origin feature/<task-name>
+   git log origin/feature/<task-name>..HEAD
    ```
+   - ✅ Should show no commits (all pushed)
+   - ❌ If unpushed commits: `git push origin feature/<task-name>`
 
-3. **Update coordination:**
-   - Mark as "Complete" or "Handover Created"
-   - Note PR number (if created)
+3. **Check for untracked files:**
+   ```bash
+   git status --porcelain
+   ```
+   - ✅ Should show no untracked files (or intentionally ignored)
+   - ❌ If untracked files: Add to .gitignore or commit them
 
-4. **Archive in Cursor** - Agent finished
+4. **Verify coordination doc updated:**
+   - ✅ Status marked "Complete" or "Handover Created"
+   - ✅ PR number noted (if created)
+   - ✅ Handover added to queue (if needed)
+
+5. **Final verification:**
+   ```bash
+   # Run clean state verification script
+   ./scripts/verify-clean-state.sh
+   ```
+   - ✅ Should show "State is clean - safe to archive"
+   - ❌ If errors: Fix them before archiving
+
+**Only after ALL checks pass → Archive in Cursor**
+
+#### Step 5: Archive Agent
+
+**When state is clean, hit "archive":**
+
+1. ✅ **State verified clean** (Step 4 complete)
+2. ✅ **All work committed and pushed**
+3. ✅ **Coordination doc updated**
+4. ✅ **PR created** (if work complete)
+5. ✅ **Handover created** (if work incomplete)
+6. ✅ **Archive in Cursor** - Agent finished
 
 #### Step 5: Cleanup (Periodic)
 
@@ -255,7 +290,8 @@
 - [ ] PR created (if work complete)
 - [ ] Handover created (if work incomplete)
 - [ ] Coordination doc updated
-- [ ] Archive in Cursor
+- [ ] **Verify clean state** (git status, all checks pass)
+- [ ] **Archive in Cursor** (only after state is clean)
 
 ### After Merge (Cleanup)
 - [ ] Run cleanup script
@@ -265,6 +301,7 @@
 ## Scripts to Use
 
 - `./scripts/pre-work-check.sh` - Before starting
+- `./scripts/verify-clean-state.sh` - **Before archiving (REQUIRED)**
 - `./scripts/create-handover.sh` - When creating handover
 - `./scripts/post-merge-cleanup.sh` - After PR merge
 - `./scripts/check-agent-coordination.sh` - Check conflicts
