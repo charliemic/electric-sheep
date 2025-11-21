@@ -51,6 +51,7 @@ git checkout -b feature/<task-description>
 - `app/build.gradle.kts`, `build.gradle.kts`
 
 ## Related Rules
+- `.cursor/rules/branch-synchronization.mdc` - **CRITICAL**: Branch sync and conflict prevention
 - `.cursor/rules/frequent-commits.mdc` - Commit frequency guidelines
 - `.cursor/rules/repository-maintenance.mdc` - Cleanup procedures
 - `.cursor/rules/cicd.mdc` - CI/CD workflow

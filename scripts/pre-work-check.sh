@@ -35,19 +35,33 @@ else
 fi
 echo ""
 
-# 2. Check for remote updates
+# 2. Check for remote updates (CRITICAL for multi-agent workflow)
 echo "2️⃣  Checking for remote updates..."
 if git fetch origin main --quiet 2>/dev/null; then
     LOCAL=$(git rev-parse main 2>/dev/null || echo "")
     REMOTE=$(git rev-parse origin/main 2>/dev/null || echo "")
     
     if [ -n "$LOCAL" ] && [ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ]; then
-        echo "   ⚠️  WARNING: Remote main has updates"
-        echo "   → Run: git pull origin main"
-        echo "   → Or merge: git merge origin/main"
-        WARNINGS=$((WARNINGS + 1))
+        echo "   ❌ ERROR: Remote main has updates (CRITICAL for multi-agent workflow)"
+        echo "   → Sync your branch: git fetch origin && git rebase origin/main"
+        echo "   → Or update main first: git checkout main && git pull origin main"
+        echo "   → See .cursor/rules/branch-synchronization.mdc for details"
+        ERRORS=$((ERRORS + 1))
     else
         echo "   ✅ Local main is up to date"
+    fi
+    
+    # Also check if current branch is behind main
+    if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
+        BRANCH_BEHIND=$(git rev-list --count origin/main.."$CURRENT_BRANCH" 2>/dev/null || echo "0")
+        MAIN_AHEAD=$(git rev-list --count "$CURRENT_BRANCH"..origin/main 2>/dev/null || echo "0")
+        
+        if [ "$MAIN_AHEAD" -gt 0 ]; then
+            echo "   ⚠️  WARNING: Your branch is $MAIN_AHEAD commit(s) behind main"
+            echo "   → Sync: git fetch origin && git rebase origin/main"
+            echo "   → See .cursor/rules/branch-synchronization.mdc"
+            WARNINGS=$((WARNINGS + 1))
+        fi
     fi
 else
     echo "   ⚠️  Could not fetch from origin (may be offline)"
