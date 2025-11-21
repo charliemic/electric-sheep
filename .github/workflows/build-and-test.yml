@@ -6,10 +6,11 @@ on:
   pull_request:
     branches: ['**']  # Run on PRs to any branch
 
-# Permissions required for path filtering action
+# Permissions required for path filtering action and status checks
 permissions:
   contents: read
   pull-requests: read
+  checks: write  # Required to create status checks
 
 jobs:
   # Detect which files changed to determine which jobs to run
@@ -328,8 +329,6 @@ jobs:
       run: ./gradlew bundleRelease --stacktrace
       continue-on-error: false
 
-<<<<<<< HEAD
-=======
   # Final status check - required by branch protection
   # This job creates the "ci-status" check that branch protection requires
   ci-status:
@@ -339,6 +338,8 @@ jobs:
     # Use a more permissive condition to ensure the job runs when needed
     if: always() && (needs.changes.outputs.app-code == 'true' || needs.lint.result != 'skipped' || needs.test.result != 'skipped')
     runs-on: ubuntu-latest
+    permissions:
+      checks: write  # Required to create status checks
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -384,6 +385,3 @@ jobs:
             if (!allPassed) {
               core.setFailed(message);
             }
-
->>>>>>> origin/main
-  # Emulator Management Scripts Tests
