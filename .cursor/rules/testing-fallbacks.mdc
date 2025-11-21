@@ -1,0 +1,118 @@
+# Testing and Fallback Rules
+
+## CRITICAL: No Fallbacks When Testing
+
+**When testing a specific feature or service:**
+1. ✅ **If testing a feature, fail if dependencies unavailable** - Don't silently fallback
+2. ✅ **Fallbacks are for production, not testing** - Tests should catch missing dependencies
+3. ✅ **Use strict mode for testing** - Disable fallbacks when testing specific features
+4. ✅ **Fail fast in test mode** - Better to fail than silently use fallback
+
+## Rule: Testing vs Production
+
+### Production (Fallbacks Allowed)
+- ✅ Graceful degradation
+- ✅ Fallback to simpler alternatives
+- ✅ Continue execution with reduced functionality
+- ✅ Log warnings but don't fail
+
+### Testing (No Fallbacks)
+- ❌ **Fail if dependency unavailable**
+- ❌ **Don't silently use fallback**
+- ❌ **Explicit error messages**
+- ❌ **Tests should catch missing dependencies**
+
+## Implementation Pattern
+
+### ✅ GOOD: Strict Mode for Testing
+
+```kotlin
+class AIEmailGenerator(
+    private val ollamaService: OllamaService,
+    private val strictMode: Boolean = false  // Fail if Ollama unavailable
+) {
+    suspend fun generateEmail(persona: Persona): String {
+        val result = ollamaService.generate(prompt)
+        
+        return result.fold(
+            onSuccess = { email -> email },
+            onFailure = { error ->
+                if (strictMode) {
+                    throw Exception("Ollama unavailable in strict mode: ${error.message}")
+                } else {
+                    // Fallback to procedural
+                    generateEmailProcedural(persona)
+                }
+            }
+        )
+    }
+}
+```
+
+### ❌ BAD: Silent Fallback in Test Mode
+
+```kotlin
+// DON'T DO THIS in test mode
+suspend fun generateEmail(persona: Persona): String {
+    return try {
+        ollamaService.generate(prompt)
+    } catch (e: Exception) {
+        // Silent fallback - bad for testing!
+        generateEmailProcedural(persona)  // Tests won't catch missing Ollama
+    }
+}
+```
+
+## When to Use Strict Mode
+
+### ✅ Use Strict Mode When:
+- Testing specific features (e.g., "test Ollama email generation")
+- CI/CD validation
+- Integration tests
+- Verifying dependencies are available
+
+### ✅ Use Fallback Mode When:
+- Production execution
+- Optional features
+- Graceful degradation needed
+- User-facing operations
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# Strict mode (fail if dependencies unavailable)
+export TEST_STRICT_MODE=true
+export TEST_OLLAMA_STRICT=true  # Specific to Ollama
+
+# Fallback mode (default for production)
+# (no env vars = fallback mode)
+```
+
+### Code Pattern
+
+```kotlin
+val strictMode = System.getenv("TEST_STRICT_MODE") == "true"
+val ollamaStrict = System.getenv("TEST_OLLAMA_STRICT") == "true"
+
+val emailGenerator = AIEmailGenerator(
+    ollamaService = ollamaService,
+    strictMode = ollamaStrict || strictMode
+)
+```
+
+## Checklist
+
+Before implementing fallbacks:
+- [ ] Is this for production or testing?
+- [ ] Should tests fail if dependency unavailable?
+- [ ] Is there a strict mode flag?
+- [ ] Are errors logged appropriately?
+- [ ] Can users distinguish fallback from primary?
+
+## Related Documentation
+
+- `.cursor/rules/no-cloud-services.mdc` - Self-hosted services
+- `.cursor/rules/error-handling.mdc` - Error handling patterns
+- `docs/testing/OLLAMA_SETUP.md` - Ollama setup

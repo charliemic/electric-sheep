@@ -1,6 +1,7 @@
 package com.electricsheep.testautomation.planner
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -10,19 +11,55 @@ import kotlin.random.Random
 
 /**
  * Manages persona definitions and generates persona-appropriate data.
+ * 
+ * **Enhanced with AI**: Uses AI to generate realistic emails that match
+ * persona characteristics (age, background, technical skill, etc.)
  */
-class PersonaManager(personasFile: File = File("test-scenarios/personas.yaml")) {
+class PersonaManager(
+    personasFile: File = File("test-scenarios/personas.yaml"),
+    ollamaService: com.electricsheep.testautomation.ai.OllamaService? = null,
+    strictMode: Boolean = System.getenv("TEST_OLLAMA_STRICT") == "true" || 
+                         System.getenv("TEST_STRICT_MODE") == "true"
+) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val objectMapper = ObjectMapper(YAMLFactory()).apply {
         registerModule(KotlinModule.Builder().build())
+        // Handle snake_case in YAML -> camelCase in Kotlin
+        propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+    }
+    private val aiEmailGenerator = ollamaService?.let { 
+        try {
+            AIEmailGenerator(ollamaService = it, strictMode = strictMode)
+        } catch (e: Exception) {
+            if (strictMode) {
+                logger.error("Failed to create AI email generator in strict mode: ${e.message}", e)
+                throw Exception("AI email generator unavailable in strict mode: ${e.message}", e)
+            }
+            logger.warn("Failed to create AI email generator: ${e.message}")
+            null
+        }
     }
     
     private val personas: Map<String, Persona> = try {
         if (personasFile.exists()) {
             val yamlContent = personasFile.readText()
-            val parsed: Map<String, Persona> = objectMapper.readValue(yamlContent)
-            logger.info("Loaded ${parsed.size} personas from ${personasFile.path}")
-            parsed
+            // Parse YAML - handle both direct map and nested "personas" key
+            val parsed: Map<String, Any> = objectMapper.readValue(yamlContent)
+            val personasRaw = if (parsed.containsKey("personas")) {
+                // YAML has "personas:" wrapper
+                parsed["personas"] as? Map<String, Map<String, Any>> ?: emptyMap()
+            } else {
+                // Direct map of personas
+                parsed as? Map<String, Map<String, Any>> ?: emptyMap()
+            }
+            
+            // Convert raw maps to Persona objects
+            val personasMap = personasRaw.mapValues { (_, personaData) ->
+                objectMapper.convertValue(personaData, Persona::class.java)
+            }
+            
+            logger.info("Loaded ${personasMap.size} personas from ${personasFile.path}")
+            personasMap
         } else {
             logger.warn("Personas file not found: ${personasFile.path}, using defaults")
             emptyMap()
@@ -41,9 +78,34 @@ class PersonaManager(personasFile: File = File("test-scenarios/personas.yaml")) 
     
     /**
      * Generate a realistic email address that humans typically use.
-     * Uses common patterns based on persona technical level.
+     * 
+     * **AI-Enhanced**: Uses AI to generate emails that match persona characteristics
+     * (age, background, technical skill, etc.) for more realistic, lifelike personas.
+     * Falls back to procedural generation if AI unavailable.
      */
-    fun generateEmail(persona: Persona?): String {
+    suspend fun generateEmail(persona: Persona?): String {
+        if (persona == null) {
+            return generateEmailProcedural(null)
+        }
+        
+        // Use AI if available (more realistic, lifelike emails)
+        if (aiEmailGenerator != null) {
+            return try {
+                aiEmailGenerator.generateEmail(persona)
+            } catch (e: Exception) {
+                logger.warn("AI email generation failed: ${e.message}, falling back to procedural", e)
+                generateEmailProcedural(persona)
+            }
+        }
+        
+        // Fallback to procedural generation
+        return generateEmailProcedural(persona)
+    }
+    
+    /**
+     * Procedural email generation (fallback when AI unavailable).
+     */
+    private fun generateEmailProcedural(persona: Persona?): String {
         val timestamp = System.currentTimeMillis().toString().takeLast(6)
         val randomSuffix = (1000..9999).random()
         
@@ -184,7 +246,13 @@ data class Persona(
     val agentInstructions: String? = null,
     val emailPatterns: List<String>? = null,
     val emailExamples: List<String>? = null,
-    val errorHandling: List<String>? = null
+    val errorHandling: List<String>? = null,
+    // Enhanced lifelike attributes
+    val ageGroup: String? = null, // "younger", "middle-aged", "older"
+    val background: String? = null, // "non-technical", "technical professional", "student", etc.
+    val interests: List<String>? = null, // Personal interests that might influence behavior
+    val occupation: String? = null, // Job/role that influences technical exposure
+    val personality: List<String>? = null // Personality traits (patient, impatient, cautious, etc.)
 ) {
     // Calculate average technical skill for quick comparison
     val averageTechnicalSkill: Int

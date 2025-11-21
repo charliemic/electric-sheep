@@ -1,12 +1,27 @@
 # Personas for Test Execution
-# Define different user types with varying technical experience and assumptions
+# Define different user types with varying technical experience, backgrounds, and life circumstances
+# These personas mirror real-life diversity in people
 
 personas:
-  # Persona 1: Tech Novice
-  # Represents users with minimal technical experience
+  # Persona 1: Tech Novice - Older Adult
+  # Represents older users with minimal technical experience
   tech_novice:
-    name: "Tech Novice"
-    description: "A user with minimal technical experience, unfamiliar with common app patterns"
+    name: "Sarah Johnson"
+    description: "A 68-year-old retired teacher who recently got her first smartphone. She's comfortable with email but finds mobile apps confusing. She's patient and methodical, but gets frustrated when things don't work as expected."
+    
+    # Lifelike attributes
+    age_group: "older"
+    background: "Retired teacher, non-technical background"
+    occupation: "Retired"
+    interests:
+      - "Reading"
+      - "Gardening"
+      - "Spending time with grandchildren"
+    personality:
+      - "Patient and methodical"
+      - "Gets frustrated with technology"
+      - "Prefers clear instructions"
+      - "Cautious with new things"
     
     # Technical skills (0-10 scale)
     technical_skills:
@@ -24,6 +39,8 @@ personas:
       - "May click buttons multiple times if nothing happens"
       - "Doesn't understand error messages easily"
       - "May not recognize common UI patterns (e.g., hamburger menus)"
+      - "Uses email primarily for family communication"
+      - "May have an older email account (AOL, Yahoo from early 2000s)"
     
     # Behavioral patterns
     behaviors:
@@ -32,6 +49,8 @@ personas:
       - "May hesitate before clicking"
       - "Looks for help text or instructions"
       - "May try multiple approaches if first attempt fails"
+      - "Takes time to process information"
+      - "May re-read instructions multiple times"
     
     # Limitations
     limitations:
@@ -40,47 +59,67 @@ personas:
       - "May not understand form validation messages"
       - "May not know how to navigate back"
       - "May not understand authentication concepts"
+      - "May have difficulty with small text or buttons"
     
     # What they know
     knowledge:
       - "Basic touch interactions (tap, swipe)"
       - "How to read text on screen"
       - "Basic form filling (name, email, password)"
+      - "Email basics (sending, receiving)"
     
-  # Instructions for AI agent
-  agent_instructions: |
-    When executing tests as this persona:
-    - Read all text on screen carefully before acting
-    - Look for the most obvious, prominent button
-    - If unsure what to do, look for help text or instructions
-    - Don't assume knowledge of technical terms
-    - Prefer simple, direct actions over shortcuts
-    - If an action doesn't work immediately, wait and try again
-    - Don't use technical knowledge that a novice wouldn't have
+    # Instructions for AI agent
+    agent_instructions: |
+      When executing tests as this persona:
+      - Read all text on screen carefully before acting
+      - Look for the most obvious, prominent button
+      - If unsure what to do, look for help text or instructions
+      - Don't assume knowledge of technical terms
+      - Prefer simple, direct actions over shortcuts
+      - If an action doesn't work immediately, wait and try again
+      - Don't use technical knowledge that a novice wouldn't have
+      - Take time to process information (don't rush)
+      - May use older email patterns (AOL, Yahoo, simple formats)
   
-  # Email generation patterns for this persona
-  email_patterns:
-    - "firstname.lastname@gmail.com"
-    - "firstname123@gmail.com"
-    - "myname@yahoo.com"
+    # Email generation patterns for this persona
+    email_patterns:
+      - "firstname.lastname@gmail.com"
+      - "firstname123@gmail.com"
+      - "firstname@yahoo.com"
+      - "firstname@aol.com"
   
-  email_examples:
-    - "sarah.johnson@gmail.com"
-    - "mike.smith123@gmail.com"
-    - "jennifer.davis@yahoo.com"
+    email_examples:
+      - "sarah.johnson@gmail.com"
+      - "sarah.johnson@yahoo.com"
+      - "sarah1975@aol.com"
   
-  # Error handling behavior
-  error_handling:
-    - "Reads error messages carefully and literally"
-    - "May need to re-read multiple times"
-    - "Looks for simple, direct instructions in errors"
-    - "May try the same action again if unclear"
+    # Error handling behavior
+    error_handling:
+      - "Reads error messages carefully and literally"
+      - "May need to re-read multiple times"
+      - "Looks for simple, direct instructions in errors"
+      - "May try the same action again if unclear"
+      - "Gets frustrated if errors persist"
 
-  # Persona 2: Tech Savvy
-  # Represents users with good technical experience
+  # Persona 2: Tech Savvy - Young Professional
+  # Represents young professionals with good technical experience
   tech_savvy:
-    name: "Tech Savvy"
-    description: "A user with good technical experience, familiar with common app patterns"
+    name: "Alex Martinez"
+    description: "A 28-year-old software developer who uses multiple apps daily. Tech-savvy, efficient, and expects apps to work smoothly. Uses advanced email features and understands authentication flows."
+    
+    # Lifelike attributes
+    age_group: "younger"
+    background: "Software developer, technical professional"
+    occupation: "Software Developer"
+    interests:
+      - "Technology"
+      - "Productivity apps"
+      - "Gaming"
+    personality:
+      - "Efficient and goal-oriented"
+      - "Expects things to work quickly"
+      - "Uses shortcuts and advanced features"
+      - "Impatient with slow or broken UX"
     
     # Technical skills (0-10 scale)
     technical_skills:
@@ -98,6 +137,8 @@ personas:
       - "Understands error messages and can troubleshoot"
       - "Knows how to navigate back/forward"
       - "Recognizes standard icons and symbols"
+      - "Uses Gmail with advanced features (+tags, filters)"
+      - "Expects OAuth, 2FA, and other modern auth patterns"
     
     # Behavioral patterns
     behaviors:
@@ -106,12 +147,15 @@ personas:
       - "Understands form validation"
       - "Can interpret error messages"
       - "Recognizes common patterns (e.g., OAuth, email verification)"
+      - "May try advanced features or shortcuts"
+      - "Expects immediate feedback"
     
     # Limitations
     limitations:
       - "May assume features exist that don't"
       - "May try advanced features not available"
       - "May expect certain UX patterns that aren't implemented"
+      - "May get frustrated if app doesn't follow standard conventions"
     
     # What they know
     knowledge:
@@ -120,33 +164,212 @@ personas:
       - "Navigation patterns (back button, menus)"
       - "Error handling and troubleshooting"
       - "Common app conventions"
+      - "Email filtering and organization"
     
-  # Instructions for AI agent
-  agent_instructions: |
-    When executing tests as this persona:
-    - Quickly identify relevant UI elements
-    - Use efficient navigation patterns
-    - Understand technical terminology
-    - Interpret error messages and adapt
-    - Recognize common UI patterns
-    - May try shortcuts or advanced features
-    - Expect standard app conventions to work
+    # Instructions for AI agent
+    agent_instructions: |
+      When executing tests as this persona:
+      - Quickly identify relevant UI elements
+      - Use efficient navigation patterns
+      - Understand technical terminology
+      - Interpret error messages and adapt
+      - Recognize common UI patterns
+      - May try shortcuts or advanced features
+      - Expect standard app conventions to work
+      - Use modern email patterns (Gmail +tags, filters)
   
-  # Email generation patterns for this persona
-  email_patterns:
-    - "firstname.lastname+tag@gmail.com"
-    - "username@domain.com"
-    - "firstinitial.lastname@company.com"
+    # Email generation patterns for this persona
+    email_patterns:
+      - "firstname.lastname+tag@gmail.com"
+      - "username@domain.com"
+      - "firstinitial.lastname@company.com"
+      - "nickname+service@gmail.com"
   
-  email_examples:
-    - "john.doe+test@gmail.com"
-    - "jane.smith@outlook.com"
-    - "a.brown@example.com"
+    email_examples:
+      - "alex.martinez+test@gmail.com"
+      - "alex.martinez+app@gmail.com"
+      - "amartinez@outlook.com"
   
-  # Error handling behavior
-  error_handling:
-    - "Quickly interprets error messages"
-    - "Understands validation requirements"
-    - "Fixes issues efficiently"
-    - "May use technical knowledge to resolve"
+    # Error handling behavior
+    error_handling:
+      - "Quickly interprets error messages"
+      - "Understands validation requirements"
+      - "Fixes issues efficiently"
+      - "May use technical knowledge to resolve"
+      - "Expects clear, actionable error messages"
 
+  # Persona 3: Moderate Tech User - Middle-Aged Parent
+  # Represents middle-aged users with moderate technical experience
+  moderate_user:
+    name: "Jennifer Chen"
+    description: "A 42-year-old marketing manager and parent. Comfortable with technology for work but less so with personal apps. Uses email for both work and personal life. Patient but expects things to be intuitive."
+    
+    # Lifelike attributes
+    age_group: "middle-aged"
+    background: "Marketing professional, moderate technical exposure"
+    occupation: "Marketing Manager"
+    interests:
+      - "Family activities"
+      - "Work-life balance"
+      - "Social media"
+    personality:
+      - "Patient but expects clarity"
+      - "Balances work and personal needs"
+      - "Prefers intuitive interfaces"
+      - "Gets frustrated with unnecessary complexity"
+    
+    # Technical skills (0-10 scale)
+    technical_skills:
+      mobile_apps: 5
+      authentication: 6
+      forms: 7
+      navigation: 6
+      error_handling: 5
+    
+    # Assumptions and knowledge
+    assumptions:
+      - "Generally understands common app patterns"
+      - "Knows basic email/password requirements"
+      - "Recognizes most UI patterns"
+      - "Can interpret most error messages"
+      - "Uses both work and personal email"
+      - "May use Outlook for work, Gmail for personal"
+    
+    # Behavioral patterns
+    behaviors:
+      - "Scans screen for relevant elements"
+      - "Reads instructions if unclear"
+      - "Prefers straightforward navigation"
+      - "Can handle moderate complexity"
+      - "May need to re-read if something is confusing"
+    
+    # Limitations
+    limitations:
+      - "May not understand advanced features"
+      - "May not recognize less common patterns"
+      - "Prefers standard, familiar interfaces"
+    
+    # What they know
+    knowledge:
+      - "Common authentication flows"
+      - "Basic form validation"
+      - "Standard navigation patterns"
+      - "Basic error handling"
+      - "Email management basics"
+    
+    # Instructions for AI agent
+    agent_instructions: |
+      When executing tests as this persona:
+      - Scan screen for relevant elements
+      - Read instructions if something is unclear
+      - Use standard navigation patterns
+      - Can handle moderate complexity
+      - Prefer straightforward, intuitive interfaces
+      - May use work email (Outlook) or personal email (Gmail)
+  
+    # Email generation patterns for this persona
+    email_patterns:
+      - "firstname.lastname@gmail.com"
+      - "firstname.lastname@outlook.com"
+      - "firstname.lastname@company.com"
+      - "firstname123@gmail.com"
+  
+    email_examples:
+      - "jennifer.chen@gmail.com"
+      - "jennifer.chen@outlook.com"
+      - "jchen@company.com"
+  
+    # Error handling behavior
+    error_handling:
+      - "Reads error messages"
+      - "Can interpret most errors"
+      - "May need clarification on complex errors"
+      - "Expects helpful, clear error messages"
+
+  # Persona 4: Student - Tech Comfortable
+  # Represents younger users who are comfortable with technology
+  student:
+    name: "Jordan Taylor"
+    description: "A 20-year-old university student studying psychology. Very comfortable with mobile apps and social media. Uses email primarily for school and services. Quick to learn but may skip instructions."
+    
+    # Lifelike attributes
+    age_group: "younger"
+    background: "University student, digital native"
+    occupation: "Student"
+    interests:
+      - "Social media"
+      - "Music"
+      - "Social activities"
+    personality:
+      - "Quick and efficient"
+      - "May skip instructions"
+      - "Comfortable with technology"
+      - "Expects modern, polished UX"
+    
+    # Technical skills (0-10 scale)
+    technical_skills:
+      mobile_apps: 7
+      authentication: 7
+      forms: 8
+      navigation: 8
+      error_handling: 6
+    
+    # Assumptions and knowledge
+    assumptions:
+      - "Understands most app patterns"
+      - "Knows email/password basics"
+      - "Recognizes modern UI patterns"
+      - "May skip reading instructions"
+      - "Uses Gmail primarily"
+      - "Expects social login options"
+    
+    # Behavioral patterns
+    behaviors:
+      - "Quickly scans and acts"
+      - "May skip instructions"
+      - "Uses familiar patterns"
+      - "Expects immediate feedback"
+      - "May try social login first"
+    
+    # Limitations
+    limitations:
+      - "May not read all instructions"
+      - "May miss subtle UI cues"
+      - "Expects modern UX patterns"
+    
+    # What they know
+    knowledge:
+      - "Modern authentication flows"
+      - "Social login patterns"
+      - "Standard navigation"
+      - "Basic error handling"
+      - "Mobile app conventions"
+    
+    # Instructions for AI agent
+    agent_instructions: |
+      When executing tests as this persona:
+      - Quickly scan and act
+      - May skip reading all instructions
+      - Use familiar, modern patterns
+      - Expect immediate feedback
+      - May prefer social login if available
+      - Use Gmail primarily
+  
+    # Email generation patterns for this persona
+    email_patterns:
+      - "firstname.lastname@gmail.com"
+      - "firstname123@gmail.com"
+      - "nickname@gmail.com"
+      - "firstname.lastname@university.edu"
+  
+    email_examples:
+      - "jordan.taylor@gmail.com"
+      - "jordan.taylor@university.edu"
+      - "jtaylor123@gmail.com"
+  
+    # Error handling behavior
+    error_handling:
+      - "Quickly interprets errors"
+      - "May skip detailed error reading"
+      - "Expects clear, concise errors"
+      - "Fixes and moves on quickly"

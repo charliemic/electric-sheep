@@ -17,19 +17,54 @@ import java.time.Duration
  * Executes human-like actions using Appium.
  * This layer abstracts away Appium internals - the planner doesn't need to know
  * about Appium's API, just human tasks.
+ * 
+ * **Visual-First Enhancement**: Can use visual detection for element finding
+ * (like human visual search) instead of Appium element queries.
+ * 
+ * **Continuous Loop Enhancement**: Can use continuous feedback during actions
+ * (like human continuous perception-action loop).
  */
 class ActionExecutor(
     private val driver: AndroidDriver,
-    private val screenshotDir: File
+    private val screenshotDir: File,
+    private val visualActionExecutor: com.electricsheep.testautomation.actions.visual.VisualActionExecutor? = null,
+    private val continuousLoop: ContinuousInteractionLoop? = null,
+    private val stateManager: com.electricsheep.testautomation.monitoring.StateManager? = null,
+    private val screenEvaluator: com.electricsheep.testautomation.monitoring.ScreenEvaluator? = null,
+    private val textDetector: com.electricsheep.testautomation.vision.TextDetector? = null
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val wait = WebDriverWait(driver, Duration.ofSeconds(30))
     
     /**
+     * Use visual-first actions when available, fallback to Appium queries.
+     */
+    private val useVisualActions: Boolean = visualActionExecutor != null
+    
+    /**
+     * Use continuous feedback loop when available.
+     */
+    private val useContinuousLoop: Boolean = continuousLoop != null
+    
+    /**
+     * Use visual detection for state queries (visual-first principle).
+     */
+    private val useVisualDetection: Boolean = stateManager != null && screenEvaluator != null && textDetector != null
+    
+    /**
      * Execute a human action.
      * Returns ActionResult with success status and any relevant information.
+     * 
+     * **Continuous Loop**: If enabled, executes action with continuous feedback
+     * (human-like: continuous perception ←→ action ←→ feedback).
      */
     suspend fun execute(action: HumanAction): ActionResult {
+        // Use continuous loop if available (human-like continuous feedback)
+        if (useContinuousLoop && shouldUseContinuousLoop(action)) {
+            return continuousLoop!!.executeWithContinuousFeedback(action)
+        }
+        
+        // Fallback to standard execution
         return try {
             when (action) {
                 is HumanAction.Tap -> executeTap(action)
@@ -50,9 +85,56 @@ class ActionExecutor(
         }
     }
     
-    private fun executeTap(action: HumanAction.Tap): ActionResult {
+    /**
+     * Determine if action should use continuous loop.
+     */
+    private fun shouldUseContinuousLoop(action: HumanAction): Boolean {
+        // Use continuous loop for interactive actions (tap, type, swipe)
+        // Skip for non-interactive actions (capture, verify, wait)
+        return when (action) {
+            is HumanAction.Tap -> true
+            is HumanAction.TypeText -> true
+            is HumanAction.Swipe -> true
+            is HumanAction.NavigateBack -> true
+            else -> false // Capture, Verify, WaitFor don't need continuous feedback
+        }
+    }
+    
+    private suspend fun executeTap(action: HumanAction.Tap): ActionResult {
         logger.info("Tapping: ${action.target} (${action.description ?: ""})")
         
+        // Use visual-first approach if available (human-like: visual search → tap)
+        if (useVisualActions && action.text != null) {
+            try {
+                val visualResult = visualActionExecutor!!.tapButton(action.text)
+                when (visualResult) {
+                    is com.electricsheep.testautomation.actions.visual.VisualActionExecutor.VisualActionResult.Success -> {
+                        return ActionResult.Success(
+                            action = action,
+                            message = visualResult.message,
+                            screenshot = visualResult.screenshot
+                        )
+                    }
+                    is com.electricsheep.testautomation.actions.visual.VisualActionExecutor.VisualActionResult.Failure -> {
+                        logger.warn("Visual tap failed: ${visualResult.message}, falling back to Appium")
+                        // Fallback to Appium - continue below
+                    }
+                }
+            } catch (e: Exception) {
+                logger.warn("Visual tap error: ${e.message}, falling back to Appium", e)
+                // Fallback to Appium - continue below
+            }
+        }
+        
+        // Fallback to Appium element queries
+        return executeTapWithAppium(action)
+    }
+    
+    /**
+     * Execute tap using Appium element queries (fallback).
+     * Made internal so ContinuousInteractionLoop can call it directly.
+     */
+    internal fun executeTapWithAppium(action: HumanAction.Tap): ActionResult {
         val element = findElement(action.accessibilityId, action.text, action.target)
         element.click()
         
@@ -63,19 +145,77 @@ class ActionExecutor(
         )
     }
     
-    private fun executeTypeText(action: HumanAction.TypeText): ActionResult {
+    private suspend fun executeTypeText(action: HumanAction.TypeText): ActionResult {
         logger.info("Typing into ${action.target}: ${action.text.take(10)}...")
         
+        // Use visual-first approach if available (human-like: visual search → type)
+        if (useVisualActions && action.target.contains("field", ignoreCase = true)) {
+            try {
+                // Extract field label from target (e.g., "Email field" → "Email")
+                val fieldLabel = action.target.replace(" field", "", ignoreCase = true)
+                    .replace("Field", "", ignoreCase = true)
+                    .trim()
+                
+                val visualResult = visualActionExecutor!!.typeText(action.text, fieldLabel)
+                when (visualResult) {
+                    is com.electricsheep.testautomation.actions.visual.VisualActionExecutor.VisualActionResult.Success -> {
+                        return ActionResult.Success(
+                            action = action,
+                            message = visualResult.message,
+                            screenshot = visualResult.screenshot
+                        )
+                    }
+                    is com.electricsheep.testautomation.actions.visual.VisualActionExecutor.VisualActionResult.Failure -> {
+                        logger.warn("Visual type failed: ${visualResult.message}, falling back to Appium")
+                        // Fallback to Appium - continue below
+                    }
+                }
+            } catch (e: Exception) {
+                logger.warn("Visual type error: ${e.message}, falling back to Appium", e)
+                // Fallback to Appium - continue below
+            }
+        }
+        
+        // Fallback to Appium element queries
+        return executeTypeTextWithAppium(action)
+    }
+    
+    /**
+     * Execute type text using Appium element queries (fallback).
+     * Made internal so ContinuousInteractionLoop can call it directly.
+     */
+    internal suspend fun executeTypeTextWithAppium(action: HumanAction.TypeText): ActionResult {
         val element = findElement(action.accessibilityId, null, action.target)
         
         // Click element first to focus it (required for Compose TextFields)
         element.click()
-        Thread.sleep(300) // Brief wait for focus
+        // Event-driven wait: Wait for element to be focused/enabled (visual-first)
+        if (useVisualDetection) {
+            kotlinx.coroutines.runBlocking {
+                stateManager!!.waitForState(
+                    predicate = { state -> 
+                        // Wait for keyboard to appear (indicates field is focused)
+                        state.hasKeyboard || !state.isLoading
+                    },
+                    timeoutMs = 1000
+                )
+            }
+        } else {
+            // Fallback: Use WebDriverWait (event-driven, not fixed delay)
+            wait.until(ExpectedConditions.elementToBeClickable(element))
+        }
         
         if (action.clearFirst) {
             // For Compose TextFields, select all and delete
             element.click()
-            Thread.sleep(200)
+            // Event-driven wait: Brief wait for clear operation
+            if (useVisualDetection) {
+                kotlinx.coroutines.runBlocking {
+                    kotlinx.coroutines.delay(100) // Minimal delay for clear operation
+                }
+            } else {
+                wait.until { element.isEnabled }
+            }
             // Use ADB input method as fallback for Compose
             try {
                 element.clear()
@@ -104,7 +244,7 @@ class ActionExecutor(
         )
     }
     
-    private fun executeSwipe(action: HumanAction.Swipe): ActionResult {
+    internal fun executeSwipe(action: HumanAction.Swipe): ActionResult {
         logger.info("Swiping ${action.direction}: ${action.description ?: ""}")
         
         val size = driver.manage().window().size
@@ -147,7 +287,7 @@ class ActionExecutor(
         )
     }
     
-    private fun executeWaitFor(action: HumanAction.WaitFor): ActionResult {
+    internal suspend fun executeWaitFor(action: HumanAction.WaitFor): ActionResult {
         logger.info("Waiting for: ${action.condition} (timeout: ${action.timeoutSeconds}s)")
         
         val waitCondition = WebDriverWait(driver, Duration.ofSeconds(action.timeoutSeconds.toLong()))
@@ -182,24 +322,74 @@ class ActionExecutor(
                 }
             }
             is WaitCondition.ScreenChanged -> {
-                // Wait for screen title or key element to appear
-                try {
-                    waitCondition.until {
-                        val elements = driver.findElements(AppiumBy.accessibilityId(condition.expectedScreen))
-                        elements.isNotEmpty()
+                // Visual-first: Use state manager to detect screen change
+                if (useVisualDetection) {
+                    try {
+                        kotlinx.coroutines.runBlocking {
+                            val result = stateManager!!.waitForState(
+                                predicate = { state -> 
+                                    state.screenName == condition.expectedScreen ||
+                                    state.visibleElements.contains(condition.expectedScreen)
+                                },
+                                timeoutMs = action.timeoutSeconds * 1000L
+                            )
+                            result != null
+                        }
+                    } catch (e: Exception) {
+                        logger.debug("Visual screen detection failed, falling back to Appium: ${e.message}")
+                        // Fallback to Appium
+                        try {
+                            waitCondition.until {
+                                val elements = driver.findElements(AppiumBy.accessibilityId(condition.expectedScreen))
+                                elements.isNotEmpty()
+                            }
+                            true
+                        } catch (e2: Exception) {
+                            false
+                        }
                     }
-                    true
-                } catch (e: Exception) {
-                    false
+                } else {
+                    // Fallback: Use Appium element queries
+                    try {
+                        waitCondition.until {
+                            val elements = driver.findElements(AppiumBy.accessibilityId(condition.expectedScreen))
+                            elements.isNotEmpty()
+                        }
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
                 }
             }
             is WaitCondition.LoadingComplete -> {
-                // Wait for loading indicators to disappear
-                Thread.sleep(2000) // Give UI time to update
-                val loadingElements = driver.findElements(
-                    AppiumBy.xpath("//*[contains(@content-desc, 'loading') or contains(@text, 'Loading')]")
-                )
-                loadingElements.isEmpty()
+                // Visual-first: Use state manager to detect loading completion
+                if (useVisualDetection) {
+                    try {
+                        kotlinx.coroutines.runBlocking {
+                            val result = stateManager!!.waitForState(
+                                predicate = { state -> !state.isLoading },
+                                timeoutMs = action.timeoutSeconds * 1000L
+                            )
+                            result != null
+                        }
+                    } catch (e: Exception) {
+                        logger.debug("Visual loading detection failed, falling back to Appium: ${e.message}")
+                        // Fallback: Check for loading elements via Appium
+                        val loadingElements = driver.findElements(
+                            AppiumBy.xpath("//*[contains(@content-desc, 'loading') or contains(@text, 'Loading')]")
+                        )
+                        loadingElements.isEmpty()
+                    }
+                } else {
+                    // Fallback: Use Appium element queries
+                    waitCondition.until {
+                        val loadingElements = driver.findElements(
+                            AppiumBy.xpath("//*[contains(@content-desc, 'loading') or contains(@text, 'Loading')]")
+                        )
+                        loadingElements.isEmpty()
+                    }
+                    true
+                }
             }
         }
         
@@ -218,7 +408,7 @@ class ActionExecutor(
         }
     }
     
-    private fun executeNavigateBack(): ActionResult {
+    internal fun executeNavigateBack(): ActionResult {
         logger.info("Navigating back")
         driver.navigate().back()
         
@@ -229,7 +419,7 @@ class ActionExecutor(
         )
     }
     
-    private fun executeCaptureState(): ActionResult {
+    internal suspend fun executeCaptureState(): ActionResult {
         logger.info("Capturing current state")
         val screenshot = captureScreenshot()
         
@@ -278,7 +468,7 @@ class ActionExecutor(
         )
     }
     
-    private fun executeVerify(action: HumanAction.Verify): ActionResult {
+    internal suspend fun executeVerify(action: HumanAction.Verify): ActionResult {
         logger.info("Verifying: ${action.condition}")
         
         val success = when (val condition = action.condition) {
@@ -291,37 +481,128 @@ class ActionExecutor(
                 }
             }
             is VerifyCondition.TextPresent -> {
-                try {
-                    driver.findElement(By.xpath("//*[contains(@text, '${condition.text}')]"))
-                    true
-                } catch (e: Exception) {
-                    false
-                }
-            }
-            is VerifyCondition.ScreenIs -> {
-                try {
-                    val elements = driver.findElements(AppiumBy.accessibilityId(condition.screenName))
-                    elements.isNotEmpty()
-                } catch (e: Exception) {
-                    false
-                }
-            }
-            is VerifyCondition.Authenticated -> {
-                // Check for authenticated state indicators
-                val authIndicators = listOf(
-                    "Mood Management screen heading",
-                    "signed in as",
-                    "Sign out"
-                )
-                authIndicators.any { indicator ->
+                // Visual-first: Use text detector to find text
+                if (useVisualDetection && textDetector != null) {
                     try {
-                        driver.findElements(
-                            AppiumBy.xpath("//*[contains(@content-desc, '$indicator') or contains(@text, '$indicator')]")
-                        ).isNotEmpty()
+                        val screenshot = captureScreenshot()
+                        val textResult = textDetector.extractText(screenshot)
+                        textResult.fullText.contains(condition.text, ignoreCase = true)
+                    } catch (e: Exception) {
+                        logger.debug("Visual text verification failed, falling back to Appium: ${e.message}")
+                        // Fallback to Appium
+                        try {
+                            driver.findElement(By.xpath("//*[contains(@text, '${condition.text}')]"))
+                            true
+                        } catch (e2: Exception) {
+                            false
+                        }
+                    }
+                } else {
+                    // Fallback: Use Appium element queries
+                    try {
+                        driver.findElement(By.xpath("//*[contains(@text, '${condition.text}')]"))
+                        true
                     } catch (e: Exception) {
                         false
                     }
-                } == condition.expected
+                }
+            }
+            is VerifyCondition.ScreenIs -> {
+                // Visual-first: Use state manager to check screen
+                if (useVisualDetection) {
+                    try {
+                        kotlinx.coroutines.runBlocking {
+                            val state = stateManager!!.getCurrentState()
+                            state?.screenName == condition.screenName ||
+                            state?.visibleElements?.contains(condition.screenName) == true
+                        }
+                    } catch (e: Exception) {
+                        logger.debug("Visual screen verification failed, falling back to Appium: ${e.message}")
+                        // Fallback to Appium
+                        try {
+                            val elements = driver.findElements(AppiumBy.accessibilityId(condition.screenName))
+                            elements.isNotEmpty()
+                        } catch (e2: Exception) {
+                            false
+                        }
+                    }
+                } else {
+                    // Fallback: Use Appium element queries
+                    try {
+                        val elements = driver.findElements(AppiumBy.accessibilityId(condition.screenName))
+                        elements.isNotEmpty()
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+            }
+            is VerifyCondition.Authenticated -> {
+                // Visual-first: Use state manager and text detector
+                if (useVisualDetection && textDetector != null) {
+                    try {
+                        kotlinx.coroutines.runBlocking {
+                            val state = stateManager!!.getCurrentState()
+                            val screenshot = captureScreenshot()
+                            val textResult = textDetector.extractText(screenshot)
+                            // Visual indicators of authentication (generic, not app-specific)
+                            val authenticatedIndicators = listOf(
+                                "sign out", "logout", "log out", "signed in", "profile", "settings",
+                                "mood history", "mood management" // Context-specific but generic patterns
+                            )
+                            val unauthenticatedIndicators = listOf(
+                                "sign in", "login", "create account", "sign up"
+                            )
+                            
+                            val fullTextLower = textResult.fullText.lowercase()
+                            val hasAuthIndicators = authenticatedIndicators.any { 
+                                fullTextLower.contains(it, ignoreCase = true) 
+                            }
+                            val hasUnauthIndicators = unauthenticatedIndicators.any { 
+                                fullTextLower.contains(it, ignoreCase = true) 
+                            }
+                            
+                            // If we see auth indicators and no unauth indicators, we're authenticated
+                            val isAuthenticated = hasAuthIndicators && !hasUnauthIndicators
+                            
+                            logger.info("   🔍 Visual auth check: authIndicators=$hasAuthIndicators, unauthIndicators=$hasUnauthIndicators, result=$isAuthenticated")
+                            
+                            isAuthenticated == condition.expected
+                        }
+                    } catch (e: Exception) {
+                        logger.debug("Visual authentication verification failed, falling back to Appium: ${e.message}")
+                        // Fallback to Appium
+                        val authIndicators = listOf(
+                            "Mood Management screen heading",
+                            "signed in as",
+                            "Sign out"
+                        )
+                        authIndicators.any { indicator ->
+                            try {
+                                driver.findElements(
+                                    AppiumBy.xpath("//*[contains(@content-desc, '$indicator') or contains(@text, '$indicator')]")
+                                ).isNotEmpty()
+                            } catch (e2: Exception) {
+                                false
+                            }
+                        } == condition.expected
+                    }
+                } else {
+                    // Fallback: Use Appium element queries
+                    val authIndicators = listOf(
+                        "Mood Management screen heading",
+                        "signed in as",
+                        "Sign out"
+                    )
+                    authIndicators.any { indicator ->
+                        try {
+                            driver.findElements(
+                                AppiumBy.xpath("//*[contains(@content-desc, '$indicator') or contains(@text, '$indicator')]")
+                            ).isNotEmpty()
+                        } catch (e: Exception) {
+                            false
+                        }
+                    } == condition.expected
+                }
             }
         }
         
@@ -383,7 +664,7 @@ class ActionExecutor(
         }
     }
     
-    private fun captureScreenshot(): File {
+    internal fun captureScreenshot(): File {
         val screenshot = driver.getScreenshotAs(org.openqa.selenium.OutputType.FILE)
         val timestamp = System.currentTimeMillis()
         val outputFile = File(screenshotDir, "screenshot_$timestamp.png")

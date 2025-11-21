@@ -1,0 +1,169 @@
+# Human-Focused Pattern Principles
+
+## CRITICAL: Event-Driven Over Fixed Delays
+
+**When implementing waits or delays:**
+
+1. ✅ **ALWAYS use event-driven waits** (wait for state changes, conditions)
+2. ❌ **NEVER use fixed delays** unless explicitly marked as LAST RESORT
+3. ✅ **Use StateManager.waitForState()** for waiting on conditions
+4. ✅ **Use continuous monitoring loops** for feedback
+
+### Examples
+
+**❌ BAD: Fixed Delay**
+```kotlin
+delay(2000) // Arbitrary wait
+Thread.sleep(1000)
+```
+
+**✅ GOOD: Event-Driven Wait**
+```kotlin
+stateManager.waitForState(
+    predicate = { state -> state.screenName == "Mood Management" },
+    timeoutMs = 5000
+)
+```
+
+**⚠️ LAST RESORT: Fixed Delay (only when event detection fails)**
+```kotlin
+// LAST RESORT: Event detection failed, need to stabilize
+delay(300) // Brief stabilization delay
+```
+
+## Visual Perception First
+
+**When detecting state or conditions:**
+
+1. ✅ **ALWAYS check visual state first** (`StateManager.getCurrentState()`)
+2. ❌ **NEVER use system APIs first** (driver.isKeyboardShown(), etc.)
+3. ✅ **Use ScreenEvaluator for visual analysis**
+4. ✅ **Check what we "see" before checking system properties**
+
+### Examples
+
+**❌ BAD: System API First**
+```kotlin
+if (driver.isKeyboardShown()) { ... }
+```
+
+**✅ GOOD: Visual Detection First**
+```kotlin
+val state = stateManager.getCurrentState()
+if (state?.hasKeyboard == true) { ... }
+```
+
+## Continuous Observation Loop
+
+**When monitoring feedback:**
+
+1. ✅ **Use continuous monitoring** (`ContinuousInteractionLoop`, `ScreenMonitor`)
+2. ✅ **Observe state changes continuously**
+3. ✅ **Process feedback as it arrives**
+4. ❌ **Don't check once and assume**
+
+### Examples
+
+**❌ BAD: Single Check**
+```kotlin
+val state = getState()
+if (state.isLoading) { wait() }
+```
+
+**✅ GOOD: Continuous Monitoring**
+```kotlin
+startContinuousMonitoring()
+while (!conditionMet()) {
+    observeState()
+    delay(100) // Small polling interval
+}
+```
+
+## Feedback-Driven Adaptation
+
+**When retrying or adapting:**
+
+1. ✅ **Observe feedback before retrying**
+2. ✅ **Adapt strategy based on what you see**
+3. ❌ **Don't retry blindly**
+4. ✅ **Use visual feedback to guide adaptation**
+
+### Examples
+
+**❌ BAD: Blind Retry**
+```kotlin
+for (i in 1..3) {
+    try { action() } catch { retry() }
+}
+```
+
+**✅ GOOD: Adaptive Retry**
+```kotlin
+val result = tryAction(action)
+if (result is Failure) {
+    observeState() // What went wrong?
+    adaptStrategy(result) // Try different approach
+}
+```
+
+## Human-Like Decision Making
+
+**When making decisions:**
+
+1. ✅ **Consider context and history**
+2. ✅ **Use StuckDetector for repeated failures**
+3. ✅ **Make decisions based on current state + recent history**
+4. ✅ **Log from human perspective**
+
+### Examples
+
+**❌ BAD: Binary Logic**
+```kotlin
+if (error) { retry() } else { continue() }
+```
+
+**✅ GOOD: Contextual Decision**
+```kotlin
+if (isStuck(recentActions)) {
+    logger.info("💭 I've tried this ${attempts} times, it's not working")
+    tryAlternativeApproach()
+} else if (isBlocked(currentState)) {
+    logger.info("💡 Something is blocking me, let me work around it")
+    clearBlockage()
+}
+```
+
+## Visual-First Error Recovery
+
+**When recovering from errors:**
+
+1. ✅ **Try visual recovery first** (detect problem visually, solve visually)
+2. ✅ **Use adaptive strategies** (try alternative visual approaches)
+3. ⚠️ **LAST RESORT: System-level fallback** (explicitly marked)
+
+### Examples
+
+**❌ BAD: System API First**
+```kotlin
+try {
+    action()
+} catch (e: Exception) {
+    driver.hideKeyboard() // System-level fallback
+}
+```
+
+**✅ GOOD: Visual-First Recovery**
+```kotlin
+if (state.hasKeyboard) {
+    dismissKeyboardVisually() // Visual detection and action
+} else {
+    // LAST RESORT: System-level fallback
+    driver.hideKeyboard()
+}
+```
+
+## Related Documentation
+
+- `docs/testing/HUMAN_FOCUSED_PATTERNS.md` - Complete pattern guide
+- `docs/testing/VISUAL_FIRST_COMPLIANCE_REVIEW.md` - Visual-first compliance
+- `.cursor/rules/visual-first-principle.mdc` - Visual-first principle

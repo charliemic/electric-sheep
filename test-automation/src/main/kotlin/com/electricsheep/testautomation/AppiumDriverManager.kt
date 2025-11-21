@@ -61,10 +61,28 @@ class AppiumDriverManager {
     fun quitDriver(driver: AndroidDriver) {
         try {
             logger.info("Quitting driver...")
-            driver.quit()
-            logger.info("Driver quit successfully")
+            
+            // Check if driver session is still active
+            try {
+                driver.sessionId // This will throw if session is already closed
+                driver.quit()
+                logger.info("Driver quit successfully")
+            } catch (e: org.openqa.selenium.WebDriverException) {
+                // Session already closed or invalid
+                logger.debug("Driver session already closed: ${e.message}")
+                logger.info("Driver already closed, skipping quit")
+            } catch (e: Exception) {
+                // Try to quit anyway, but don't fail if it doesn't work
+                try {
+                    driver.quit()
+                    logger.info("Driver quit after session check")
+                } catch (e2: Exception) {
+                    logger.debug("Driver quit failed (session may be closed): ${e2.message}")
+                }
+            }
         } catch (e: Exception) {
-            logger.error("Error quitting driver", e)
+            logger.warn("Error during driver cleanup: ${e.message}")
+            // Don't throw - cleanup should be best-effort
         }
     }
 }

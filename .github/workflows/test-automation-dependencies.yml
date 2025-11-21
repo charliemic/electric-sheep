@@ -1,0 +1,38 @@
+name: Test Automation Dependencies
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  check-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Dependencies
+        run: |
+          chmod +x scripts/check-dependencies.sh
+          ./scripts/check-dependencies.sh || true
+
+  setup-ollama-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ollama (Docker)
+        run: |
+          chmod +x scripts/setup-ollama-docker.sh
+          ./scripts/setup-ollama-docker.sh
+
+      - name: Test Ollama
+        env:
+          OLLAMA_BASE_URL: http://localhost:11434
+          OLLAMA_MODEL: llama3.2:1b
+        run: |
+          curl -s http://localhost:11434/api/tags
+          docker exec ollama ollama list
+

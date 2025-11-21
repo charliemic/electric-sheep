@@ -1,0 +1,7 @@
+# Test Scenario: Sign Up with Tech Novice Persona
+# Tests account creation with a persona that has minimal technical experience
+
+task: "Sign up and add a mood value"
+context: "tech_novice persona"
+persona: "tech_novice"
+

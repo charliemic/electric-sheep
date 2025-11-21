@@ -1,0 +1,171 @@
+# Agnostic Planner Principle
+
+## CRITICAL: Planner Must Be App-Agnostic
+
+**When implementing or modifying `GenericAdaptivePlanner`:**
+
+1. ✅ **NEVER include app-specific knowledge** - No hardcoded terms like "mood", "email", "password", app names, or feature names
+2. ✅ **ALWAYS use metadata hints** - All context must come from `AbstractGoal.metadata` passed from `TaskDecomposer`
+3. ✅ **ALWAYS use generic patterns** - Button patterns, input patterns, navigation patterns must be generic
+4. ✅ **ALWAYS work without hints** - Planner must work generically even if no metadata hints are provided
+
+## Architecture Principle
+
+### Proper Layering
+
+```
+Task: "Sign up and add mood value"
+  ↓
+TaskDecomposer (Layer 2: Task Semantics)
+  - KNOWS about task semantics
+  - Extracts "mood" from task
+  - Creates AbstractGoal(ADD_DATA_ENTRY, metadata={"dataType": "mood"})
+  ↓
+GenericAdaptivePlanner (Layer 4: Generic Planning)
+  - AGNOSTIC - doesn't know what "mood" means
+  - Uses metadata hints if available
+  - Works generically if no hints
+  ↓
+Actions: Based on visual observation + hints
+```
+
+### Separation of Concerns
+
+**TaskDecomposer Responsibilities:**
+- ✅ Extract task semantics (e.g., "mood" from "add mood value")
+- ✅ Create abstract goals with metadata hints
+- ✅ Know about task structure and requirements
+
+**GenericAdaptivePlanner Responsibilities:**
+- ✅ Work with abstract goals only (AUTHENTICATE, ADD_DATA_ENTRY, etc.)
+- ✅ Use metadata hints as additional patterns (not requirements)
+- ✅ Work generically without hints
+- ✅ Observe screen visually and generate actions
+
+**What GenericAdaptivePlanner MUST NOT Do:**
+- ❌ Hardcode app-specific terms (e.g., "mood", "email", "password")
+- ❌ Know about specific app features
+- ❌ Make assumptions about app structure
+- ❌ Require metadata hints to function
+
+## Implementation Rules
+
+### Rule 1: Generic Patterns Only
+
+**✅ GOOD:**
+```kotlin
+// Generic button patterns
+val buttonPatterns = listOf(
+    "sign in", "sign up", "login", "create account",
+    "add", "create", "new", "view", "history"
+)
+
+// Use hint if available (but not required)
+if (hint != null) {
+    // Look for hint-related patterns
+    val hintPatterns = listOf(hint, "add $hint", "$hint management")
+}
+```
+
+**❌ BAD:**
+```kotlin
+// App-specific patterns
+val buttonPatterns = listOf(
+    "mood management", "add mood", "track mood" // ❌ App-specific
+)
+
+// Hardcoded app knowledge
+if (visibleText.contains("mood", ignoreCase = true)) { // ❌ App-specific
+    actions.add(HumanAction.Tap(target = "Mood Management"))
+}
+```
+
+### Rule 2: Metadata Hints Only
+
+**✅ GOOD:**
+```kotlin
+// Get hint from metadata (passed from TaskDecomposer)
+val dataTypeHint = goal.metadata["dataType"] as? String
+
+// Use hint if available
+if (dataTypeHint != null) {
+    // Look for hint-related patterns
+    val hintPatterns = listOf(hint, "add $hint", "$hint management")
+}
+```
+
+**❌ BAD:**
+```kotlin
+// Hardcoded knowledge
+val dataType = "mood" // ❌ App-specific
+if (visibleText.contains("mood", ignoreCase = true)) { // ❌ App-specific
+    // ...
+}
+```
+
+### Rule 3: Must Work Without Hints
+
+**✅ GOOD:**
+```kotlin
+// Works with or without hints
+val buttonPatterns = listOf("add", "create", "new", "view") // Generic
+if (hint != null) {
+    // Add hint-specific patterns
+    buttonPatterns += listOf(hint, "add $hint")
+}
+```
+
+**❌ BAD:**
+```kotlin
+// Requires hint to work
+if (hint == null) {
+    return emptyList() // ❌ Doesn't work without hint
+}
+```
+
+### Rule 4: Abstract Goals Only
+
+**✅ GOOD:**
+```kotlin
+when (goal.type) {
+    AbstractGoalType.AUTHENTICATE -> { /* ... */ }
+    AbstractGoalType.ADD_DATA_ENTRY -> { /* ... */ }
+    AbstractGoalType.VIEW_DATA -> { /* ... */ }
+}
+```
+
+**❌ BAD:**
+```kotlin
+when (goal.type) {
+    "mood_entry" -> { /* ... */ } // ❌ App-specific goal type
+    "sign_up" -> { /* ... */ } // ❌ App-specific goal type
+}
+```
+
+## Code Review Checklist
+
+When reviewing `GenericAdaptivePlanner`:
+
+- [ ] No hardcoded app-specific terms (mood, email, password, app names)
+- [ ] All context comes from `goal.metadata` or `goal.type`
+- [ ] Generic patterns work without hints
+- [ ] Hints are used as additional patterns, not requirements
+- [ ] Planner works for any app, not just this one
+- [ ] No assumptions about app structure or features
+
+## Testing
+
+**Test 1: Works without hints**
+- Create goal without metadata → Planner should still work generically
+
+**Test 2: Works with hints**
+- Create goal with metadata → Planner should use hints as additional patterns
+
+**Test 3: Works with different apps**
+- Test with different app → Planner should work without modification
+
+## Related Documentation
+
+- `docs/testing/ARCHITECTURE_LAYERING_ANALYSIS.md` - Architecture layering
+- `docs/testing/AGNOSTIC_PLANNER_FIX.md` - Fix documentation
+- `test-automation/src/main/kotlin/com/electricsheep/testautomation/planner/GenericAdaptivePlanner.kt` - Implementation

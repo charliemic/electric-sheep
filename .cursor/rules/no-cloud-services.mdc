@@ -1,0 +1,73 @@
+# No Cloud Services Rule
+
+## CRITICAL: Never Use Cloud Services We Don't Self-Host
+
+**When implementing features that require external services:**
+1. ✅ **ALWAYS prefer self-hosted/local solutions first**
+2. ✅ **NEVER use cloud services we don't self-host** (OpenAI, AWS Bedrock, etc.)
+3. ✅ **Use local alternatives** (Ollama, local models, embedded models)
+4. ✅ **Only use cloud services if explicitly approved and self-hosted**
+
+## Self-Hosted Services We Use
+
+### AI/ML Services
+- ✅ **Ollama** - Local LLM inference (self-hosted)
+- ✅ **Local Models** - ONNX, TensorFlow Lite (embedded)
+- ✅ **OpenCV** - Local computer vision (embedded)
+- ✅ **Tesseract OCR** - Local OCR (embedded)
+
+### External Services (Only if Self-Hosted)
+- ✅ **Supabase** - Self-hosted instance (if applicable)
+- ✅ **Any service we run ourselves** - OK to use
+
+## Cloud Services to Avoid
+
+### ❌ DO NOT USE (Unless Self-Hosted)
+- OpenAI API (use Ollama instead)
+- AWS Bedrock (use Ollama instead)
+- Google Cloud AI (use Ollama instead)
+- Azure Cognitive Services (use Ollama instead)
+- Any external API we don't control
+
+## Implementation Pattern
+
+### ✅ GOOD: Use Local/Self-Hosted
+```kotlin
+// Use Ollama for local LLM inference
+val ollamaClient = OllamaClient("http://localhost:11434")
+val response = ollamaClient.generate(prompt)
+```
+
+### ❌ BAD: Use Cloud Service
+```kotlin
+// DON'T use OpenAI or other cloud services
+val openaiClient = OpenAI(apiKey = "...")  // DON'T DO THIS
+```
+
+## When to Use What
+
+### Local AI/ML Tasks
+- ✅ **Email generation** → Ollama
+- ✅ **Text analysis** → Ollama
+- ✅ **Report generation** → Ollama
+- ✅ **Screenshot analysis** → Local models (ONNX, OpenCV, OCR)
+
+### When Cloud Might Be Acceptable
+- Only if explicitly approved
+- Only if we self-host the service
+- Only if no local alternative exists
+
+## Checklist
+
+Before using any external service:
+- [ ] Is there a local/self-hosted alternative?
+- [ ] Can we use Ollama instead?
+- [ ] Can we use embedded models instead?
+- [ ] Is this service self-hosted by us?
+- [ ] Has this been explicitly approved?
+
+## Related Documentation
+
+- `docs/testing/OLLAMA_EVALUATION.md` - Ollama usage and setup
+- `docs/testing/LOCAL_VS_CLOUD_MODEL_STRATEGY.md` - Local vs cloud strategy
+- `docs/testing/RUNTIME_MODEL_EVALUATION.md` - Runtime model evaluation

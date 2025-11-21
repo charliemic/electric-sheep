@@ -220,6 +220,15 @@ main() {
     # Check prerequisites
     check_appium
     
+    # Bring emulator window to front (macOS)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        log "🖥️  Bringing emulator window to front..."
+        osascript -e 'tell application "System Events" to tell process "qemu-system-aarch64" to set frontmost to true' 2>/dev/null || \
+        osascript -e 'tell application "System Events" to tell process "qemu-system-x86_64" to set frontmost to true' 2>/dev/null || \
+        osascript -e 'tell application "System Events" to set frontmost to true of (first process whose name contains "qemu" or name contains "emulator")' 2>/dev/null || \
+        log "⚠️  Could not bring emulator to front (may not be needed)"
+    fi
+    
     # Start recording
     start_recording
     
@@ -230,14 +239,25 @@ main() {
     # Run the test
     log ""
     log "═══════════════════════════════════════════════════════════════"
-    log "🧪 Running Test Automation"
+    log "🧪 Running Test Automation (with cognitive process logging)"
     log "═══════════════════════════════════════════════════════════════"
     log ""
     
     cd test-automation
     
-    # Capture test output and parse for natural language activities
-    TEST_OUTPUT=$(../gradlew run --args="--task '$TASK' --context '$CONTEXT' --device $DEVICE_ID" 2>&1 | tee -a "$OUTPUT_DIR/test_output.log")
+    # Capture test output with real-time streaming and parse for natural language activities
+    # Use unbuffered output to see logs in real-time
+    TEST_OUTPUT=$(stdbuf -oL -eL ../gradlew run --args="--task '$TASK' --context '$CONTEXT' --device $DEVICE_ID" 2>&1 | tee -a "$OUTPUT_DIR/test_output.log" | while IFS= read -r line; do
+        # Stream cognitive process markers to console
+        if echo "$line" | grep -qE "(👁️|🧠|✋|🔄|🎯|OBSERVE|ORIENT|DECIDE|ACT|PERCEPTION|INTENTION|ACTION|FEEDBACK)"; then
+            echo "$line"
+        fi
+        # Also show errors and important info
+        if echo "$line" | grep -qE "(ERROR|WARN|✅|❌|Planning|Iteration)"; then
+            echo "$line"
+        fi
+        echo "$line"  # Still output everything to file
+    done)
     
     cd ..
     

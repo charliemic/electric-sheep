@@ -27,7 +27,9 @@ class TaskPlanner(
     private val actionExecutor: ActionExecutor,
     private val aiApiKey: String? = null,
     private val aiModel: String = "gpt-4-vision-preview",
-    private val personaManager: PersonaManager = PersonaManager()
+    private val personaManager: PersonaManager = PersonaManager(),
+    private val screenEvaluator: com.electricsheep.testautomation.monitoring.ScreenEvaluator? = null,
+    private val textDetector: com.electricsheep.testautomation.vision.TextDetector? = null
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val httpClient = OkHttpClient.Builder()
@@ -36,6 +38,14 @@ class TaskPlanner(
         .build()
     private val objectMapper = ObjectMapper(YAMLFactory()).apply {
         registerModule(KotlinModule.Builder().build())
+    }
+    
+    // Adaptive planning components
+    private val taskDecomposer = TaskDecomposer()
+    private val genericAdaptivePlanner = if (screenEvaluator != null && textDetector != null) {
+        GenericAdaptivePlanner(screenEvaluator, textDetector)
+    } else {
+        null
     }
     
     /**
@@ -68,11 +78,21 @@ class TaskPlanner(
         val executionHistory = mutableListOf<ExecutionStep>()
         var lastErrorMessages: List<String> = emptyList()
         
+        // Human-like stuck detection: "I've tried this multiple times, it's not working"
+        val stuckDetector = StuckDetector(
+            maxRepeatedActionAttempts = 3, // Try same action 3 times before giving up
+            maxRepeatedGoalAttempts = 4    // Try same goal 4 iterations before giving up
+        )
+        
         while (iteration < maxIterations) {
             iteration++
-            logger.info("Planning iteration $iteration/$maxIterations")
+            logger.info("")
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            logger.info("🔄 Planning Cycle $iteration/$maxIterations")
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             
-            // Step 1: Capture current state
+            // Step 1: OBSERVE - Capture current state
+            logger.info("👁️  Looking at the screen...")
             val captureResult = actionExecutor.execute(HumanAction.CaptureState)
             if (captureResult is ActionResult.Failure) {
                 return TaskResult.Failure(
@@ -104,15 +124,26 @@ class TaskPlanner(
                 logger.info("Persona error handling: ${errorResponse.action} (${errorResponse.reasoning})")
             }
             
-            // Step 2: Generate plan from current state (with error context)
-            val planResult = if (aiApiKey != null) {
-                generatePlanWithAI(task, context, screenshot, executionHistory, lastErrorMessages)
-            } else {
+            // Step 2: ORIENT - Understand current situation and generate plan
+            logger.info("🧠 Thinking about what to do next...")
+            val planResult = when {
+                // Use AI planning if available
+                aiApiKey != null -> {
+                    generatePlanWithAI(task, context, screenshot, executionHistory, lastErrorMessages)
+                }
+                // Use adaptive planning if components available
+                genericAdaptivePlanner != null -> {
+                    generateAdaptivePlan(task, screenshot, persona, executionHistory, lastErrorMessages)
+                }
                 // Fallback: Use simple heuristic planning
-                generateSimplePlan(task, screenshot, persona, lastErrorMessages)
+                else -> {
+                    logger.warn("⚠️  Using simple planning (adaptive planning not available)")
+                    generateSimplePlan(task, screenshot, persona, lastErrorMessages)
+                }
             }
             
             if (planResult is PlanResult.Failure) {
+                logger.error("❌ ORIENT: Failed to generate plan: ${planResult.error}")
                 return TaskResult.Failure(
                     task = task,
                     error = "Failed to generate plan: ${planResult.error}",
@@ -121,33 +152,36 @@ class TaskPlanner(
             }
             
             currentPlan = when (planResult) {
-                is PlanResult.Success -> planResult.actions
+                is PlanResult.Success -> {
+                    logger.info("📋 Plan: ${planResult.actions.size} steps")
+                    planResult.actions.forEachIndexed { idx, action ->
+                        val actionDesc = when (action) {
+                            is HumanAction.Tap -> action.target
+                            is HumanAction.TypeText -> "${action.target}: ${action.text?.take(20)}"
+                            is HumanAction.Swipe -> "Swipe ${action.direction}"
+                            is HumanAction.WaitFor -> "Wait: ${action.condition}"
+                            is HumanAction.Verify -> "Verify: ${action.condition}"
+                            is HumanAction.NavigateBack -> "Navigate back"
+                            is HumanAction.CaptureState -> "Capture state"
+                        }
+                        logger.info("   ${idx + 1}. $actionDesc")
+                    }
+                    planResult.actions
+                }
                 is PlanResult.Failure -> emptyList()
             }
             
-            // Log natural language activity for the plan
-            if (currentPlan.isNotEmpty()) {
-                logger.info("📋 Generated plan with ${currentPlan.size} actions")
-                currentPlan.forEachIndexed { index, action ->
-                    val activity = when (action) {
-                        is HumanAction.Tap -> "👆 Will tap on: ${action.target}"
-                        is HumanAction.TypeText -> "⌨️  Will type into: ${action.target}"
-                        is HumanAction.Swipe -> "👈 Will swipe ${action.direction}"
-                        is HumanAction.WaitFor -> "⏳ Will wait for: ${action.condition}"
-                        is HumanAction.Verify -> "✅ Will verify: ${action.condition}"
-                        is HumanAction.NavigateBack -> "⬅️  Will go back"
-                        is HumanAction.CaptureState -> "📸 Will capture screen state"
-                    }
-                    logger.info("   [$index] $activity")
-                }
-            }
+            // Log natural language activity for the plan (simplified)
+            // Detailed plan already logged above
             
             // Step 3: Execute plan and collect feedback
-            val executionResult = executePlan(currentPlan, executionHistory, task, persona)
+            val executionResult = executePlan(currentPlan, executionHistory, task, persona, stuckDetector)
             
-            // Step 4: Check if task is complete
+            // Step 4: Check if task is complete FIRST (before checking if stuck)
+            // If task is complete, we're done - don't check for stuck
             if (executionResult.isComplete) {
                 logger.info("✅ Task completed successfully!")
+                stuckDetector.reset() // Clear stuck detection on success
                 return TaskResult.Success(
                     task = task,
                     executionHistory = executionHistory,
@@ -155,7 +189,20 @@ class TaskPlanner(
                 )
             }
             
-            // Step 5: If not complete, continue with feedback loop
+            // Step 5: Check if we're stuck (only if task is not complete)
+            // Human-like decision: "I've tried this enough"
+            if (stuckDetector.isStuck()) {
+                val stuckReason = stuckDetector.getStuckReason()
+                logger.warn("🛑 HUMAN DECISION: Stopping test - $stuckReason")
+                logger.warn("💭 Reasoning: I've tried the same thing multiple times and it's not working. I should stop.")
+                return TaskResult.Failure(
+                    task = task,
+                    error = "Test stopped due to repeated failures: $stuckReason",
+                    executionHistory = executionHistory
+                )
+            }
+            
+            // Step 6: If not complete, continue with feedback loop
             logger.info("Task not complete, continuing with feedback loop...")
         }
         
@@ -164,6 +211,65 @@ class TaskPlanner(
             error = "Reached maximum iterations ($maxIterations) without completing task",
             executionHistory = executionHistory
         )
+    }
+    
+    /**
+     * Generate plan using adaptive planning (decomposition + generic planner).
+     * 
+     * This is the preferred method when AI is not available:
+     * 1. Decompose task into abstract goals
+     * 2. Use generic adaptive planner to work out how to achieve each goal
+     * 3. Generate actions based on visual observation
+     */
+    private suspend fun generateAdaptivePlan(
+        task: String,
+        screenshot: File,
+        persona: Persona?,
+        history: List<ExecutionStep>,
+        errorMessages: List<String> = emptyList()
+    ): PlanResult {
+        try {
+            logger.info("🧠 ADAPTIVE PLANNING: Decomposing task and working out how to achieve it...")
+            
+            // Step 1: Decompose task into abstract goals
+            val abstractGoals = taskDecomposer.decomposeTask(task)
+            if (abstractGoals.isEmpty()) {
+                logger.warn("⚠️  Could not decompose task into goals, falling back to simple planning")
+                return generateSimplePlan(task, screenshot, persona, errorMessages)
+            }
+            
+            // Step 2: Use generic adaptive planner for current goal
+            // For now, work on the highest priority goal
+            val currentGoal = abstractGoals.first()
+            logger.info("🎯 Working on abstract goal: ${currentGoal.type.name} - ${currentGoal.description}")
+            
+            val planResult = genericAdaptivePlanner!!.generatePlanForGoal(
+                goal = currentGoal,
+                screenshot = screenshot,
+                history = history
+            )
+            
+            // If adaptive planner returns empty actions, fall back to simple planning
+            // This maintains agnostic principle - planner doesn't force actions, we fall back
+            return when (planResult) {
+                is PlanResult.Success -> {
+                    if (planResult.actions.isEmpty()) {
+                        logger.warn("⚠️  Adaptive planner returned empty actions, falling back to simple planning")
+                        generateSimplePlan(task, screenshot, persona, errorMessages)
+                    } else {
+                        planResult
+                    }
+                }
+                is PlanResult.Failure -> {
+                    logger.warn("⚠️  Adaptive planning failed: ${planResult.error}, falling back to simple planning")
+                    generateSimplePlan(task, screenshot, persona, errorMessages)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Adaptive planning failed: ${e.message}", e)
+            logger.warn("⚠️  Falling back to simple planning")
+            return generateSimplePlan(task, screenshot, persona, errorMessages)
+        }
     }
     
     /**
@@ -208,7 +314,7 @@ class TaskPlanner(
             
             // If email error, generate a better email
             if (errorText.contains("email") && (errorText.contains("invalid") || errorText.contains("format"))) {
-                val betterEmail = personaManager.generateEmail(persona)
+                val betterEmail = kotlinx.coroutines.runBlocking { personaManager.generateEmail(persona) }
                 logger.info("Generating persona-appropriate email: $betterEmail")
                 actions.add(
                     HumanAction.TypeText(
@@ -257,7 +363,7 @@ class TaskPlanner(
             // Sign up AND add mood value
             (task.contains("sign up", ignoreCase = true) || task.contains("create account", ignoreCase = true)) 
                 && task.contains("mood", ignoreCase = true) -> {
-                val email = personaManager.generateEmail(persona)
+                val email = kotlinx.coroutines.runBlocking { personaManager.generateEmail(persona) }
                 val password = personaManager.generatePassword(persona)
                 logger.info("Generated email for persona ${persona?.name ?: "default"}: $email")
                 
@@ -331,7 +437,7 @@ class TaskPlanner(
             }
             // Just sign up (no mood)
             task.contains("sign up", ignoreCase = true) || task.contains("create account", ignoreCase = true) -> {
-                val email = personaManager.generateEmail(persona)
+                val email = kotlinx.coroutines.runBlocking { personaManager.generateEmail(persona) }
                 val password = personaManager.generatePassword(persona)
                 logger.info("Generated email for persona ${persona?.name ?: "default"}: $email")
                 
@@ -489,7 +595,8 @@ Analyze the screenshot and return a plan to complete the task.
         plan: List<HumanAction>,
         history: MutableList<ExecutionStep>,
         task: String = "",
-        persona: Persona? = null
+        persona: Persona? = null,
+        stuckDetector: StuckDetector? = null
     ): ExecutionResult {
         var allSuccessful = true
         
@@ -501,6 +608,9 @@ Analyze the screenshot and return a plan to complete the task.
                 logger.info("💭 PERSONA THOUGHT: $thought")
             }
             val result = actionExecutor.execute(action)
+            
+            // Record attempt for stuck detection (human-like: "I tried this")
+            stuckDetector?.recordAttempt(action, result, goalDescription = task)
             
             history.add(ExecutionStep(
                 action = action,
@@ -557,16 +667,25 @@ Analyze the screenshot and return a plan to complete the task.
             )
         }
         
-        val isComplete = allSuccessful && 
-            authVerifyResult is ActionResult.Success && 
-            moodVerifyResult is ActionResult.Success
+        // Task is complete if verifications pass, even if some non-critical actions failed
+        // (e.g., WaitFor timeouts are acceptable if the final state is correct)
+        val authSuccess = authVerifyResult is ActionResult.Success
+        val moodSuccess = moodVerifyResult is ActionResult.Success
+        
+        // For tasks requiring mood, both must succeed
+        // For tasks not requiring mood, only auth must succeed
+        val isComplete = if (needsMoodVerification) {
+            authSuccess && moodSuccess
+        } else {
+            authSuccess
+        }
         
         if (isComplete && needsMoodVerification) {
-            logger.info("✅ Task complete: User authenticated and mood value added")
+            logger.info("✅ Task complete: User authenticated and mood value added (auth=$authSuccess, mood=$moodSuccess)")
         } else if (isComplete) {
-            logger.info("✅ Task complete: User authenticated")
+            logger.info("✅ Task complete: User authenticated (auth=$authSuccess)")
         } else {
-            logger.info("⚠️  Task not complete: auth=${authVerifyResult is ActionResult.Success}, mood=${moodVerifyResult is ActionResult.Success}")
+            logger.info("⚠️  Task not complete: auth=$authSuccess, mood=$moodSuccess (needsMood=$needsMoodVerification)")
         }
         
         return ExecutionResult(
@@ -710,7 +829,13 @@ Analyze the screenshot and return a plan to complete the task.
         val lastResult: ActionResult?
     )
     
-    private data class ExecutionStep(
+    
+    sealed class PlanResult {
+        data class Success(val actions: List<HumanAction>) : PlanResult()
+        data class Failure(val error: String) : PlanResult()
+    }
+    
+    data class ExecutionStep(
         val action: HumanAction,
         val result: ActionResult,
         val timestamp: Long
@@ -718,11 +843,6 @@ Analyze the screenshot and return a plan to complete the task.
         fun summary(): String {
             return "${action::class.simpleName}: ${if (result is ActionResult.Success) "✓" else "✗"}"
         }
-    }
-    
-    private sealed class PlanResult {
-        data class Success(val actions: List<HumanAction>) : PlanResult()
-        data class Failure(val error: String) : PlanResult()
     }
 }
 

@@ -1,0 +1,193 @@
+# Reliability Mitigations and Complexity Trade-offs
+
+## CRITICAL: Balance Reliability with Complexity
+
+**When implementing features that have reliability risks:**
+1. ✅ Identify potential reliability issues upfront
+2. ✅ Design mitigations for each risk
+3. ✅ Evaluate complexity cost of each mitigation
+4. ✅ Choose mitigations that provide best reliability/complexity ratio
+5. ✅ Document trade-offs and decisions
+
+## Reliability Mitigation Process
+
+### Step 1: Identify Risks
+
+**For any feature with reliability concerns, document:**
+- What can go wrong?
+- How likely is it?
+- What's the impact if it happens?
+
+**Example:**
+```markdown
+## Runtime Template Discovery Risks
+
+1. **False Positives** (High Risk)
+   - Problem: Extract non-icon elements as templates
+   - Impact: Pattern matching fails, false negatives
+   - Likelihood: Medium-High
+
+2. **Transient Elements** (Medium Risk)
+   - Problem: Extract elements that appear briefly
+   - Impact: Templates for elements that don't exist
+   - Likelihood: Medium
+```
+
+### Step 2: Design Mitigations
+
+**For each risk, design mitigations:**
+- What can we do to prevent/reduce this risk?
+- How effective is the mitigation?
+- What's the complexity cost?
+
+**Example:**
+```markdown
+## Mitigations
+
+1. **False Positives** → Semantic Filtering
+   - Effectiveness: High (filters 80% of false positives)
+   - Complexity: Low (simple size/aspect ratio checks)
+   - Trade-off: ✅ Good - High effectiveness, low complexity
+
+2. **Transient Elements** → Multi-Pass Validation
+   - Effectiveness: High (filters 90% of transient elements)
+   - Complexity: Medium (requires tracking element history)
+   - Trade-off: ✅ Good - High effectiveness, acceptable complexity
+```
+
+### Step 3: Evaluate Complexity
+
+**For each mitigation, evaluate:**
+- **Implementation complexity**: How hard to implement?
+- **Runtime complexity**: Performance impact?
+- **Maintenance complexity**: How hard to maintain?
+- **Cognitive complexity**: How hard to understand?
+
+**Complexity Scoring:**
+- ⭐ = Low complexity
+- ⭐⭐ = Medium complexity
+- ⭐⭐⭐ = High complexity
+- ⭐⭐⭐⭐ = Very high complexity
+
+**Decision Matrix:**
+```
+Effectiveness vs Complexity:
+- High Effectiveness + Low Complexity = ✅ Always implement
+- High Effectiveness + Medium Complexity = ✅ Usually implement
+- High Effectiveness + High Complexity = ⚠️ Consider alternatives
+- Low Effectiveness + Any Complexity = ❌ Don't implement
+```
+
+### Step 4: Choose Mitigations
+
+**Select mitigations based on:**
+1. **Reliability/complexity ratio**: Best bang for buck
+2. **Cumulative complexity**: Don't stack too many complex mitigations
+3. **Maintenance burden**: Can we maintain this long-term?
+
+**Example Decision:**
+```markdown
+## Chosen Mitigations
+
+1. ✅ **Semantic Filtering** (High effectiveness, Low complexity)
+2. ✅ **Multi-Pass Validation** (High effectiveness, Medium complexity)
+3. ⚠️ **Confidence Scoring** (High effectiveness, High complexity) → Defer to v2
+4. ✅ **Hybrid Approach** (Very high effectiveness, Medium complexity)
+
+**Rationale**: 
+- Semantic filtering + multi-pass validation provide 90% reliability
+- Confidence scoring adds 5% but doubles complexity → defer
+- Hybrid approach provides fallback without adding complexity
+```
+
+## Complexity Evaluation Checklist
+
+**Before implementing a mitigation, ask:**
+
+### Implementation Complexity
+- [ ] How many lines of code? (<100 = Low, 100-500 = Medium, >500 = High)
+- [ ] How many dependencies? (0-1 = Low, 2-3 = Medium, >3 = High)
+- [ ] How many new classes/files? (<3 = Low, 3-5 = Medium, >5 = High)
+- [ ] How much testing needed? (Unit tests only = Low, Integration tests = Medium, E2E tests = High)
+
+### Runtime Complexity
+- [ ] Performance impact? (<10ms = Low, 10-100ms = Medium, >100ms = High)
+- [ ] Memory impact? (<10MB = Low, 10-50MB = Medium, >50MB = High)
+- [ ] Scalability concerns? (None = Low, Some = Medium, Many = High)
+
+### Maintenance Complexity
+- [ ] How often will it need updates? (Rarely = Low, Occasionally = Medium, Frequently = High)
+- [ ] How hard to debug? (Easy = Low, Moderate = Medium, Hard = High)
+- [ ] How many edge cases? (<3 = Low, 3-10 = Medium, >10 = High)
+
+### Cognitive Complexity
+- [ ] How hard to understand? (Self-explanatory = Low, Needs docs = Medium, Needs deep knowledge = High)
+- [ ] How many concepts? (<3 = Low, 3-5 = Medium, >5 = High)
+- [ ] How many interactions? (Simple = Low, Moderate = Medium, Complex = High)
+
+## When to Simplify
+
+**If complexity score is too high, consider:**
+
+1. **Simpler alternatives**: Can we achieve 80% of the benefit with 50% of the complexity?
+2. **Defer to later**: Can we add this in v2 after validating simpler approach?
+3. **Remove feature**: Is the complexity worth it? Maybe the feature isn't needed?
+
+**Example:**
+```markdown
+## Complexity Review: Confidence Scoring
+
+**Complexity Score**: ⭐⭐⭐ (High)
+- Implementation: 300 lines, 2 new classes
+- Runtime: 50ms per element
+- Maintenance: Needs tuning, edge cases
+- Cognitive: Multiple scoring factors
+
+**Decision**: ⚠️ **Defer to v2**
+- Current mitigations (semantic + multi-pass) provide 90% reliability
+- Confidence scoring adds 5% but doubles complexity
+- Can add later if needed after validating simpler approach
+```
+
+## Documentation Requirements
+
+**For each mitigation, document:**
+
+1. **Risk**: What problem does it solve?
+2. **Mitigation**: How does it solve it?
+3. **Effectiveness**: How well does it work? (percentage, evidence)
+4. **Complexity**: What's the complexity cost? (score, details)
+5. **Trade-off**: Why is this worth it? (or why not)
+
+**Example:**
+```markdown
+## Multi-Pass Validation
+
+**Risk**: Transient elements (loading spinners, animations)
+**Mitigation**: Require element to appear 3+ times before extracting
+**Effectiveness**: 90% (filters out 90% of transient elements)
+**Complexity**: ⭐⭐ (Medium - requires element history tracking)
+**Trade-off**: ✅ Worth it - High effectiveness, acceptable complexity
+**Evidence**: Tested on 100 screenshots, reduced false positives from 15% to 1.5%
+```
+
+## Continuous Evaluation
+
+**Regularly review mitigations:**
+
+1. **Are they still needed?** (Has the risk changed?)
+2. **Are they still effective?** (Do they still work well?)
+3. **Is complexity still acceptable?** (Has maintenance burden grown?)
+4. **Can we simplify?** (Are there simpler alternatives now?)
+
+**Review Schedule:**
+- After each major feature addition
+- When complexity concerns arise
+- When reliability issues occur
+- Quarterly architecture review
+
+## Related Documentation
+
+- `docs/testing/TEMPLATE_EXTRACTION_TRADE_OFFS.md` - Trade-off analysis
+- `docs/testing/RUNTIME_VISUAL_EVALUATION_ARCHITECTURE.md` - Architecture decisions
+- `.cursor/rules/visual-first-principle.mdc` - Visual-first principle
