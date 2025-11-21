@@ -131,9 +131,13 @@ jobs:
             PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
           fi
           
+          # URL encode the password to handle special characters
+          # Use Python for URL encoding (available in GitHub Actions)
+          ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
+          
           # Construct database URL
           # Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres"
+          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres"
           echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
           echo "Database URL configured (password hidden)"
       
