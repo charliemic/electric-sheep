@@ -1,0 +1,113 @@
+---
+alwaysApply: true
+---
+
+# Agent Effectiveness Monitoring
+
+## When This Applies
+During any work session, especially long-running tasks or complex work.
+
+## CRITICAL: Monitor Agent Effectiveness
+
+**Research shows**: Agents become less effective over time due to:
+- Context growth (conversation length, accumulated decisions)
+- Cognitive load accumulation
+- Information overload
+- Conflicting context
+
+**Solution**: Handover to new agent when effectiveness degrades.
+
+## Detection Thresholds
+
+**Handover recommended when ANY threshold exceeded:**
+
+- **Conversation turns** > 100
+- **Time elapsed** > 4 hours
+- **Context tokens** > 100,000
+- **Error rate** > 3 failures
+- **Repetition count** > 3
+
+**Also handover at natural breakpoints:**
+- Major milestone completed
+- Task completion reached
+- Deployment complete
+- Complex work finished
+
+## Standard Workflow
+
+### Before Starting Work
+
+1. **Check handover queue** (via pre-work-check.sh):
+   ```bash
+   ./scripts/pre-work-check.sh
+   ```
+   - Reviews `docs/development/workflow/HANDOVER_QUEUE.md`
+   - Suggests picking up pending handovers
+   - Checks if handover needed for current work
+
+2. **Pick up pending handover** if available:
+   - Review queue for highest priority
+   - Read handover document
+   - Update status to "assigned"
+   - Continue from handover point
+
+### During Work
+
+1. **Monitor effectiveness** periodically:
+   ```bash
+   ./scripts/detect-handover-needed.sh
+   ```
+   - Run after major milestones
+   - Run if quality seems to decline
+   - Run if confusion increases
+
+2. **Create handover** when needed:
+   ```bash
+   ./scripts/create-handover.sh [task-name]
+   ```
+   - When threshold exceeded
+   - At natural breakpoints
+   - When quality declining
+
+### When Handover Needed
+
+1. **Detect**: Run detection script
+2. **Create**: Generate handover document
+3. **Queue**: Add to handover queue
+4. **Commit**: Commit handover document
+5. **New agent**: Picks up from queue
+
+## Handover Queue Management
+
+**Location**: `docs/development/workflow/HANDOVER_QUEUE.md`
+
+**Before starting work**:
+- ✅ Check queue for pending handovers
+- ✅ Pick highest priority if available
+- ✅ Update status when working on handover
+
+**When creating handover**:
+- ✅ Add to queue with priority
+- ✅ Set status to "pending"
+- ✅ Document next steps clearly
+
+**When completing work**:
+- ✅ Update status to "complete"
+- ✅ Move to completed section
+- ✅ Document outcome
+
+## Benefits
+
+- ✅ **Prevent degradation** - Handover before quality drops
+- ✅ **Fresh context** - New agent starts clean
+- ✅ **Better focus** - Less accumulated confusion
+- ✅ **Maintain quality** - Consistent effectiveness
+- ✅ **Work continuity** - No work gets lost
+
+## Related Documentation
+
+- `docs/development/workflow/AGENT_EFFECTIVENESS_DEGRADATION.md` - Full analysis
+- `docs/development/workflow/HANDOVER_QUEUE_SYSTEM.md` - System design
+- `docs/development/workflow/HANDOVER_QUEUE.md` - Active queue
+- `docs/development/workflow/AGENT_HANDOVER_PATTERNS.md` - Handover patterns
+- `.cursor/rules/branching.mdc` - Integrated workflow

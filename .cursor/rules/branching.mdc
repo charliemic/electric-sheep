@@ -73,9 +73,11 @@ This script automatically verifies:
 1. ✅ **Not on main branch** - Prevents working on main
 2. ✅ **Latest main pulled** - Checks for remote updates
 3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
-4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
-5. ✅ **Available tools identified** - Lists automation scripts
-6. ✅ **Working directory clean** - Checks for uncommitted changes
+4. ✅ **Handover queue checked** - Reviews pending handovers (pick up if available)
+5. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
+6. ✅ **Available tools identified** - Lists automation scripts
+7. ✅ **Working directory clean** - Checks for uncommitted changes
+8. ✅ **Handover detection** - Checks if handover needed for current work
 
 **If the script reports errors, fix them before proceeding.**
 
@@ -359,6 +361,11 @@ Please verify these are correct before cleanup proceeds.
 - Update status when working on handover
 
 **See:** 
+- `.cursor/rules/agent-effectiveness.mdc` - Complete effectiveness monitoring rule
 - `docs/development/workflow/AGENT_EFFECTIVENESS_DEGRADATION.md` - Degradation analysis
 - `docs/development/workflow/HANDOVER_QUEUE_SYSTEM.md` - Queue system design
+- `docs/development/workflow/HANDOVER_QUEUE.md` - Active handover queue
+- `docs/development/workflow/AGENT_HANDOVER_PATTERNS.md` - Handover patterns
+- `scripts/detect-handover-needed.sh` - Detection script
+- `scripts/create-handover.sh` - Handover creation script
 - `docs/development/workflow/HANDOVER_QUEUE.md` - Active queue
