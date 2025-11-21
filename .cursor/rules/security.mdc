@@ -42,12 +42,79 @@ alwaysApply: true
 - Use secure storage (GitHub Secrets, CI/CD secrets)
 - Use separate keystores for debug and release
 - Keep dependencies updated to patch vulnerabilities
+- Use temporary credentials (AWS SSO) when possible
+- Extract credentials using scripts (credentials not in scripts)
 
 ### DON'T ❌
 - Never commit secrets or credentials
 - Never hardcode API keys
 - Never commit keystore files or passwords
 - Never expose sensitive information in error messages
+- Never commit AWS credentials (Access Keys, Secret Keys, Session Tokens)
+- Never commit Cursor local configuration files
+- Never store credentials in version control
+
+## AWS Access Security
+
+### AWS Bedrock Integration
+
+**CRITICAL: Read-Only, Minimal Scope**
+
+When configuring AWS Bedrock access:
+- ✅ **Read-only permissions only** - Only `bedrock:InvokeModel` and `bedrock:ListFoundationModels`
+- ✅ **No write permissions** - Cannot create, modify, or delete Bedrock resources
+- ✅ **Model access only** - Restricted to using models, not managing them
+- ✅ **Temporary credentials** - Use SSO session tokens that expire
+- ✅ **No cross-service access** - Bedrock permissions don't grant access to other AWS services
+
+**IAM Policy (Minimal Permissions):**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "arn:aws:bedrock:*::foundation-model/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["bedrock:ListFoundationModels"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**What this does NOT allow:**
+- ❌ Creating or modifying Bedrock models
+- ❌ Managing Bedrock model access
+- ❌ Accessing other AWS services (S3, EC2, etc.)
+- ❌ Any write operations on Bedrock
+
+### Credential Management
+
+**Never commit:**
+- ❌ AWS Access Keys
+- ❌ AWS Secret Keys
+- ❌ AWS Session Tokens
+- ❌ AWS SSO credentials
+- ❌ Cursor local configuration
+
+**Protected by `.gitignore`:**
+- `*aws-credentials*.txt`
+- `*cursor-bedrock-credentials*.txt`
+- `.cursor/local/`
+- `.cursor/settings.json`
+
+**When credentials expire:**
+- Re-authenticate via SSO
+- Extract new credentials using scripts
+- Update local configuration (not committed)
+- Never store credentials in version control
 
 ## Security Checklist
 
@@ -67,6 +134,9 @@ alwaysApply: true
 - [ ] API keys stored securely
 - [ ] Keystores stored securely
 - [ ] Dependencies up-to-date
+- [ ] AWS credentials not committed (in `.gitignore`)
+- [ ] Cursor local config not committed
+- [ ] Credential files excluded from version control
 
 ### Error Handling
 - [ ] Error messages don't leak sensitive information
@@ -101,5 +171,7 @@ suspend fun getMoodsByUserId(userId: String): List<Mood>
 ## Related Documentation
 
 - `AI_AGENT_GUIDELINES.md` - Complete security guidelines
+- `docs/development/PROJECT_GOALS.md` - Project goals including AWS security principles
+- `docs/development/AWS_BEDROCK_CURSOR_SETUP.md` - AWS Bedrock setup (security-focused)
 - `docs/architecture/AUTHENTICATION.md` - Authentication architecture
 - `docs/architecture/DATA_LAYER_ARCHITECTURE.md` - Data layer security

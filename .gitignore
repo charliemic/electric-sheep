@@ -107,3 +107,16 @@ supabase/.env.local
 supabase/.temp
 supabase/.branches
 supabase/.temp
+
+# AWS credentials and local config (never commit)
+**/aws-credentials*.txt
+**/aws-credentials*.json
+**/cursor-bedrock-credentials*.txt
+/tmp/cursor-bedrock-credentials.txt
+**/.aws/credentials
+**/.aws/config.local
+
+# Cursor local configuration (not shareable)
+.cursor/local/
+.cursor/settings.json
+.cursor/workspace.json

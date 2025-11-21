@@ -23,8 +23,10 @@ This directory contains all project documentation organized by purpose. For quic
 #### Development Tools
 - **[HOT_RELOAD.md](development/HOT_RELOAD.md)** - Hot reloading and development workflow
 - **[KSP_MIGRATION.md](development/KSP_MIGRATION.md)** - KSP migration guide (reference)
-- **[AWS_BEDROCK_CURSOR_SETUP.md](development/AWS_BEDROCK_CURSOR_SETUP.md)** - AWS Bedrock setup for Cursor IDE
-- **[AWS_BEDROCK_QUICK_START.md](development/AWS_BEDROCK_QUICK_START.md)** - Quick start guide for AWS Bedrock
+- **[AWS_BEDROCK_SETUP.md](development/AWS_BEDROCK_SETUP.md)** - AWS Bedrock setup for Cursor IDE
+
+#### Project Principles
+- **[PROJECT_GOALS.md](development/PROJECT_GOALS.md)** - Project goals and principles (repo content, AWS security, workflow)
 
 #### Supabase Setup & Configuration
 - **[SUPABASE_SETUP.md](development/SUPABASE_SETUP.md)** - Complete Supabase setup guide (local and cloud)
