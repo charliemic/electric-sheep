@@ -70,13 +70,8 @@ fun main(args: Array<String>) {
         logger.info("Results:")
         logger.info("--------")
         logger.info("Patterns detected: ${patternResult.detectedPatterns.size}")
-<<<<<<< HEAD
-        patternResult.detectedPatterns.forEach { pattern: com.electricsheep.testautomation.vision.PatternRecognizer.DetectedPattern ->
-            logger.info("  - ${pattern.name} at (${pattern.location.first}, ${pattern.location.second}) confidence: ${String.format("%.2f", pattern.confidence)}")
-=======
         patternResult.detectedPatterns.forEach { pattern ->
-            logger.info("  - ${pattern.name} at (${pattern.location.x}, ${pattern.location.y}) confidence: ${String.format("%.2f", pattern.confidence)}")
->>>>>>> origin/main
+            logger.info("  - ${pattern.name} at (${pattern.location.first}, ${pattern.location.second}) confidence: ${String.format("%.2f", pattern.confidence)}")
         }
         logger.info("Has error icon: ${patternResult.hasErrorIcon}")
         logger.info("Has loading spinner: ${patternResult.hasLoadingSpinner}")
