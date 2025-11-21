@@ -16,10 +16,24 @@ alwaysApply: true
 
 ### Before Making Changes
 1. ✅ Verify NOT on `main` branch
-2. ✅ Understand existing code and architecture
-3. ✅ Check dependencies and compatibility
-4. ✅ Review related code for consistency
-5. ✅ Consider impact on other parts of system
+2. ✅ **Plan before coding** - Use structured planning checklist
+3. ✅ Understand existing code and architecture
+4. ✅ Check dependencies and compatibility
+5. ✅ Review related code for consistency
+6. ✅ Consider impact on other parts of system
+
+### Pre-Implementation Planning (Research-Backed)
+
+**Before writing code, complete this planning checklist:**
+
+- [ ] **Objective**: What are we trying to achieve? (Clear goal)
+- [ ] **Boundaries**: What's in scope? What's out? (Scope definition)
+- [ ] **Success Metrics**: How will we know it works? (Measurable outcomes)
+- [ ] **Approach**: What's the recommended pattern? (Check documentation-first)
+- [ ] **Dependencies**: What do we need first? (Prerequisites)
+- [ ] **Risks**: What could go wrong? (Risk assessment)
+
+**Research shows**: Structured planning reduces errors by 30-50% and debugging time by 40-60%
 
 ### When Implementing Features
 - ✅ **Start Small**: Minimal viable functionality first

@@ -9,6 +9,8 @@ Quick guide for using AWS Bedrock models in Cursor IDE.
 
 ## Setup (2 minutes)
 
+**Note**: Cursor settings are stored locally (`.cursor/settings.json` is gitignored) and must be configured manually through the UI.
+
 1. **Open Cursor Settings**
    - Press `Cmd + ,` (or `Cursor > Settings`)
 
@@ -25,6 +27,8 @@ Quick guide for using AWS Bedrock models in Cursor IDE.
    - Try Cursor's AI features (Chat, Composer) to confirm it's working
 
 That's it! The team plan handles authentication automatically via IAM roles.
+
+**Important**: The automatic model optimization rule (`.cursor/rules/bedrock-model-optimization.mdc`) will work once Bedrock is configured. Settings are per-user and stored locally, so each team member needs to configure this once.
 
 ## Troubleshooting
 

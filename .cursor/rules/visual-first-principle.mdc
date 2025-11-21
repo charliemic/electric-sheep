@@ -1,8 +1,25 @@
+---
+alwaysApply: false
+---
+
 # Visual-First Principle: CRITICAL RULE
+
+## When This Rule Applies
+
+**This rule applies ONLY when working on test automation:**
+- Test automation code (Appium, UI testing)
+- Screen evaluation and state detection
+- Visual analysis components
+- Test planning and execution
+
+**This rule does NOT apply to:**
+- General UI development
+- Regular app code
+- Non-test automation work
 
 ## ⚠️ CRITICAL: Always Use Visual Cues, Never Appium Internals
 
-**This is a fundamental architectural principle that MUST be maintained.**
+**This is a fundamental architectural principle that MUST be maintained for test automation.**
 
 ### The Rule
 
