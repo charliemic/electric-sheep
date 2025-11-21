@@ -224,9 +224,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
-        with:
-          # Deploy from .github-pages directory
-          artifact_name: published-document
 
       - name: Deployment info
         run: |
