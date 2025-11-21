@@ -1,11 +1,13 @@
 name: Publish Document to GitHub Pages
 
 on:
-  # Publish documents based on branch pushes
-  # Format: publish/<doc-name> or publish/<doc-name>-v<version>
+  # Publish documents from main branch
+  # Trigger on pushes to main that affect markdown files, or use commit message format
   push:
     branches:
-      - 'publish/**'        # Any branch starting with publish/ (e.g., publish/cognitive-journey)
+      - 'main'              # Publish from main branch
+    paths:
+      - 'docs/**/*.md'      # Only trigger when markdown files in docs/ change
   # Also support tags for backward compatibility
   push:
     tags:
@@ -62,16 +64,16 @@ jobs:
             DOC_NAME="${{ github.event.inputs.document }}"
             VERSION="${{ github.event.inputs.version }}"
             SOURCE_PATH="${{ github.event.inputs.source_path }}"
-          elif [ "${{ github.ref_name }}" == "publish-docs" ]; then
-            # Detect from commit message or changed files
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            # Detect from commit message or changed files on main
             # Check commit message for pattern: publish:<doc-name> or publish:<doc-name>:<version>
             COMMIT_MSG="${{ github.event.head_commit.message }}"
             if [[ "$COMMIT_MSG" =~ publish:([^:]+)(:([^[:space:]]+))? ]]; then
               DOC_NAME="${BASH_REMATCH[1]}"
               VERSION="${BASH_REMATCH[3]:-latest}"
             else
-              # Fallback: find most recently changed markdown file
-              CHANGED_FILE=$(git diff --name-only HEAD~1 HEAD | grep '\.md$' | head -1)
+              # Fallback: find most recently changed markdown file in docs/
+              CHANGED_FILE=$(git diff --name-only HEAD~1 HEAD | grep '^docs/.*\.md$' | head -1)
               if [ -n "$CHANGED_FILE" ]; then
                 # Extract doc name from file path (e.g., docs/learning/cognitive-journey.md -> cognitive-journey)
                 DOC_NAME=$(basename "$CHANGED_FILE" .md)
@@ -79,12 +81,13 @@ jobs:
                 SOURCE_PATH="$CHANGED_FILE"
               else
                 echo "Error: Could not detect document from commit. Use format: publish:<doc-name> or publish:<doc-name>:<version>"
+                echo "Or ensure a markdown file in docs/ was changed in this commit."
                 exit 1
               fi
             fi
             # Find document if SOURCE_PATH not set
             if [ -z "$SOURCE_PATH" ]; then
-              SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+              SOURCE_PATH=$(find . -type f -path "docs/**/*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
             fi
           elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
             # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
