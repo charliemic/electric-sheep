@@ -2,91 +2,47 @@
 alwaysApply: true
 ---
 
-# Branch Isolation and Multi-Agent Workflow Rules
+# Branch Isolation and Multi-Agent Workflow
 
-## CRITICAL: Never Work on Main Branch
+## When This Applies
+Before making ANY changes to code.
 
-**Before making ANY changes, you MUST:**
+## Critical Requirements
 
-1. **Check current branch:**
-   ```bash
-   git status
-   # or
-   git branch
-   ```
+### Before Starting Work
+- ✅ **Never work on `main` branch** - Always create feature branch first
+- ✅ **Run pre-work check**: `./scripts/pre-work-check.sh` (validates branch, coordination, tools)
+- ✅ **Use proper naming**: `feature/<description>`, `fix/<description>`, `refactor/<description>`, `docs/<description>`, `test/<description>`
 
-2. **If on `main` branch, IMMEDIATELY create a feature branch:**
-   ```bash
-   git checkout -b feature/<task-description>
-   # Or use git worktree for file system isolation:
-   # git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
-   ```
-
-3. **Never commit directly to `main`** - All changes must go through feature branches.
-
-## Branch Naming Convention
-
-**Required format:** `<type>/<task-description>`
-
-**Types:**
-- `feature/` - New functionality
-- `fix/` - Bug fixes  
-- `refactor/` - Code refactoring
-- `docs/` - Documentation only
-- `test/` - Test improvements
-
-**Examples:**
-- ✅ `feature/test-helpers`
-- ✅ `feature/env-switch`
-- ✅ `fix/login-bug`
-- ✅ `refactor/component-cleanup`
-- ❌ `feature/my-feature` (too vague - be descriptive)
-- ❌ `test-helpers` (missing type prefix)
-
-**Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
-
-## File System Isolation (RECOMMENDED)
-
-**For complete file system isolation, use git worktrees:**
-
+### Branch Creation
 ```bash
-# Create isolated worktree
-git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
-cd ../electric-sheep-<task-name>
-# Work in complete isolation
+# Standard branch
+git checkout -b feature/<task-description>
+
+# For isolation (recommended for shared files)
+./scripts/create-worktree.sh <task-name>
 ```
 
-**Benefits:**
-- Complete file system isolation
-- No conflicts with other agents
-- Easy cleanup after merge
+### During Work
+- ✅ **Commit frequently** (every 15-30 min, WIP commits OK)
+- ✅ **Check coordination** before modifying shared files
+- ✅ **Run tests** before committing: `./gradlew test`
 
-## Pre-Work Checklist (MANDATORY)
+### After Merge
+- ✅ **Run cleanup**: `./scripts/post-merge-cleanup.sh <pr-number>`
+- ✅ **Check other work** before deleting branches/worktrees
 
-**CRITICAL: Run automated pre-work check before starting ANY work:**
+## Implementation
 
-```bash
-./scripts/pre-work-check.sh
-```
+**Automated helpers:**
+- `scripts/pre-work-check.sh` - Validates branch, coordination, discovers rules
+- `scripts/create-worktree.sh` - Creates isolated worktree
+- `scripts/post-merge-cleanup.sh` - Cleans up after merge
+- `scripts/check-agent-coordination.sh` - Checks for file conflicts
 
-This script automatically verifies:
-1. ✅ **Not on main branch** - Prevents working on main
-2. ✅ **Latest main pulled** - Checks for remote updates
-3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
-4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
-5. ✅ **Available tools identified** - Lists automation scripts
-6. ✅ **Working directory clean** - Checks for uncommitted changes
-
-**If the script reports errors, fix them before proceeding.**
-
-**Manual steps (if needed):**
-1. ✅ **Create feature branch** - Use proper naming convention
-2. ✅ **Use worktree if needed** - `./scripts/create-worktree.sh <task-name>`
-3. ✅ **Update coordination doc** - `docs/development/AGENT_COORDINATION.md`
-
-## File Coordination
-
-**Before modifying files, check coordination:**
+**Coordination:**
+- Check `docs/development/AGENT_COORDINATION.md` before modifying shared files
+- Update coordination doc when work status changes
 
 **Shared files (require coordination):**
 - `app/.../ui/screens/LandingScreen.kt`
@@ -94,207 +50,26 @@ This script automatically verifies:
 - `app/.../data/DataModule.kt`
 - `app/build.gradle.kts`, `build.gradle.kts`
 
-**If modifying shared files:**
-1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
-2. Document your changes in coordination doc
-3. Consider using git worktree for isolation
-4. Coordinate with other agents if needed
-
-## Workflow Enforcement
-
-**When user asks you to make changes:**
-
-1. **MANDATORY: Run pre-work check first:**
-   ```bash
-   ./scripts/pre-work-check.sh
-   ```
-   This will:
-   - Verify you're not on main
-   - Check for remote updates
-   - Run coordination checks
-   - Discover relevant rules
-   - Identify available tools
-
-2. **If on main, STOP and create branch:**
-   ```bash
-   git checkout -b feature/<task-description>
-   # Or for file system isolation:
-   ./scripts/create-worktree.sh <task-name>
-   ```
-
-3. **Discover relevant rules:**
-   ```bash
-   ./scripts/discover-rules.sh <task-keyword>
-   ```
-   Read the suggested rules and reference them explicitly in your implementation.
-
-4. **Before modifying files, check coordination:**
-   ```bash
-   ./scripts/check-agent-coordination.sh
-   ```
-   This will:
-   - Check for shared file conflicts
-   - Warn about high-risk files
-   - Suggest worktree usage if needed
-
-5. **After work, update coordination doc:**
-   - Mark work as "In Progress" or "Complete"
-   - List files you modified
-
-## Commit Rules
-
-**Before committing:**
-
-1. ✅ **Pre-commit hook runs automatically** - Prevents commits to main
-2. ✅ Verify you're on a feature branch (not `main`)
-3. ✅ Use descriptive commit messages
-4. ✅ Keep commits atomic (one logical change)
-5. ✅ Run tests: `./gradlew test` (all tests must pass)
-
-**Commit message format:**
-```
-<type>: <description>
-
-[optional body]
-```
-
-**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-
-**CRITICAL: Commit Frequently (Safety Net)**
-- ✅ **Commit frequently** - Every 15-30 minutes, even if work is incomplete
-- ✅ **Use WIP commits** - `git commit -m "WIP: <description>"` for incomplete work
-- ✅ **Commit after each logical step** - Don't wait for feature completion
-- ✅ **Commit before risky operations** - Before refactoring, large changes, experiments
-- ✅ **Local commits only** - No need to push every commit (push when ready for review)
-
-**See:** `.cursor/rules/frequent-commits.mdc` for complete frequent commit guidelines
+## Related Rules
+- `.cursor/rules/frequent-commits.mdc` - Commit frequency guidelines
+- `.cursor/rules/repository-maintenance.mdc` - Cleanup procedures
+- `.cursor/rules/cicd.mdc` - CI/CD workflow
 
 ## Error Prevention
 
-**If you detect these conditions, STOP and fix:**
-
-- ❌ User is on `main` branch → Create feature branch immediately
+**STOP and fix if:**
+- ❌ On `main` branch → Create feature branch
+- ❌ Tests failing → Fix before proceeding
+- ❌ Shared file conflict → Check coordination, use worktree
 - ❌ Branch name doesn't follow convention → Rename branch
-- ❌ Modifying shared file without coordination → Check coordination doc first
-- ❌ Tests failing → Fix tests before proceeding
-- ❌ Uncommitted work on `main` → Move to feature branch
-- ❌ File system conflicts → Use git worktree for isolation
 
-## Post-Merge Cleanup (MANDATORY)
+## Examples
 
-**CRITICAL: Run automated cleanup after PR merge:**
+**See code examples:**
+- Branch creation: `scripts/create-worktree.sh`
+- Pre-work validation: `scripts/pre-work-check.sh`
+- Cleanup automation: `scripts/post-merge-cleanup.sh`
 
-```bash
-./scripts/post-merge-cleanup.sh <pr-number>
-```
-
-This script automatically:
-- Checks other active work (worktrees and branches)
-- Verifies PR merge status
-- Switches to main and pulls latest
-- Deletes merged branches
-- Removes associated worktrees
-- Cleans up temp branches
-- Prunes stale worktree references
-
-**Manual cleanup (if automation unavailable):**
-
-### Step 0: Check Other Agents and Worktrees (REQUIRED)
-
-**Before cleaning up, ALWAYS check and report on other active work:**
-
-1. **List all worktrees:**
-   ```bash
-   git worktree list
-   ```
-
-2. **List all branches (local and remote):**
-   ```bash
-   git branch -a
-   ```
-
-3. **Check for other active work:**
-   ```bash
-   # List all worktrees with their branches
-   git worktree list --porcelain | grep -E "^(worktree|HEAD|branch)" | paste - - -
-   
-   # List all feature branches
-   git branch | grep -E "^  (feature|fix|refactor|docs|test)/"
-   
-   # List remote branches
-   git branch -r | grep -E "(feature|fix|refactor|docs|test)/"
-   ```
-
-4. **Report status to user:**
-   - List all worktrees and their associated branches
-   - List all feature branches (local and remote)
-   - Describe the status of each (active, merged, stale)
-   - Ask user to verify before deleting anything
-
-**Example output format:**
-```
-Active Worktrees:
-  /path/to/electric-sheep-runtime-visual-evaluation [feature/runtime-visual-evaluation-architecture] - Active work
-  /path/to/electric-sheep-other-work [feature/other-task] - Active work
-
-Active Branches:
-  feature/runtime-visual-evaluation-architecture - Has unmerged commits
-  feature/other-task - Has unmerged commits
-  feature/aws-bedrock-security-goals - MERGED (ready to delete)
-
-Please verify these are correct before cleanup proceeds.
-```
-
-### Step 1: Switch to Main Branch
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-
-### Step 2: Delete Merged Feature Branch
-   ```bash
-   git branch -d feature/<branch-name>
-   # Use -D if branch has unmerged commits (shouldn't happen if PR merged)
-   ```
-
-### Step 3: Remove Worktree (if used)
-   ```bash
-   git worktree remove ../electric-sheep-<task-name>
-   # Or if worktree directory was deleted manually:
-   git worktree prune
-   ```
-
-### Step 4: Delete Duplicate/Old Branches
-   ```bash
-   # Check for duplicate branches (e.g., -rebased, -old, -backup)
-   git branch | grep <branch-name>
-   # Delete if duplicate: git branch -D <duplicate-branch>
-   ```
-
-### Step 5: Delete Temp/Test Branches
-   ```bash
-   # Delete branches starting with temp/, tmp/, test-merge, etc.
-   git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
-   ```
-
-**Why this matters:**
-- Prevents branch clutter
-- Avoids confusion about which branch to use
-- Keeps repository state clean
-- Makes it easier to identify active work
-
-**Best Practice:**
-- Always start new work from a fresh `main` branch
-- Never continue work on a merged branch
-- Create a new feature branch for follow-up work
-
-## Multi-Agent Coordination
-
-**Always:**
-- Check `docs/development/AGENT_COORDINATION.md` before starting
-- Document your work in coordination doc
-- Update coordination doc when work status changes
-- Coordinate if files overlap with other agents
-- Use git worktree for file system isolation when needed
-
-**See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines
+**See documentation:**
+- Multi-agent workflow: `docs/development/MULTI_AGENT_WORKFLOW.md`
+- Coordination: `docs/development/AGENT_COORDINATION.md`
