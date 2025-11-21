@@ -1,0 +1,191 @@
+# Python Environment Management
+
+## CRITICAL: Use pyenv for Python Version Management
+
+**When working with Python code:**
+1. ✅ Always use pyenv-managed Python (check with `which python3`)
+2. ✅ Respect `.python-version` file in project root
+3. ✅ Install dependencies in pyenv environment
+4. ✅ Never assume system Python version
+
+## Python Version Management
+
+### Current Setup
+- **Version**: Python 3.12.11 (managed by pyenv)
+- **Location**: `~/.pyenv/versions/3.12.11`
+- **Project Setting**: `.python-version` file specifies `3.12.11`
+- **Auto-activation**: pyenv automatically activates version when entering project directory
+
+### Verifying Python Environment
+
+**Before running Python commands:**
+```bash
+# Check Python version (should show 3.12.11)
+python3 --version
+
+# Check Python location (should show pyenv shim)
+which python3
+# Should output: ~/.pyenv/shims/python3
+
+# Verify pyenv is managing Python
+pyenv version
+# Should show: 3.12.11 (set by /path/to/electric-sheep/.python-version)
+```
+
+### Installing Dependencies
+
+**Always use pyenv Python:**
+```bash
+# Install project dependencies
+python3 -m pip install -r requirements.txt
+
+# Or explicitly use pyenv Python
+pyenv exec pip install -r requirements.txt
+```
+
+**Never use:**
+- ❌ `pip install` (may use wrong Python)
+- ❌ `pip3 install` (may use system Python)
+- ❌ System Python directly
+
+### Running Python Scripts
+
+**Always use pyenv Python:**
+```bash
+# Run Python scripts
+python3 scripts/annotate-video.py ...
+
+# Or explicitly
+pyenv exec python scripts/annotate-video.py ...
+```
+
+### Managing Python Versions
+
+**List installed versions:**
+```bash
+pyenv versions
+```
+
+**Install new version:**
+```bash
+pyenv install 3.12.12  # or other version
+```
+
+**Set version for project:**
+```bash
+# Set local version (creates/updates .python-version)
+pyenv local 3.12.11
+
+# Set global version (affects all projects)
+pyenv global 3.12.11
+```
+
+**Update .python-version:**
+- If you change Python version, update `.python-version` file
+- Commit `.python-version` to repository
+- pyenv will auto-activate the version when entering project directory
+
+## Virtual Environments (Optional)
+
+**For additional isolation, use virtual environments:**
+
+```bash
+# Create virtual environment (optional, pyenv already provides isolation)
+python3 -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Deactivate when done
+deactivate
+```
+
+**Note**: Virtual environments are optional with pyenv, as pyenv already provides version isolation. Use venv if you need additional package isolation.
+
+## Troubleshooting
+
+### Python Version Mismatch
+
+**If Python version doesn't match `.python-version`:**
+```bash
+# Check current version
+python3 --version
+
+# Check pyenv version
+pyenv version
+
+# Reinstall if needed
+pyenv install 3.12.11
+pyenv local 3.12.11
+```
+
+### Dependencies Not Found
+
+**If Python can't find installed packages:**
+```bash
+# Verify you're using pyenv Python
+which python3  # Should show ~/.pyenv/shims/python3
+
+# Reinstall dependencies
+python3 -m pip install -r requirements.txt
+
+# Check installed packages
+python3 -m pip list
+```
+
+### pyenv Not Working
+
+**If pyenv commands don't work:**
+```bash
+# Check pyenv is installed
+which pyenv  # Should show /opt/homebrew/bin/pyenv or similar
+
+# Check shell configuration
+grep pyenv ~/.zshrc  # Should show pyenv init
+
+# Reload shell
+source ~/.zshrc
+```
+
+## Best Practices
+
+### DO ✅
+- Always use `python3` (pyenv will route to correct version)
+- Check `which python3` before running Python commands
+- Install dependencies with `python3 -m pip install`
+- Update `.python-version` if changing Python version
+- Commit `.python-version` to repository
+
+### DON'T ❌
+- Don't use system Python directly
+- Don't assume Python version without checking
+- Don't use `pip` without `python3 -m` prefix
+- Don't hardcode Python paths in scripts
+- Don't skip `.python-version` file
+
+## Integration with Scripts
+
+**In shell scripts, always use:**
+```bash
+#!/usr/bin/env python3
+# This will use pyenv-managed Python if available
+```
+
+**Or explicitly check:**
+```bash
+# Verify Python version before running
+if ! python3 --version | grep -q "3.12"; then
+    echo "Error: Python 3.12 required"
+    exit 1
+fi
+```
+
+## Related Documentation
+
+- `docs/development/PYTHON_SETUP.md` - Complete Python setup guide
+- `docs/development/PYTHON_VERSION_MANAGEMENT.md` - Version management strategy
+- `requirements.txt` - Python dependencies
+- `.python-version` - Project Python version

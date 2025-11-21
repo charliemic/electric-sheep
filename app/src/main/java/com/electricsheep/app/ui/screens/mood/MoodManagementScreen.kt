@@ -511,7 +511,6 @@ fun MoodManagementScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
                 
-                
                 // Mood history section
                 item {
                     Text(

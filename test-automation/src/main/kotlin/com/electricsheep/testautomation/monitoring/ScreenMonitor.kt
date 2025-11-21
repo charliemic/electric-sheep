@@ -33,8 +33,12 @@ class ScreenMonitor(
     private val screenshotDir: File,
     private val monitoringIntervalMs: Long = 1000, // Default: 1 second
     private val testStartTime: Long = System.currentTimeMillis(),
+<<<<<<< HEAD
     private val attentionManager: AttentionManager? = null, // Optional attention manager
     private val screenEvaluator: ScreenEvaluator? = null // Optional screen evaluator for visual analysis
+=======
+    private val attentionManager: AttentionManager? = null // Optional attention manager
+>>>>>>> origin/main
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private var monitoringJob: Job? = null
@@ -64,6 +68,7 @@ class ScreenMonitor(
                 while (isMonitoring) {
                     // Capture and analyze screen state
                     val currentState = captureAndAnalyzeState()
+<<<<<<< HEAD
                     // Only log meaningful state changes (errors, loading, screen names)
                     if (currentState.hasErrors && currentState.errorMessages.isNotEmpty()) {
                         logger.info("⚠️  Error on screen: ${currentState.errorMessages.first()}")
@@ -78,6 +83,12 @@ class ScreenMonitor(
                         if (fromScreen != toScreen) {
                             logger.info("🔄 Screen changed: $fromScreen → $toScreen")
                         }
+=======
+                    
+                    // Report state change if detected
+                    if (currentState.hasChangedFrom(lastState)) {
+                        logger.info("🔄 State change detected: ${lastState?.screenName ?: "unknown"} → ${currentState.screenName ?: "unknown"}")
+>>>>>>> origin/main
                         if (currentState.hasErrors && currentState.errorMessages.isNotEmpty()) {
                             logger.warn("⚠️ Monitor detected errors: ${currentState.errorMessages.joinToString("; ")}")
                         }
@@ -266,6 +277,7 @@ class ScreenMonitor(
                     )
                 }
                 
+<<<<<<< HEAD
                 // Visual analysis: Use ScreenEvaluator if available for detailed visual analysis
                 val evaluation = if (screenEvaluator != null) {
                     try {
@@ -303,6 +315,17 @@ class ScreenMonitor(
                 // Extract keyboard and blocking elements from evaluation
                 val hasKeyboard = evaluation?.hasKeyboard ?: false
                 val blockingElements = evaluation?.blockingElements ?: emptyList()
+=======
+                // Visual analysis: Basic state tracking
+                // Detailed analysis (errors, loading, screen name) should be done by ScreenEvaluator
+                // This method just tracks that a screenshot exists and is available for analysis
+                
+                val isLoading = false // Would be detected visually from screenshot by ScreenEvaluator
+                val hasErrors = false // Would be detected visually from screenshot by ScreenEvaluator
+                val errorMessages = emptyList<String>() // Would be extracted visually from screenshot by ScreenEvaluator
+                val visibleElements = emptyList<String>() // Would be identified visually from screenshot by ScreenEvaluator
+                val screenName = null // Would be identified visually from screenshot by ScreenEvaluator
+>>>>>>> origin/main
                 
                 ScreenState(
                     screenName = screenName,
@@ -313,9 +336,13 @@ class ScreenMonitor(
                     screenshot = screenshot,
                     testStartTime = testStartTime,
                     currentAction = currentAction,
+<<<<<<< HEAD
                     currentIntent = currentIntent,
                     hasKeyboard = hasKeyboard,
                     blockingElements = blockingElements
+=======
+                    currentIntent = currentIntent
+>>>>>>> origin/main
                 )
             } catch (e: Exception) {
                 logger.warn("Error analyzing state: ${e.message}")

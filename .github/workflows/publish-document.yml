@@ -1,0 +1,223 @@
+name: Publish Document to GitHub Pages
+
+on:
+  # Publish documents from main branch
+  # Trigger on pushes to main that affect markdown files, or use commit message format
+  push:
+    branches:
+      - 'main'              # Publish from main branch
+    paths:
+      - 'docs/**/*.md'      # Only trigger when markdown files in docs/ change
+    # Also support tags for backward compatibility
+    tags:
+      - 'publish-*-v*'      # Versioned documents (e.g., publish-cognitive-journey-v1.0.0)
+      - 'publish-*-latest'   # Latest version (e.g., publish-cognitive-journey-latest)
+  # Manual publication
+  workflow_dispatch:
+    inputs:
+      document:
+        description: 'Document name (e.g., cognitive-journey)'
+        required: true
+        type: string
+      version:
+        description: 'Version (e.g., v1.0.0) or "latest"'
+        required: true
+        type: string
+        default: 'latest'
+      source_path:
+        description: 'Path to source document (relative to repo root)'
+        required: true
+        type: string
+
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  detect-document:
+    name: Detect Document and Version
+    runs-on: ubuntu-latest
+    outputs:
+      doc_name: ${{ steps.detect.outputs.doc_name }}
+      version: ${{ steps.detect.outputs.version }}
+      is_latest: ${{ steps.detect.outputs.is_latest }}
+      source_path: ${{ steps.detect.outputs.source_path }}
+      output_path: ${{ steps.detect.outputs.output_path }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect document and version
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DOC_NAME="${{ github.event.inputs.document }}"
+            VERSION="${{ github.event.inputs.version }}"
+            SOURCE_PATH="${{ github.event.inputs.source_path }}"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            # Detect from commit message or changed files on main
+            # Check commit message for pattern: publish:<doc-name> or publish:<doc-name>:<version>
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            if [[ "$COMMIT_MSG" =~ publish:([^:]+)(:([^[:space:]]+))? ]]; then
+              DOC_NAME="${BASH_REMATCH[1]}"
+              VERSION="${BASH_REMATCH[3]:-latest}"
+            else
+              # Fallback: find most recently changed markdown file in docs/
+              CHANGED_FILE=$(git diff --name-only HEAD~1 HEAD | grep '^docs/.*\.md$' | head -1)
+              if [ -n "$CHANGED_FILE" ]; then
+                # Extract doc name from file path (e.g., docs/learning/cognitive-journey.md -> cognitive-journey)
+                DOC_NAME=$(basename "$CHANGED_FILE" .md)
+                VERSION="latest"
+                SOURCE_PATH="$CHANGED_FILE"
+              else
+                echo "Error: Could not detect document from commit. Use format: publish:<doc-name> or publish:<doc-name>:<version>"
+                echo "Or ensure a markdown file in docs/ was changed in this commit."
+                exit 1
+              fi
+            fi
+            # Find document if SOURCE_PATH not set
+            if [ -z "$SOURCE_PATH" ]; then
+              SOURCE_PATH=$(find . -type f -path "docs/**/*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+            fi
+          elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
+            # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
+            TAG="${{ github.ref_name }}"
+            # Remove 'publish-' prefix
+            REST="${TAG#publish-}"
+            # Check if ends with -latest or -v*
+            if [[ "$REST" =~ -latest$ ]]; then
+              DOC_NAME="${REST%-latest}"
+              VERSION="latest"
+            elif [[ "$REST" =~ -(v.+)$ ]]; then
+              # Extract version (e.g., v1.0.0)
+              VERSION="${BASH_REMATCH[1]}"
+              # Remove version suffix to get doc name
+              DOC_NAME="${REST%-${VERSION}}"
+            else
+              echo "Error: Could not parse tag format: $TAG"
+              echo "Expected: publish-<doc-name>-v<version> or publish-<doc-name>-latest"
+              exit 1
+            fi
+            # Try to find document automatically
+            SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+          else
+            echo "Error: Could not parse branch/tag or inputs"
+            echo "Expected: publish/<doc-name> branch or publish-<doc-name>-* tag"
+            exit 1
+          fi
+          
+          if [ "$VERSION" == "latest" ]; then
+            IS_LATEST="true"
+            OUTPUT_PATH="$DOC_NAME.html"
+          else
+            IS_LATEST="false"
+            OUTPUT_PATH="$DOC_NAME/$VERSION.html"
+          fi
+          
+          # Default source path if not provided
+          if [ -z "$SOURCE_PATH" ]; then
+            # Try common locations
+            for loc in "docs/**/$DOC_NAME.md" "docs/**/*$DOC_NAME*.md" "$DOC_NAME.md"; do
+              if find . -path "$loc" -type f | head -1 | read found; then
+                SOURCE_PATH="$found"
+                break
+              fi
+            done
+          fi
+          
+          if [ -z "$SOURCE_PATH" ] || [ ! -f "$SOURCE_PATH" ]; then
+            echo "Error: Source document not found: $SOURCE_PATH"
+            echo "Available markdown files:"
+            find . -name "*.md" -type f | head -10
+            exit 1
+          fi
+          
+          echo "doc_name=$DOC_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_latest=$IS_LATEST" >> $GITHUB_OUTPUT
+          echo "source_path=$SOURCE_PATH" >> $GITHUB_OUTPUT
+          echo "output_path=$OUTPUT_PATH" >> $GITHUB_OUTPUT
+          
+          echo "📄 Document: $DOC_NAME"
+          echo "📌 Version: $VERSION"
+          echo "📂 Source: $SOURCE_PATH"
+          echo "📤 Output: $OUTPUT_PATH"
+          echo "🔖 Latest: $IS_LATEST"
+
+  convert-document:
+    name: Convert Document to HTML
+    needs: [detect-document]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create GitHub Pages directory
+        run: |
+          mkdir -p .github-pages
+
+      - name: Convert document to HTML
+        run: |
+          # Use the existing Python converter script
+          python3 scripts/md-to-html.py \
+            "${{ needs.detect-document.outputs.source_path }}" \
+            "${{ github.workspace }}/.github-pages/${{ needs.detect-document.outputs.output_path }}" \
+            "${{ needs.detect-document.outputs.doc_name }}"
+
+      - name: Create index page (if latest)
+        if: needs.detect-document.outputs.is_latest == 'true'
+        run: |
+          mkdir -p .github-pages
+          cat > .github-pages/index.html <<EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url=${{ needs.detect-document.outputs.doc_name }}.html">
+            <title>${{ needs.detect-document.outputs.doc_name }}</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="${{ needs.detect-document.outputs.doc_name }}.html">${{ needs.detect-document.outputs.doc_name }}</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .github-pages/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [detect-document, convert-document]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deployment info
+        run: |
+          echo "✅ Deployed: ${{ needs.detect-document.outputs.doc_name }}"
+          echo "📌 Version: ${{ needs.detect-document.outputs.version }}"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"

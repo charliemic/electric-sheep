@@ -1,0 +1,224 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Gradle: Build",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false,
+                "clear": true
+            }
+        },
+        {
+            "label": "Gradle: Test",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "test"
+            ],
+            "group": "test",
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Gradle: Install Debug",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "installDebug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Gradle: Clean",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "clean"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Gradle: Refresh Dependencies",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "--refresh-dependencies"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev Reload",
+            "type": "shell",
+            "command": "./scripts/dev-reload.sh",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev Reload (Clean)",
+            "type": "shell",
+            "command": "./scripts/dev-reload.sh",
+            "args": [
+                "--clean"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev Reload (Fresh)",
+            "type": "shell",
+            "command": "./scripts/dev-reload.sh",
+            "args": [
+                "--fresh"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Emulator: Start",
+            "type": "shell",
+            "command": "./scripts/emulator-manager.sh",
+            "args": [
+                "start"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Emulator: Status",
+            "type": "shell",
+            "command": "./scripts/emulator-manager.sh",
+            "args": [
+                "status"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Emulator: Stop",
+            "type": "shell",
+            "command": "./scripts/emulator-manager.sh",
+            "args": [
+                "stop"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Pre-Work Check",
+            "type": "shell",
+            "command": "./scripts/pre-work-check.sh",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Check Agent Coordination",
+            "type": "shell",
+            "command": "./scripts/check-agent-coordination.sh",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Git: List Worktrees",
+            "type": "shell",
+            "command": "git",
+            "args": [
+                "worktree",
+                "list"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Git: Worktree Status (Detailed)",
+            "type": "shell",
+            "command": "git",
+            "args": [
+                "worktree",
+                "list",
+                "--porcelain"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}

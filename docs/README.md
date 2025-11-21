@@ -1,65 +1,44 @@
 # Documentation Index
 
-**Last Updated**: 2025-11-19
+**Last Updated**: 2025-11-21
 
-This directory contains all project documentation organized by purpose. For quick reference, see the sections below.
+This directory contains all project documentation organized by purpose. Documentation is now organized into subdirectories for easier navigation.
 
 ## 🚀 Quick Start
 
 - **[README.md](../README.md)** - Project overview and quick start
 - **[AI_AGENT_GUIDELINES.md](../AI_AGENT_GUIDELINES.md)** - Complete guidelines for AI agents and developers
-- **[Multi-Agent Workflow](development/MULTI_AGENT_WORKFLOW.md)** - How to work with multiple agents
+- **[Multi-Agent Workflow](development/workflow/MULTI_AGENT_WORKFLOW.md)** - How to work with multiple agents
 
 ## 📚 Active Documentation
 
-### Development Workflows
+### Development Documentation
 
-#### Multi-Agent Workflow
-- **[MULTI_AGENT_WORKFLOW.md](development/MULTI_AGENT_WORKFLOW.md)** - Complete multi-agent workflow guidelines
-- **[MULTI_AGENT_QUICK_REFERENCE.md](development/MULTI_AGENT_QUICK_REFERENCE.md)** - Quick reference guide
-- **[AGENT_COORDINATION.md](development/AGENT_COORDINATION.md)** - Current work tracking and coordination
-- **[GIT_WORKTREE_COMPATIBILITY.md](development/GIT_WORKTREE_COMPATIBILITY.md)** - Git worktree compatibility analysis
+Documentation is organized into subdirectories:
 
-#### Development Tools
-- **[HOT_RELOAD.md](development/HOT_RELOAD.md)** - Hot reloading and development workflow
-- **[KSP_MIGRATION.md](development/KSP_MIGRATION.md)** - KSP migration guide (reference)
-- **[AWS_BEDROCK_CURSOR_SETUP.md](development/AWS_BEDROCK_CURSOR_SETUP.md)** - AWS Bedrock setup for Cursor IDE
-- **[AWS_BEDROCK_QUICK_START.md](development/AWS_BEDROCK_QUICK_START.md)** - Quick start guide for AWS Bedrock
+- **[Setup Guides](development/setup/README.md)** - AWS, Supabase, Python, OAuth, Docker setup
+- **[Workflow Guides](development/workflow/README.md)** - Multi-agent workflow, git worktrees, branch management
+- **[CI/CD](development/ci-cd/README.md)** - Continuous integration and deployment
+- **[Tools](development/tools/README.md)** - Emulator management and development tools
+- **[Feature Flags](development/feature-flags/README.md)** - Feature flag system
+- **[Environments](development/environments/README.md)** - Staging, cloud, runtime configuration
+- **[Guides](development/guides/README.md)** - General development guides
+- **[Reports](development/reports/README.md)** - Analysis reports and evaluations
 
-#### Supabase Setup & Configuration
-- **[SUPABASE_SETUP.md](development/SUPABASE_SETUP.md)** - Complete Supabase setup guide (local and cloud)
-- **[CLOUD_SETUP_STEPS.md](development/CLOUD_SETUP_STEPS.md)** - Step-by-step cloud setup
-- **[STAGING_ENVIRONMENT_SETUP.md](development/STAGING_ENVIRONMENT_SETUP.md)** - Staging environment configuration
-- **[STAGING_APP_CONFIGURATION.md](development/STAGING_APP_CONFIGURATION.md)** - Staging app configuration
-- **[RUNTIME_ENVIRONMENT_SWITCHING.md](development/RUNTIME_ENVIRONMENT_SWITCHING.md)** - Runtime environment switching feature
+### Testing Documentation
 
-#### OAuth & Authentication
-- **[GOOGLE_OAUTH_SETUP.md](development/GOOGLE_OAUTH_SETUP.md)** - Google OAuth configuration
-- **[SUPABASE_GOOGLE_CONFIG.md](development/SUPABASE_GOOGLE_CONFIG.md)** - Supabase Google provider setup
-- **[SUPABASE_OAUTH_CALLBACK_SETUP.md](development/SUPABASE_OAUTH_CALLBACK_SETUP.md)** - OAuth callback URL configuration
-- **[OAUTH_IMPLEMENTATION.md](development/OAUTH_IMPLEMENTATION.md)** - OAuth implementation guide (Chrome Custom Tabs)
-- **[SUPABASE_EMAIL_CONFIRMATION.md](development/SUPABASE_EMAIL_CONFIRMATION.md)** - Email confirmation configuration
+Testing documentation is organized into:
 
-#### CI/CD & Infrastructure
-- **[CI_CD_MIGRATION_SETUP.md](development/CI_CD_MIGRATION_SETUP.md)** - CI/CD migration setup
-- **[SERVICE_ROLE_SETUP.md](development/SERVICE_ROLE_SETUP.md)** - Service role key setup
-- **[DOCKER_SETUP.md](development/DOCKER_SETUP.md)** - Docker Desktop setup (if needed)
-- **[../CI_CD_OPTIMIZATION.md](../CI_CD_OPTIMIZATION.md)** - CI/CD optimization details
+- **[Guides](testing/guides/README.md)** - Test coverage, database access, framework integration
+- **[Architecture](testing/architecture/README.md)** - Testing framework architecture and visual evaluation
+- **[Implementation](testing/implementation/README.md)** - Implementation status and progress
+- **[Tools](testing/tools/README.md)** - Video, screenshot, and AI vision tools
+- **[Reports](testing/reports/README.md)** - Evaluation reports and analysis
 
-#### Feature Flags
-- **[FEATURE_FLAGS_TESTING.md](development/FEATURE_FLAGS_TESTING.md)** - Feature flags testing guide
-- **[FLIPT_SETUP.md](development/FLIPT_SETUP.md)** - Flipt setup (if using Flipt)
+### Learning Documentation
 
-### Testing
-
-- **[TEST_COVERAGE.md](testing/TEST_COVERAGE.md)** - Test coverage status and strategy
-- **[DATABASE_ACCESS.md](testing/DATABASE_ACCESS.md)** - Accessing Room database on emulator
-- **[SUPABASE_AUTH_PROVIDER_TESTING.md](testing/SUPABASE_AUTH_PROVIDER_TESTING.md)** - Testing Supabase auth provider
-- **[TEST_IMPROVEMENTS_ANALYSIS.md](testing/TEST_IMPROVEMENTS_ANALYSIS.md)** - Test improvements analysis
-- **[TEST_VS_APP_IMPROVEMENTS.md](testing/TEST_VS_APP_IMPROVEMENTS.md)** - Test vs app improvements decision
-- **[FRAMEWORK_ARCHITECTURE_RECOMMENDATION.md](testing/FRAMEWORK_ARCHITECTURE_RECOMMENDATION.md)** - Test framework architecture
-- **[APPIUM_INTEGRATION_PLAN.md](testing/APPIUM_INTEGRATION_PLAN.md)** - Appium integration plan
-- **[OPINIONATED_RECOMMENDATION.md](testing/OPINIONATED_RECOMMENDATION.md)** - Testing framework recommendations
+- **[Blog Posts](learning/blog-posts/README.md)** - AI-driven development blog posts
+- **[Workflow Tools](learning/workflow-tools/README.md)** - Documentation tools and automation
 
 ## 🏗️ Architecture
 
@@ -116,10 +95,18 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 
 ### Adding New Documentation
 
-1. **Developer Guides**: Add to `docs/development/` or `docs/testing/`
-2. **Architecture**: Add to `docs/architecture/`
-3. **Decisions**: Add to `docs/architecture/decisions/`
-4. **Evaluations/Completed Work**: Add to `docs/archive/` when completed
+1. **Setup Guides**: Add to `docs/development/setup/`
+2. **Workflow Guides**: Add to `docs/development/workflow/`
+3. **CI/CD**: Add to `docs/development/ci-cd/`
+4. **Tools**: Add to `docs/development/tools/`
+5. **Feature Flags**: Add to `docs/development/feature-flags/`
+6. **Environments**: Add to `docs/development/environments/`
+7. **General Guides**: Add to `docs/development/guides/`
+8. **Reports**: Add to `docs/development/reports/`
+9. **Testing**: Add to appropriate `docs/testing/` subdirectory
+10. **Architecture**: Add to `docs/architecture/`
+11. **Decisions**: Add to `docs/architecture/decisions/`
+12. **Evaluations/Completed Work**: Add to `docs/archive/` when completed
 
 ### Updating Documentation
 
@@ -140,29 +127,31 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 ### By Topic
 
 **Multi-Agent Workflow:**
-- `docs/development/MULTI_AGENT_WORKFLOW.md`
-- `docs/development/MULTI_AGENT_QUICK_REFERENCE.md`
-- `docs/development/AGENT_COORDINATION.md`
+- `docs/development/workflow/` - See [Workflow README](development/workflow/README.md)
 
 **Testing:**
-- `docs/testing/TEST_COVERAGE.md`
-- `docs/testing/FRAMEWORK_ARCHITECTURE_RECOMMENDATION.md`
+- `docs/testing/guides/` - See [Testing Guides README](testing/guides/README.md)
+- `docs/testing/architecture/` - See [Testing Architecture README](testing/architecture/README.md)
 - `AI_AGENT_GUIDELINES.md` (Testing section)
+
+**Setup & Configuration:**
+- `docs/development/setup/` - See [Setup README](development/setup/README.md)
+
+**CI/CD:**
+- `docs/development/ci-cd/` - See [CI/CD README](development/ci-cd/README.md)
+- `docs/CI_CD_OPTIMIZATION.md` (root level)
+- `AI_AGENT_GUIDELINES.md` (CI/CD section)
+
+**Architecture:**
+- `docs/architecture/` - Core architecture documentation
+- `docs/architecture/DATA_LAYER_ARCHITECTURE.md`
+- `docs/architecture/AUTHENTICATION.md`
+- `docs/architecture/ERROR_HANDLING.md`
 
 **Accessibility:**
 - `docs/architecture/UX_PRINCIPLES.md`
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md`
 - `AI_AGENT_GUIDELINES.md` (Accessibility section)
-
-**CI/CD:**
-- `docs/development/CI_CD_MIGRATION_SETUP.md`
-- `docs/CI_CD_OPTIMIZATION.md`
-- `AI_AGENT_GUIDELINES.md` (CI/CD section)
-
-**Architecture:**
-- `docs/architecture/DATA_LAYER_ARCHITECTURE.md`
-- `docs/architecture/AUTHENTICATION.md`
-- `docs/architecture/ERROR_HANDLING.md`
 
 ## Related Files
 

@@ -48,6 +48,14 @@ CREATE POLICY "Users can delete own moods"
     FOR DELETE
     USING (auth.uid() = user_id);
 
+-- RLS Policy: Service role can manage all moods (for CI/CD and admin operations)
+-- This allows the service role (used by GitHub Actions) to insert/select/update/delete moods
+CREATE POLICY "Service role can manage moods"
+    ON public.moods
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role')
+    WITH CHECK (auth.jwt() ->> 'role' = 'service_role');
+
 -- Add comment to table
 COMMENT ON TABLE public.moods IS 'Mood entries scoped to individual users';
 

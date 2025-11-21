@@ -41,10 +41,11 @@ alwaysApply: true
 ## Test Requirements
 
 ### When Implementing Features
-- ✅ **Add Tests**: Write tests alongside implementation, not after
-- ✅ **Test New Functionality**: Every new feature needs tests
+- ✅ **REQUIRED: Add Tests**: Write tests alongside implementation, not after
+- ✅ **REQUIRED: Test New Functionality**: Every new feature, class, and function MUST have tests
 - ✅ **Test Edge Cases**: Test boundary conditions, null values, and error scenarios
 - ✅ **Test Error Handling**: Test error paths and failure scenarios
+- ✅ **Test Coverage**: Aim for >80% code coverage for new code
 
 ### Test Structure (AAA Pattern)
 ```kotlin
@@ -78,14 +79,17 @@ fun `should do something when condition is met`() {
 - Use real implementations in stack-level tests
 - Run tests frequently during development
 - Fix failing tests immediately
+- **Test accessibility features**: Test with accessibility services enabled, different text sizes, high contrast mode
+- **Test with diverse scenarios**: Test error recovery, reduced motion, one-handed use, voice commands
 
 ### DON'T ❌
-- Don't skip tests for non-trivial code
+- **NEVER skip tests** - All new functionality MUST have tests (not just "non-trivial" code)
 - Don't leave tests in a failing state
 - Don't test implementation details
 - Don't create brittle tests that break on refactoring
 - Don't accumulate test failures
 - Don't commit failing tests
+- Don't create PRs without tests for new functionality
 
 ## Refactoring with Tests
 
@@ -138,8 +142,74 @@ fun `should display user profile after successful login`() = runTest {
 }
 ```
 
+## Accessibility Testing
+
+### Accessibility Test Requirements
+
+**When testing UI components, also test accessibility:**
+- ✅ **Screen Reader Testing**: Test with TalkBack/VoiceOver enabled
+- ✅ **Touch Target Testing**: Verify minimum 48dp × 48dp (or larger for motor disabilities)
+- ✅ **Color Contrast Testing**: Verify WCAG AA compliance (4.5:1 for text)
+- ✅ **Keyboard Navigation**: Test all interactive elements are keyboard accessible
+- ✅ **Error Announcements**: Verify errors are announced to screen readers
+- ✅ **State Changes**: Verify loading, success, error states are announced
+- ✅ **Dynamic Content**: Verify live regions work for dynamic content
+- ✅ **Accessibility Preferences**: Test with different accessibility settings enabled
+  - Reduced motion
+  - High contrast mode
+  - Large text sizes
+  - Different color schemes
+  - Sensory preferences (animations, sounds, haptics)
+
+### Accessibility Test Examples
+
+```kotlin
+@Test
+fun `should announce error to screen reader when validation fails`() {
+    // Test that error semantics are set correctly
+    val semantics = composeTestRule.onNodeWithText("Email")
+        .fetchSemanticsNode()
+    
+    assertTrue(semantics.config.contains(SemanticsActions.GetText))
+    // Verify error is announced
+}
+
+@Test
+fun `should respect reduced motion preference`() {
+    val preferences = AccessibilityPreferences(reduceMotion = true)
+    // Test that animations are disabled
+    // Verify no animations occur
+}
+
+@Test
+fun `should support large text sizes`() {
+    // Test with text size multiplier > 1.0
+    val preferences = AccessibilityPreferences(textSizeMultiplier = 1.5f)
+    // Verify text scales appropriately
+    // Verify layout doesn't break
+}
+```
+
+### User Testing with Diverse Users
+
+**Include users with diverse abilities in testing:**
+- Visual disabilities (blind, low vision, color blind)
+- Hearing disabilities (deaf, hard of hearing)
+- Motor disabilities (limited dexterity, tremors)
+- Cognitive disabilities (learning, memory, attention)
+- Neurodivergent (autism, ADHD, dyslexia)
+- Mental health conditions (anxiety, depression)
+- Chronic conditions (pain, fatigue)
+- Older adults (age-related changes)
+- Multiple overlapping conditions
+- Situational limitations (bright sunlight, one-handed use)
+
+**See:** `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` for complete testing strategy
+
 ## Related Documentation
 
 - `AI_AGENT_GUIDELINES.md` - Complete testing guidelines
 - `docs/testing/TEST_COVERAGE.md` - Test coverage details
 - `docs/testing/FRAMEWORK_ARCHITECTURE_RECOMMENDATION.md` - Test framework architecture
+- `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` - Comprehensive accessibility guide with testing strategy
+- `.cursor/rules/accessibility.mdc` - Accessibility requirements and testing checklist

@@ -1,19 +1,27 @@
 name: Seed Test Data (Initial Setup)
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger from any branch
     inputs:
       project_ref:
         description: 'Supabase Project Reference ID (leave empty to use SUPABASE_PROJECT_REF_STAGING)'
         required: false
         type: string
+      environment:
+        description: 'Environment to seed (staging or production)'
+        required: false
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
 
 jobs:
   seed-test-data:
     name: Seed Test Data
     runs-on: ubuntu-latest
     environment:
-      name: staging  # Use staging environment for test data
+      name: ${{ github.event.inputs.environment || 'staging' }}  # Use input or default to staging
     
     steps:
       - name: Checkout code
@@ -32,41 +40,24 @@ jobs:
           fi
           echo "Token is set (length: $(echo -n '${{ secrets.SUPABASE_ACCESS_TOKEN }}' | wc -c))"
       
-      - name: Login to Supabase
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
-            echo "ERROR: SUPABASE_ACCESS_TOKEN environment variable is empty"
-            exit 1
-          fi
-          echo "Logging in to Supabase..."
-          supabase login --token "$SUPABASE_ACCESS_TOKEN"
-      
-      - name: Link to staging project
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          # Use staging project ref if available, otherwise fall back to production or workflow input
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
-            exit 1
-          fi
-          echo "Linking to project: $PROJECT_REF"
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
-          fi
-          supabase link --project-ref "$PROJECT_REF"
+      # Note: We no longer need to login or link to Supabase
+      # User creation and mood data loading both use HTTP REST API (no CLI linking required)
+      # This completely avoids the network timeout issues with supabase link
       
       - name: Get Supabase URL
         id: supabase-url
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
         run: |
           # Get Supabase URL from linked project or construct from project ID
           SUPABASE_URL=$(supabase status 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
           if [ -z "$SUPABASE_URL" ]; then
             # Fallback: construct from project ID
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            if [ "$ENVIRONMENT" = "production" ]; then
+              PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            else
+              PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            fi
             SUPABASE_URL="https://${PROJECT_REF}.supabase.co"
           fi
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
@@ -88,48 +79,61 @@ jobs:
       
       - name: Create test users
         env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SECRET_KEY: ${{ github.event.inputs.environment == 'production' && secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          echo "Creating test users in Supabase Auth ($ENVIRONMENT)..."
+          bash supabase/scripts/create-test-users.sh
+      
+      - name: Load baseline mood data via HTTP API
+        env:
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
-          echo "Creating test users in Supabase Auth..."
-          bash supabase/scripts/create-test-users.sh
-      
-      - name: Ensure generate_mood_score function exists
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          echo "Ensuring generate_mood_score function exists..."
-          cat supabase/seed/functions/generate_mood_score.sql | supabase db execute || {
-            echo "Warning: Failed to create function (may already exist)"
-          }
-      
-      - name: Load baseline mood data
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          echo "Loading baseline mood data (30 days)..."
-          cat supabase/seed/002_load_baseline_mood_data.sql | supabase db execute || {
-            echo "Warning: Some data may already exist (this is expected if re-running)"
-          }
+          echo "Loading baseline mood data via PostgREST API (HTTP REST, same pattern as user creation)..."
+          echo "This bypasses the need for supabase link and db execute"
+          ./supabase/scripts/load-mood-data-via-api.sh
       
       - name: Verify data was seeded
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
-          echo "Verifying test data was seeded..."
-          # Query to check test users and their mood entries
-          supabase db execute "
-            SELECT 
-              u.email,
-              COUNT(m.id) as entry_count,
-              MIN(DATE(to_timestamp(m.timestamp / 1000))) as earliest_date,
-              MAX(DATE(to_timestamp(m.timestamp / 1000))) as latest_date
-            FROM auth.users u
-            LEFT JOIN public.moods m ON m.user_id = u.id
-            WHERE u.email LIKE 'test-%@electric-sheep.test'
-            GROUP BY u.email
-            ORDER BY u.email;
-          " || echo "Warning: Could not verify data (this is non-critical)"
+          echo "Verifying test data was seeded via PostgREST API..."
+          # Get test users and their mood entry counts via HTTP API
+          # First, get all test users
+          USERS_RESPONSE=$(curl -s -X GET \
+            -H "apikey: ${SUPABASE_SECRET_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+            "${SUPABASE_URL}/auth/v1/admin/users?email=like.test-%40electric-sheep.test" 2>/dev/null || echo "[]")
+          
+          USER_COUNT=$(echo "$USERS_RESPONSE" | jq '.users | length' 2>/dev/null || echo "0")
+          echo "Found $USER_COUNT test users"
+          
+          # For each user, count mood entries
+          TOTAL_ENTRIES=0
+          for i in $(seq 0 $((USER_COUNT - 1))); do
+            USER_ID=$(echo "$USERS_RESPONSE" | jq -r ".users[$i].id" 2>/dev/null)
+            EMAIL=$(echo "$USERS_RESPONSE" | jq -r ".users[$i].email" 2>/dev/null)
+            
+            if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
+              MOODS_RESPONSE=$(curl -s -X GET \
+                -H "apikey: ${SUPABASE_SECRET_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+                "${SUPABASE_URL}/rest/v1/moods?user_id=eq.${USER_ID}&select=id" 2>/dev/null || echo "[]")
+              
+              ENTRY_COUNT=$(echo "$MOODS_RESPONSE" | jq 'length' 2>/dev/null || echo "0")
+              TOTAL_ENTRIES=$((TOTAL_ENTRIES + ENTRY_COUNT))
+              echo "  $EMAIL: $ENTRY_COUNT entries"
+            fi
+          done
+          
+          echo "Total mood entries: $TOTAL_ENTRIES"
+          if [ $TOTAL_ENTRIES -eq 0 ]; then
+            echo "⚠️  Warning: No mood entries found. Data seeding may have failed."
+            exit 1
+          fi
       
       - name: Summary
         if: always()
@@ -139,6 +143,8 @@ jobs:
           echo "- **Time**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Trigger**: Manual (workflow_dispatch)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Users Created:" >> $GITHUB_STEP_SUMMARY
           echo "- 8 test users (2 tech levels × 4 mood patterns)" >> $GITHUB_STEP_SUMMARY

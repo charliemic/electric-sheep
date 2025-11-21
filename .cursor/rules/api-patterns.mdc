@@ -1,0 +1,222 @@
+---
+alwaysApply: true
+---
+
+# API and Remote Data Patterns
+
+## CRITICAL: Use Working Patterns First
+
+**Before implementing remote operations:**
+1. ✅ **Evaluate existing working patterns** - Check if similar operations already work (e.g., user creation via HTTP API)
+2. ✅ **Assess appropriateness** - Determine if the working approach fits your use case
+3. ✅ **Build abstractions** - If appropriate, create reusable abstractions from working patterns
+4. ✅ **Don't try different approaches** - Avoid CLI/direct DB when HTTP API works
+
+**See:** `.cursor/rules/working-patterns-first.mdc` for complete guidelines
+
+## CRITICAL: Remote Operations Requirements
+
+**When implementing remote API calls or data fetching:**
+1. ✅ **ALWAYS use `Result<T>` return type** for operations that can fail
+2. ✅ **ALWAYS use `NetworkError.fromException()`** to convert exceptions to proper error types
+3. ✅ **ALWAYS log errors** using the error's `.log()` method
+4. ✅ Consider using structured data sources for consistency
+5. ✅ Handle offline scenarios with caching when appropriate
+
+## Remote Data Source Patterns
+
+### Structured Data Sources (Preferred)
+
+**For Supabase or other structured backends, use data source pattern:**
+
+```kotlin
+// ✅ GOOD: Structured data source pattern
+class SupabaseDataSource(
+    private val supabaseClient: SupabaseClient
+) {
+    suspend fun getAllMoods(userId: String): List<Mood> {
+        return try {
+            supabaseClient.from("moods")
+                .select { filter { eq("user_id", userId) } }
+                .decodeList<Mood>()
+        } catch (e: Exception) {
+            val networkError = NetworkError.fromException(e)
+            networkError.log("SupabaseDataSource", "getAllMoods")
+            throw networkError
+        }
+    }
+}
+```
+
+### Direct HTTP Calls (When Appropriate)
+
+**For external APIs (not Supabase), you may use direct HTTP calls, but MUST follow error handling patterns:**
+
+```kotlin
+// ✅ GOOD: Direct HTTP with proper error handling
+object QuoteApi {
+    suspend fun fetchRandomQuote(): Result<InspirationalQuote> = withContext(Dispatchers.IO) {
+        try {
+            val connection = (URL(API_URL).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 5000
+                readTimeout = 5000
+            }
+            
+            // ... fetch and parse ...
+            
+            Result.success(InspirationalQuote(text = combined))
+        } catch (e: Exception) {
+            // ALWAYS use NetworkError.fromException()
+            val networkError = NetworkError.fromException(e)
+            networkError.log("QuoteApi", "fetchRandomQuote")
+            Result.failure(networkError)
+        } finally {
+            connection.disconnect()
+        }
+    }
+}
+```
+
+## Result Pattern for Remote Operations
+
+### ALWAYS Use Result for Operations That Can Fail
+
+```kotlin
+// ✅ GOOD: Result pattern
+suspend fun fetchData(): Result<Data> {
+    return try {
+        val data = apiService.getData()
+        Result.success(data)
+    } catch (e: Exception) {
+        val networkError = NetworkError.fromException(e)
+        networkError.log("ApiService", "fetchData")
+        Result.failure(networkError)
+    }
+}
+
+// ❌ BAD: Throwing exceptions
+suspend fun fetchData(): Data {
+    return try {
+        apiService.getData()
+    } catch (e: Exception) {
+        throw e  // DON'T DO THIS - use Result instead
+    }
+}
+```
+
+### Using Result in Callers
+
+```kotlin
+// ✅ GOOD: Handle Result properly
+LaunchedEffect(Unit) {
+    apiService.fetchData()
+        .onSuccess { data ->
+            // Handle success
+            state = data
+        }
+        .onFailure { error ->
+            // Handle error - error is already logged
+            Logger.warn("Component", "Failed to fetch data", error)
+            // Show user-friendly message or use cached data
+        }
+}
+```
+
+## Error Handling Requirements
+
+### Network Errors
+
+**CRITICAL: ALWAYS use `NetworkError.fromException()` for network errors**
+
+```kotlin
+// ✅ GOOD: Convert to NetworkError
+catch (e: Exception) {
+    val networkError = NetworkError.fromException(e)
+    networkError.log("ComponentName", "Operation context")
+    Result.failure(networkError)
+}
+
+// ❌ BAD: Throwing raw exceptions
+catch (e: IOException) {
+    throw e  // DON'T DO THIS
+}
+```
+
+### Error Logging
+
+**ALWAYS log errors using the error's `.log()` method:**
+
+```kotlin
+// ✅ GOOD: Use error's log method
+val networkError = NetworkError.fromException(e)
+networkError.log("ComponentName", "Operation context")
+Result.failure(networkError)
+
+// ❌ BAD: Manual logging
+Logger.error("ComponentName", "Error: ${e.message}", e)  // Less structured
+```
+
+## Caching and Offline Support
+
+### When to Cache
+
+- ✅ Cache data that changes infrequently
+- ✅ Cache for offline fallback scenarios
+- ✅ Use SharedPreferences or Room database for persistence
+- ✅ Consider TTL (Time To Live) for cached data
+
+### Caching Pattern
+
+```kotlin
+// ✅ GOOD: Cache with offline fallback
+suspend fun fetchQuote(): Result<InspirationalQuote> {
+    // Try to fetch fresh data
+    return when (val result = apiService.fetchQuote()) {
+        is Result.Success -> {
+            // Cache successful result
+            cache.setLastQuote(result.value)
+            result
+        }
+        is Result.Failure -> {
+            // Fall back to cached data
+            val cached = cache.getLastQuote()
+            if (cached != null) {
+                Result.success(cached)
+            } else {
+                result  // Return original error if no cache
+            }
+        }
+    }
+}
+```
+
+## API Design Considerations
+
+### When to Use Structured Data Sources
+
+- ✅ **Supabase operations**: Always use `SupabaseDataSource` pattern
+- ✅ **Multiple operations on same API**: Create a data source class
+- ✅ **Complex API interactions**: Use structured data source
+
+### When Direct HTTP is Acceptable
+
+- ✅ **Simple, one-off API calls**: Direct HTTP is acceptable
+- ✅ **External APIs (not Supabase)**: Direct HTTP is acceptable
+- ✅ **Must follow error handling patterns**: Use `Result` and `NetworkError`
+
+## Checklist for Remote Operations
+
+- [ ] Uses `Result<T>` return type
+- [ ] Uses `NetworkError.fromException()` for error conversion
+- [ ] Errors are logged using `.log()` method
+- [ ] Handles offline scenarios (caching, fallback)
+- [ ] Timeouts are configured appropriately
+- [ ] Connection is properly closed in finally block
+- [ ] User-friendly error messages are provided
+
+## Related Documentation
+
+- `.cursor/rules/error-handling.mdc` - Error handling patterns
+- `docs/architecture/ERROR_HANDLING.md` - Error handling architecture
+- `docs/architecture/DATA_LAYER_ARCHITECTURE.md` - Data layer patterns

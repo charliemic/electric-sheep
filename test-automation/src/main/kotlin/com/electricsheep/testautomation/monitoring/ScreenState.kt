@@ -15,9 +15,13 @@ data class ScreenState(
     val timestamp: Long = System.currentTimeMillis(),
     val testStartTime: Long? = null, // Test start time for relative timestamps
     val currentAction: String? = null, // Current action being executed (if known)
+<<<<<<< HEAD
     val currentIntent: String? = null, // Current intent/goal (if known)
     val hasKeyboard: Boolean = false, // VISUALLY detected: keyboard is visible on screen
     val blockingElements: List<String> = emptyList() // VISUALLY detected: elements blocking interaction (keyboard, dialogs, etc.)
+=======
+    val currentIntent: String? = null // Current intent/goal (if known)
+>>>>>>> origin/main
 ) {
     /**
      * Check if this state represents the same screen as another state.

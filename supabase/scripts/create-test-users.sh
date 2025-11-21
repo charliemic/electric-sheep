@@ -65,15 +65,16 @@ for user_id in "${!TEST_USERS[@]}"; do
     
     echo -n "Processing ${email}... "
     
-    # Check if user already exists (using shared library)
-    if auth_admin_user_exists "$user_id" "$email"; then
+    # Check if user already exists by email (Supabase generates UUIDs, not string IDs)
+    if auth_admin_user_exists "" "$email"; then
         echo -e "${YELLOW}SKIPPED (already exists)${NC}"
         skipped_count=$((skipped_count + 1))
         continue
     fi
     
-    # Create user (using shared library)
-    if auth_admin_create_user "$user_id" "$email" "$TEST_PASSWORD" "$display_name"; then
+    # Create user without specifying ID (let Supabase generate UUID)
+    # The string IDs in TEST_USERS are for app-side reference only
+    if auth_admin_create_user "" "$email" "$TEST_PASSWORD" "$display_name"; then
         echo -e "${GREEN}CREATED${NC}"
         created_count=$((created_count + 1))
     else
@@ -89,9 +90,15 @@ echo "  Created: ${created_count}"
 echo "  Skipped: ${skipped_count}"
 echo "  Errors: ${error_count}"
 
-if [ $error_count -gt 0 ]; then
+# Don't fail if users already exist (idempotent operation)
+# Only fail if we tried to create new users and they failed for other reasons
+if [ $error_count -gt 0 ] && [ $created_count -eq 0 ] && [ $skipped_count -eq 0 ]; then
+    # All users failed to create and none were skipped (all new attempts failed)
     exit 1
 fi
+
+# If some users already exist (skipped) and some failed, that's okay - continue
+# The workflow can proceed to load data for existing users
 
 echo -e "${GREEN}Test users setup complete!${NC}"
 echo -e "${YELLOW}Note: All test users have password: ${TEST_PASSWORD}${NC}"

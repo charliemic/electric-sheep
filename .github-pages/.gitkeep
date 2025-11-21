@@ -1,0 +1,4 @@
+# This directory is used for GitHub Pages deployments
+# The publish-document.yml workflow builds documents here
+# GitHub Pages serves from this directory
+

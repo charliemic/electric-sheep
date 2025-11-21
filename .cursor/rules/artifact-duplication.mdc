@@ -1,0 +1,295 @@
+---
+alwaysApply: true
+---
+
+# Artifact Duplication Prevention Rules
+
+## CRITICAL: Check for Existing Artifacts Before Creating New Ones
+
+**Before creating ANY new file, script, document, or artifact, you MUST:**
+
+1. ✅ **Search for existing similar artifacts** using multiple methods
+2. ✅ **Evaluate if existing artifact can be extended** instead of creating new
+3. ✅ **Document why new artifact is needed** if existing one cannot be used
+4. ✅ **Consolidate duplicates** if found during search
+
+## Pre-Creation Search Requirements
+
+### MANDATORY: Search Before Creating
+
+**Before creating a new artifact, you MUST search using ALL of these methods:**
+
+#### 1. File Name Search (Glob Patterns)
+```bash
+# Search for similar file names
+find . -type f -name "*<keyword>*" -not -path "*/\.*" -not -path "*/build/*"
+find scripts -name "*<keyword>*"
+find docs -name "*<keyword>*"
+```
+
+**Examples:**
+- Creating `google-docs-upload.py`? Search: `find scripts -name "*google*"`
+- Creating `aws-setup.md`? Search: `find docs -name "*aws*" -name "*setup*"`
+
+#### 2. Content Search (Grep)
+```bash
+# Search for similar functionality in existing files
+grep -r "<functionality-keyword>" scripts/ docs/ --include="*.sh" --include="*.py" --include="*.md"
+```
+
+**Examples:**
+- Creating emulator script? Search: `grep -r "emulator" scripts/`
+- Creating AWS setup doc? Search: `grep -r "AWS.*setup\|Bedrock.*setup" docs/`
+
+#### 3. Semantic Search (Codebase Search)
+```bash
+# Use codebase search for similar functionality
+# Search: "How does X work?" or "Where is Y implemented?"
+```
+
+**Examples:**
+- Creating test helper? Search: "How are test helpers implemented?"
+- Creating setup guide? Search: "Where are setup guides documented?"
+
+#### 4. Directory Structure Review
+```bash
+# Check relevant directories for similar artifacts
+ls -la scripts/
+ls -la docs/development/setup/
+ls -la docs/testing/tools/
+```
+
+## What Constitutes Duplication
+
+### Scripts
+**Duplication occurs when:**
+- ❌ Multiple scripts with similar names (e.g., `google-docs-api-upload.py`, `google-docs-browser-upload.py`, `google-docs-workflow.py`)
+- ❌ Scripts with same purpose but different implementations (e.g., `add-activity-overlays.sh`, `add-activity-overlays-simple.sh`)
+- ❌ Scripts that can be unified with command-line flags or subcommands
+
+**NOT duplication when:**
+- ✅ Scripts serve distinct purposes (e.g., `emulator-manager.sh` vs `emulator-discovery.sh`)
+- ✅ Scripts are part of a toolchain (e.g., `md-to-html.sh`, `md-to-google-doc.sh`, `md-to-both.sh`)
+- ✅ Scripts are clearly versioned or deprecated (e.g., `*-old.sh`, `*-deprecated.sh`)
+
+### Documentation
+**Duplication occurs when:**
+- ❌ Multiple docs covering same topic (e.g., `AWS_BEDROCK_SETUP_WALKTHROUGH.md`, `AWS_BEDROCK_QUICK_START.md`)
+- ❌ Docs with overlapping content that could be consolidated
+- ❌ Status reports that duplicate information from other reports
+
+**NOT duplication when:**
+- ✅ Docs serve different audiences (e.g., quick start vs detailed walkthrough)
+- ✅ Docs are in different contexts (e.g., setup guide vs architecture doc)
+- ✅ Docs are archived versions of superseded content
+
+### Code
+**Duplication occurs when:**
+- ❌ Multiple implementations of same functionality
+- ❌ Copy-pasted code blocks that should be extracted to shared utilities
+- ❌ Similar classes/components that could share a base class
+
+**NOT duplication when:**
+- ✅ Platform-specific implementations (e.g., `androidMain` vs `iosMain`)
+- ✅ Test doubles (mocks, fakes, stubs)
+- ✅ Intentional variations for different use cases
+
+## Decision Tree: Extend vs Create New
+
+### When to EXTEND Existing Artifact
+
+**Extend if:**
+- ✅ Existing artifact serves same purpose
+- ✅ Can add functionality via parameters, flags, or subcommands
+- ✅ Existing artifact is actively maintained
+- ✅ Consolidation improves maintainability
+
+**Example:**
+```bash
+# ❌ BAD: Creating new script
+scripts/google-docs-upload-v2.py
+
+# ✅ GOOD: Extending existing script
+scripts/google-docs-workflow.py upload --method api
+scripts/google-docs-workflow.py upload --method browser
+```
+
+### When to CREATE New Artifact
+
+**Create new if:**
+- ✅ Serves fundamentally different purpose
+- ✅ Different target audience or use case
+- ✅ Would make existing artifact too complex
+- ✅ Part of distinct toolchain or workflow
+
+**Example:**
+```bash
+# ✅ GOOD: Different purposes
+scripts/emulator-manager.sh      # Manages emulator lifecycle
+scripts/emulator-discovery.sh   # Discovers available emulators
+scripts/get-device-id.sh         # Gets current device ID
+```
+
+## Search Checklist (MANDATORY)
+
+**Before creating ANY artifact, complete this checklist:**
+
+- [ ] **File name search**: Searched for similar file names using glob patterns
+- [ ] **Content search**: Searched for similar functionality using grep
+- [ ] **Semantic search**: Used codebase search to find related implementations
+- [ ] **Directory review**: Checked relevant directories for similar artifacts
+- [ ] **Documentation review**: Checked docs for existing guides or references
+- [ ] **Script review**: Checked scripts directory for similar tools
+- [ ] **Decision made**: Documented why extending vs creating new
+
+## Consolidation Requirements
+
+### If Duplicates Found
+
+**When you find duplicates:**
+
+1. **Evaluate consolidation:**
+   - Can artifacts be merged?
+   - Which version is more complete/maintained?
+   - What functionality would be lost?
+
+2. **Consolidate if appropriate:**
+   - Merge into single artifact
+   - Add deprecation notices to old versions
+   - Update references in documentation
+
+3. **Document decision:**
+   - Why consolidation was or wasn't done
+   - What functionality is preserved
+   - Migration path if needed
+
+### Consolidation Examples
+
+**Scripts:**
+```bash
+# Before: Multiple scripts
+scripts/google-docs-api-upload.py
+scripts/google-docs-browser-upload.py
+scripts/google-docs-workflow.py
+
+# After: Unified script
+scripts/google-docs-workflow.py upload --method api
+scripts/google-docs-workflow.py upload --method browser
+scripts/google-docs-workflow.py download
+```
+
+**Documentation:**
+```bash
+# Before: Multiple setup guides
+docs/development/setup/AWS_BEDROCK_SETUP_WALKTHROUGH.md
+docs/development/setup/AWS_BEDROCK_QUICK_START.md
+
+# After: Single guide with sections
+docs/development/setup/AWS_BEDROCK_SETUP.md
+# - Quick Start section
+# - Detailed Walkthrough section
+```
+
+## Integration with Pre-Work Checks
+
+### Enhanced Pre-Work Check
+
+**The pre-work check should remind agents to:**
+- Search for existing artifacts before creating new ones
+- Check scripts directory for similar tools
+- Review documentation structure before adding new docs
+
+**Add to `scripts/pre-work-check.sh`:**
+```bash
+# 8. Check for existing artifacts (before creating new ones)
+echo "8️⃣  Checking for existing artifacts..."
+echo "   💡 Before creating new files, search for existing ones:"
+echo "   → find . -name \"*<keyword>*\""
+echo "   → grep -r \"<keyword>\" scripts/ docs/"
+echo "   → Check relevant directories first"
+```
+
+## Common Duplication Patterns to Avoid
+
+### Script Patterns
+- ❌ **Version suffixes**: `script-v2.sh`, `script-new.sh` → Extend original
+- ❌ **Method suffixes**: `upload-api.py`, `upload-browser.py` → Use flags/subcommands
+- ❌ **Simple variants**: `script-simple.sh`, `script-basic.sh` → Add `--simple` flag
+
+### Documentation Patterns
+- ❌ **Multiple setup guides**: `SETUP.md`, `QUICK_START.md`, `WALKTHROUGH.md` → Single guide with sections
+- ❌ **Duplicate status reports**: Multiple reports with same info → Consolidate or archive
+- ❌ **Overlapping guides**: Similar content in different locations → Cross-reference or merge
+
+### Code Patterns
+- ❌ **Copy-paste utilities**: Similar helper functions → Extract to shared module
+- ❌ **Duplicate components**: Similar UI components → Create reusable component
+- ❌ **Repeated patterns**: Same logic in multiple places → Extract to shared function
+
+## Examples
+
+### Good: Extending Existing Script
+```bash
+# Existing: scripts/google-docs-workflow.py
+# Need: Add new upload method
+
+# ✅ GOOD: Extend with new subcommand
+python scripts/google-docs-workflow.py upload --method new-method
+
+# ❌ BAD: Create new script
+python scripts/google-docs-new-method-upload.py
+```
+
+### Good: Creating New Script (Different Purpose)
+```bash
+# Existing: scripts/emulator-manager.sh (manages lifecycle)
+# Need: Discover available emulators
+
+# ✅ GOOD: New script for different purpose
+scripts/emulator-discovery.sh
+
+# ❌ BAD: Add discovery to manager (different concerns)
+scripts/emulator-manager.sh discover  # Mixing concerns
+```
+
+### Good: Consolidating Documentation
+```bash
+# Before: Multiple AWS setup docs
+docs/development/setup/AWS_BEDROCK_SETUP_WALKTHROUGH.md
+docs/development/setup/AWS_BEDROCK_QUICK_START.md
+docs/archive/development/AWS_BEDROCK_SETUP_WALKTHROUGH.md
+
+# After: Single comprehensive guide
+docs/development/setup/AWS_BEDROCK_SETUP.md
+# - Quick Start section (for experienced users)
+# - Detailed Walkthrough section (for new users)
+# - Archive old versions
+```
+
+## Enforcement
+
+### Pre-Creation Validation
+
+**Before creating a new artifact, agents MUST:**
+
+1. ✅ Run search commands (file name, content, semantic)
+2. ✅ Review search results
+3. ✅ Document decision (extend vs create new)
+4. ✅ If creating new, explain why existing cannot be used
+
+### Post-Creation Review
+
+**After creating a new artifact, verify:**
+
+1. ✅ No duplicates exist with same purpose
+2. ✅ New artifact is properly documented
+3. ✅ References to old artifacts are updated
+4. ✅ Deprecation notices added if replacing old artifact
+
+## Related Documentation
+
+- `AI_AGENT_GUIDELINES.md` - Code quality principles (DRY)
+- `.cursor/rules/code-quality.mdc` - Code quality rules
+- `.cursor/rules/repository-maintenance.mdc` - Repository cleanup rules
+- `docs/development/reports/DOCUMENTATION_ORGANIZATION.md` - Documentation organization
+- `scripts/pre-work-check.sh` - Pre-work validation

@@ -1,13 +1,21 @@
 package com.electricsheep.testautomation.vision
 
+<<<<<<< HEAD
 import org.slf4j.LoggerFactory
 import java.io.File
 
 // OpenCV imports
+=======
+>>>>>>> origin/main
 import nu.pattern.OpenCV
 import org.opencv.core.*
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
+<<<<<<< HEAD
+=======
+import org.slf4j.LoggerFactory
+import java.io.File
+>>>>>>> origin/main
 
 /**
  * Detects known UI patterns using template matching (like human pattern recognition).
@@ -29,19 +37,31 @@ import org.opencv.imgproc.Imgproc
  * **When to Use**: Known, stable UI elements (error icons, loading spinners, etc.)
  */
 class PatternRecognizer(
+<<<<<<< HEAD
     private val templateDir: File? = null,
     private val templateManager: com.electricsheep.testautomation.templates.HybridTemplateManager? = null
+=======
+    private val templateDir: File? = null
+>>>>>>> origin/main
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     
     // Check if OpenCV is available
     private val opencvAvailable: Boolean = run {
         try {
+<<<<<<< HEAD
             OpenCV.loadLocally()
             logger.info("OpenCV loaded successfully - pattern recognition enabled")
             true
         } catch (e: Exception) {
             logger.warn("OpenCV not available - pattern recognition disabled. Install OpenCV or use alternative. Error: ${e.message}")
+=======
+            // Try to load OpenCV native library
+            nu.pattern.OpenCV.loadLocally()
+            true
+        } catch (e: Exception) {
+            logger.warn("OpenCV not available - pattern recognition disabled. Install OpenCV or use alternative.")
+>>>>>>> origin/main
             false
         }
     }
@@ -51,9 +71,15 @@ class PatternRecognizer(
      */
     data class DetectedPattern(
         val name: String,
+<<<<<<< HEAD
         val location: Pair<Double, Double>, // (x, y) coordinates
         val confidence: Double,
         val size: Pair<Double, Double> // (width, height)
+=======
+        val location: Point,
+        val confidence: Double,
+        val size: Size
+>>>>>>> origin/main
     )
     
     /**
@@ -95,6 +121,7 @@ class PatternRecognizer(
                 return PatternDetectionResult(emptyList(), false, false, false, false)
             }
             
+<<<<<<< HEAD
             // Load templates from directory if provided
             val templates = loadTemplates()
             val detectedPatterns = mutableListOf<DetectedPattern>()
@@ -115,6 +142,24 @@ class PatternRecognizer(
             val hasBlockingDialog = detectedPatterns.any { it.name.contains("dialog", ignoreCase = true) || it.name.contains("modal", ignoreCase = true) }
             
             logger.debug("Pattern detection complete: found ${detectedPatterns.size} patterns")
+=======
+            val detectedPatterns = mutableListOf<DetectedPattern>()
+            
+            // Load and match templates
+            val templates = loadTemplates()
+            for ((name, templateMat) in templates) {
+                val matches = matchTemplate(screenshotMat, templateMat, name)
+                detectedPatterns.addAll(matches)
+            }
+            
+            // Determine high-level patterns from detected matches
+            val hasErrorIcon = detectedPatterns.any { it.name.contains("error", ignoreCase = true) }
+            val hasLoadingSpinner = detectedPatterns.any { it.name.contains("loading", ignoreCase = true) || it.name.contains("spinner", ignoreCase = true) }
+            val hasSuccessCheckmark = detectedPatterns.any { it.name.contains("success", ignoreCase = true) || it.name.contains("checkmark", ignoreCase = true) }
+            val hasBlockingDialog = detectedPatterns.any { it.name.contains("dialog", ignoreCase = true) || it.name.contains("popup", ignoreCase = true) }
+            
+            logger.debug("Detected ${detectedPatterns.size} patterns: ${detectedPatterns.map { it.name }}")
+>>>>>>> origin/main
             
             PatternDetectionResult(
                 detectedPatterns = detectedPatterns,
@@ -131,12 +176,16 @@ class PatternRecognizer(
     
     /**
      * Load template images from template directory.
+<<<<<<< HEAD
      * 
      * @return Map of template names to OpenCV Mat objects
+=======
+>>>>>>> origin/main
      */
     private fun loadTemplates(): Map<String, Mat> {
         val templates = mutableMapOf<String, Mat>()
         
+<<<<<<< HEAD
         if (templateDir == null || !templateDir.exists() || !templateDir.isDirectory) {
             logger.debug("No template directory provided or directory doesn't exist")
             return templates
@@ -160,23 +209,49 @@ class PatternRecognizer(
             } catch (e: Exception) {
                 logger.warn("Error loading template ${templateFile.name}: ${e.message}")
             }
+=======
+        if (templateDir == null || !templateDir.exists()) {
+            logger.debug("No template directory provided, using empty template set")
+            return templates
+        }
+        
+        try {
+            templateDir.listFiles { _, name -> 
+                name.endsWith(".png", ignoreCase = true) || 
+                name.endsWith(".jpg", ignoreCase = true)
+            }?.forEach { templateFile ->
+                val templateMat = Imgcodecs.imread(templateFile.absolutePath)
+                if (!templateMat.empty()) {
+                    val name = templateFile.nameWithoutExtension
+                    templates[name] = templateMat
+                    logger.debug("Loaded template: $name")
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load templates: ${e.message}")
+>>>>>>> origin/main
         }
         
         return templates
     }
     
     /**
+<<<<<<< HEAD
      * Match template against screenshot using OpenCV template matching.
      * 
      * @param screenshot OpenCV Mat of the screenshot
      * @param template OpenCV Mat of the template
      * @param templateName Name of the template for identification
      * @return List of detected pattern matches
+=======
+     * Match template against screenshot.
+>>>>>>> origin/main
      */
     private fun matchTemplate(screenshot: Mat, template: Mat, templateName: String): List<DetectedPattern> {
         val matches = mutableListOf<DetectedPattern>()
         
         try {
+<<<<<<< HEAD
             // Template matching requires screenshot to be larger than template
             if (screenshot.rows() < template.rows() || screenshot.cols() < template.cols()) {
                 logger.debug("Screenshot too small for template $templateName")
@@ -188,10 +263,15 @@ class PatternRecognizer(
             val resultRows = screenshot.rows() - template.rows() + 1
             val resultCols = screenshot.cols() - template.cols() + 1
             result.create(resultRows, resultCols, CvType.CV_32FC1)
+=======
+            // Create result matrix
+            val result = Mat()
+>>>>>>> origin/main
             
             // Perform template matching
             Imgproc.matchTemplate(screenshot, template, result, Imgproc.TM_CCOEFF_NORMED)
             
+<<<<<<< HEAD
             // Find matches above confidence threshold (0.8 = 80% match)
             val confidenceThreshold = 0.8
             val minMaxLoc = Core.minMaxLoc(result)
@@ -214,6 +294,28 @@ class PatternRecognizer(
             result.release()
         } catch (e: Exception) {
             logger.warn("Template matching failed for $templateName: ${e.message}")
+=======
+            // Find matches above threshold (80% similarity)
+            val threshold = 0.8
+            val minMaxLoc = Core.minMaxLoc(result)
+            
+            if (minMaxLoc.maxVal >= threshold) {
+                // Found a match
+                val location = minMaxLoc.maxLoc
+                matches.add(
+                    DetectedPattern(
+                        name = templateName,
+                        location = location,
+                        confidence = minMaxLoc.maxVal,
+                        size = template.size()
+                    )
+                )
+                
+                logger.debug("Pattern '$templateName' detected at (${location.x}, ${location.y}) with confidence ${minMaxLoc.maxVal}")
+            }
+        } catch (e: Exception) {
+            logger.warn("Template matching failed for '$templateName': ${e.message}")
+>>>>>>> origin/main
         }
         
         return matches

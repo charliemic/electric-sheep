@@ -12,6 +12,7 @@ alwaysApply: true
 - ✅ **DRY**: Avoid duplication; extract common functionality
 - ✅ **SOLID Principles**: Apply object-oriented design principles
 - ✅ **UK English**: Use UK English spellings (analyse, colour, organise, etc.)
+- ✅ **Safe Null Handling**: NEVER use force unwrap (`!!`) operator - use safe calls (`?.`) or `?.let { }`
 
 ### Before Making Changes
 1. ✅ Verify NOT on `main` branch
@@ -40,6 +41,7 @@ alwaysApply: true
 - [ ] Functions are focused and do one thing well
 - [ ] No magic numbers or strings
 - [ ] Proper use of design patterns where appropriate
+- [ ] **No force unwrap (`!!`) operator used** - use safe calls (`?.`) or `?.let { }`
 
 ### Architecture
 - [ ] Database migrations added for schema changes
@@ -92,6 +94,29 @@ alwaysApply: true
 - Don't ignore error handling
 - Don't break existing functionality
 - Don't skip documentation updates
+- **NEVER use force unwrap (`!!`) operator** - use safe calls (`?.`) or `?.let { }` instead
+
+### Safe Null Handling Examples
+
+```kotlin
+// ❌ BAD: Force unwrap - can crash if null
+if (quoteText != null) {
+    Text(text = quoteText!!)  // DON'T DO THIS
+}
+
+// ✅ GOOD: Safe call with let
+quoteText?.let { text ->
+    Text(text = text)
+}
+
+// ✅ GOOD: Safe call with elvis operator
+Text(text = quoteText ?: "Default value")
+
+// ✅ GOOD: Explicit null check
+if (quoteText != null) {
+    Text(text = quoteText)  // Smart cast works here
+}
+```
 
 ## Related Documentation
 

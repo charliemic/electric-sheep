@@ -6,12 +6,28 @@ alwaysApply: true
 
 ## CRITICAL: Always Implement Accessibility
 
-**When creating or modifying UI components:**
-1. ✅ Add content descriptions to all interactive elements
-2. ✅ Provide semantic roles for custom components
-3. ✅ Ensure touch targets meet minimum 48dp × 48dp
-4. ✅ Test with TalkBack screen reader
-5. ✅ Announce state changes (loading, errors, success) to screen readers
+**When creating or modifying UI components, consider ALL disability types:**
+1. ✅ **Visual**: Screen reader support, high contrast, text scaling, color independence
+2. ✅ **Hearing**: Visual alternatives to audio, captions, haptic feedback
+3. ✅ **Motor**: Large touch targets, gesture alternatives, voice commands, keyboard navigation
+4. ✅ **Cognitive**: Plain language, clear instructions, task breakdown, progress indicators
+5. ✅ **Neurodivergent**: Sensory control, predictability, customization, executive functioning support
+6. ✅ **Speech**: Text alternatives, no voice-only requirements
+7. ✅ **Neurological**: No flashing content, reduced motion, error tolerance
+8. ✅ **Mental Health**: Reduced stress, clear communication, optional social features
+9. ✅ **Chronic Conditions**: Energy conservation, flexible timing, rest support
+10. ✅ **Age-Related**: Larger text, higher contrast, simpler interfaces
+11. ✅ **Situational**: High contrast for sunlight, visual alternatives for noise, one-handed support
+
+**Core Requirements:**
+- ✅ Add content descriptions to all interactive elements
+- ✅ Provide semantic roles for custom components
+- ✅ Ensure touch targets meet minimum 48dp × 48dp (consider larger for motor disabilities)
+- ✅ Test with TalkBack screen reader
+- ✅ Announce state changes (loading, errors, success) to screen readers
+- ✅ Never auto-play media (videos, sounds, music)
+- ✅ Use plain language (no idioms, metaphors, cultural references)
+- ✅ Provide explicit, actionable error messages
 
 ## WCAG AA Compliance
 
@@ -21,16 +37,18 @@ alwaysApply: true
 - ✅ Never use color alone to convey information
 
 ### Touch Targets
-- ✅ **Minimum 48dp × 48dp** for all interactive elements
+- ✅ **Minimum 48dp × 48dp** for all interactive elements (WCAG requirement)
+- ✅ **Consider 56dp × 56dp or larger** for users with motor disabilities (tremors, limited dexterity)
 - ✅ Use `Modifier.size(48.dp)` or `Modifier.minimumInteractiveSize()`
-- ✅ Ensure sufficient spacing between touch targets
+- ✅ Ensure sufficient spacing between touch targets (minimum 8dp, prefer 16dp)
+- ✅ Provide gesture alternatives for complex gestures (swipe-to-delete → button alternative)
 
 ### Screen Reader Support
 - ✅ **Content Descriptions**: All interactive elements must have descriptive content descriptions
 - ✅ **Semantic Roles**: Use appropriate semantic roles (Button, Image, etc.)
 - ✅ **State Announcements**: Announce dynamic state changes (loading, errors, success)
 - ✅ **Error Annotations**: Use `error()` semantics for error states
-- ✅ **Live Regions**: Use `liveRegion` for dynamic content updates
+- ✅ **Live Regions (CRITICAL)**: **ALWAYS use `liveRegion` for content that changes dynamically** (quotes, status messages, dynamic text, etc.)
 
 ## Component Accessibility Checklist
 
@@ -61,8 +79,10 @@ alwaysApply: true
 ### Error Messages
 - [ ] Live region for dynamic announcements
 - [ ] Error semantics (`error()` annotation)
-- [ ] Clear, actionable error messages
+- [ ] **Clear, actionable error messages** (explicit, no idioms, explain what went wrong and how to fix)
 - [ ] Sufficient color contrast
+- [ ] Error recovery assistance (suggestions, alternative paths)
+- [ ] Supportive language (avoid blaming user)
 
 ## Implementation Examples
 
@@ -112,6 +132,28 @@ Text(
 )
 ```
 
+### Accessible Dynamic Content (REQUIRED)
+```kotlin
+// ✅ GOOD: Dynamic content with live region
+var quoteText by remember { mutableStateOf<String?>(null) }
+
+quoteText?.let { text ->
+    Text(
+        text = text,
+        modifier = Modifier.semantics {
+            liveRegion = LiveRegionMode.Polite  // REQUIRED for dynamic content
+            contentDescription = "Inspirational quote: $text"
+        }
+    )
+}
+
+// ❌ BAD: Dynamic content without live region
+Text(
+    text = quoteText ?: "",
+    // Missing liveRegion - screen readers won't announce updates
+)
+```
+
 ## Use Accessible Components
 
 **Prefer using existing accessible components:**
@@ -131,12 +173,21 @@ Text(
 3. ✅ Verify all interactive elements are announced
 4. ✅ Verify state changes are announced
 5. ✅ Verify error messages are announced
+6. ✅ Test with animations disabled (reduced motion)
+7. ✅ Test with high contrast mode
+8. ✅ Test with large text sizes
+9. ✅ Test with one-handed use
+10. ✅ Test with voice commands (if implemented)
+11. ✅ Test with keyboard navigation
+12. ✅ Test error recovery scenarios
 
 ### Automated Testing
 - Use accessibility testing tools
 - Check touch target sizes
 - Verify color contrast ratios
 - Test with accessibility services enabled
+- Test with different text sizes
+- Test with different color schemes
 
 ## Design System Compliance
 
@@ -176,10 +227,54 @@ Text(
 - Both rules require clear error messages (accessibility for announcements, design for comprehensibility)
 - When implementing UI, consider both accessibility and design requirements together
 
+## Neurodiversity-Inclusive Design (Beyond WCAG)
+
+**When creating or modifying UI components, also consider:**
+
+### Sensory Considerations
+- ✅ **No Auto-Playing Media**: Never auto-play videos, sounds, or music
+- ✅ **Animation Control**: Respect user preferences for reduced motion
+- ✅ **Haptic Control**: Allow users to disable haptic feedback
+- ✅ **Minimalistic Layouts**: Clean, uncluttered interfaces reduce sensory overload
+- ✅ **Color Choices**: Prefer neutral/pastel colors; avoid high-arousal colors
+
+### Predictability and Structure
+- ✅ **Consistent Navigation**: Maintain uniform navigation patterns
+- ✅ **Predictable Behavior**: Interface responds predictably to user actions
+- ✅ **Clear Hierarchy**: Use consistent typography and spacing
+- ✅ **Visual Structure**: Group related information together
+
+### Clear Communication
+- ✅ **Plain Language**: Use straightforward, unambiguous language
+- ✅ **Avoid Idioms**: Don't use metaphors, idioms, or cultural references
+- ✅ **Explicit Instructions**: State things directly, provide step-by-step guidance
+- ✅ **Clear Errors**: Error messages explain what went wrong and how to fix it
+
+### Executive Functioning Support
+- ✅ **Task Breakdown**: Break complex tasks into checklists or steps
+- ✅ **Progress Indicators**: Show users where they are in a process
+- ✅ **Memory Aids**: Show history, saved states, recent actions
+- ✅ **Flexible Interaction**: Support multiple input methods
+
+### Customization and Control
+- ✅ **User Preferences**: Allow customization of text size, colors, layout density
+- ✅ **Optional Features**: Make social features optional (read receipts, etc.)
+- ✅ **Feature Toggles**: Allow users to enable/disable features
+- ✅ **Workflow Flexibility**: Provide multiple paths to accomplish tasks
+
+**See:** 
+- `docs/architecture/NEURODIVERSITY_INCLUSIVE_DESIGN.md` - Neurodiversity-inclusive design principles
+- `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` - Complete guide covering all disability types (visual, hearing, motor, cognitive, speech, neurological, mental health, chronic conditions, age-related, situational)
+- `docs/architecture/ACCESSIBILITY_IMPLEMENTATION_ROADMAP.md` - Implementation roadmap and priorities
+
 ## Related Documentation
 
 - `AI_AGENT_GUIDELINES.md` - Complete accessibility guidelines
 - `docs/architecture/UX_PRINCIPLES.md` - UX and accessibility principles
+- `docs/architecture/NEURODIVERSITY_INCLUSIVE_DESIGN.md` - Neurodiversity-inclusive design principles
+- `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` - Comprehensive accessibility guide for all disability types
+- `docs/architecture/ACCESSIBILITY_IMPLEMENTATION_ROADMAP.md` - Implementation roadmap
+- `docs/architecture/NEURODIVERSITY_QUICK_REFERENCE.md` - Quick reference guide
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md` - Typography system
 - `.cursor/rules/design.mdc` - Design and UX principles
 - `app/src/main/.../ui/components/Accessible*.kt` - Accessible component implementations

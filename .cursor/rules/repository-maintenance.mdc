@@ -1,0 +1,236 @@
+---
+alwaysApply: true
+---
+
+# Repository Maintenance and Cleanup Rules
+
+## CRITICAL: Keep Repository Clean
+
+**Regular maintenance prevents:**
+- Branch clutter and confusion
+- Working on merged/abandoned branches
+- Untracked file accumulation
+- Worktree proliferation
+- Merge conflicts from stale branches
+
+## Post-Merge Cleanup Checklist
+
+**After every PR merge, complete this checklist:**
+
+### 0. Check Other Agents and Worktrees (REQUIRED FIRST STEP)
+
+**CRITICAL: Before cleaning up, ALWAYS check and report on other active work:**
+
+```bash
+# List all worktrees with details
+git worktree list
+
+# List all branches (local and remote)
+git branch -a
+
+# Get detailed worktree info
+git worktree list --porcelain | grep -E "^(worktree|HEAD|branch)" | paste - - -
+
+# List feature branches with status
+git branch | grep -E "^  (feature|fix|refactor|docs|test)/"
+git branch -r | grep -E "(feature|fix|refactor|docs|test)/"
+```
+
+**You MUST report to the user:**
+- All active worktrees and their associated branches
+- All feature branches (local and remote) and their status
+- Which branches are merged (safe to delete)
+- Which branches are active (should NOT be deleted)
+- Ask user to verify before proceeding with cleanup
+
+**Example report format:**
+```
+📋 Current Repository State:
+
+Active Worktrees:
+  /path/to/electric-sheep-runtime-visual-evaluation
+    Branch: feature/runtime-visual-evaluation-architecture
+    Status: Active work (has unmerged commits)
+  
+  /path/to/electric-sheep-other-work
+    Branch: feature/other-task
+    Status: Active work (has unmerged commits)
+
+Active Branches:
+  feature/runtime-visual-evaluation-architecture - Active (DO NOT DELETE)
+  feature/other-task - Active (DO NOT DELETE)
+  feature/aws-bedrock-security-goals - MERGED (safe to delete)
+
+Please verify these are correct before cleanup proceeds.
+```
+
+### 1. Verify Merge Status
+```bash
+# Check PR status
+gh pr view <pr-number> --json state,merged
+
+# Verify branch is merged into main
+git log main --oneline | grep <commit-hash>
+```
+
+### 2. Switch to Main
+```bash
+git checkout main
+git pull origin main
+```
+
+### 3. Delete Merged Branch
+```bash
+# Safe delete (only if fully merged)
+git branch -d feature/<branch-name>
+
+# Force delete if needed (check first!)
+git branch -D feature/<branch-name>
+```
+
+### 4. Remove Worktree (if used)
+```bash
+# If worktree was used for isolation
+git worktree remove ../electric-sheep-<task-name>
+
+# Clean up any stale worktree references
+git worktree prune
+```
+
+### 5. Delete Duplicate Branches
+```bash
+# Check for duplicates (e.g., -rebased, -old, -backup)
+git branch | grep <branch-name>
+
+# Delete duplicates
+git branch -D feature/<branch-name>-rebased
+```
+
+### 6. Delete Temp Branches
+```bash
+# Find temp branches
+git branch | grep -E "^(temp|tmp|test-)"
+
+# Delete them
+git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
+```
+
+## Regular Maintenance Tasks
+
+### Weekly Cleanup
+
+1. **List all branches:**
+   ```bash
+   git branch -a
+   ```
+
+2. **Check for merged branches:**
+   ```bash
+   git branch --merged main | grep -v "main"
+   ```
+
+3. **Check for stale remote branches:**
+   ```bash
+   git remote prune origin --dry-run
+   ```
+
+4. **List all worktrees:**
+   ```bash
+   git worktree list
+   ```
+
+5. **Check for untracked files:**
+   ```bash
+   git status
+   git ls-files --others --exclude-standard
+   ```
+
+### Monthly Review
+
+1. **Review unmerged branches:**
+   - Check if work is still needed
+   - Merge or abandon as appropriate
+   - Document decision in `docs/development/AGENT_COORDINATION.md`
+
+2. **Review worktrees:**
+   - Verify worktrees are for active work
+   - Remove worktrees for completed/abandoned work
+
+3. **Review temp branches:**
+   - Delete all temp/test branches
+   - Document any that should be kept
+
+## Branch Protection Rules
+
+### Never Do These:
+- ❌ Work on a merged branch
+- ❌ Keep duplicate branches (-rebased, -old, etc.)
+- ❌ Leave temp branches around
+- ❌ Keep worktrees for merged work
+- ❌ Accumulate untracked files
+
+### Always Do These:
+- ✅ Delete merged branches immediately
+- ✅ Remove worktrees after merge
+- ✅ Start new work from fresh `main`
+- ✅ Create new branch for follow-up work
+- ✅ Clean up temp branches regularly
+
+## Starting New Work
+
+**Before starting new work:**
+
+1. **Ensure you're on main:**
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. **Verify clean state:**
+   ```bash
+   git status  # Should be clean
+   ```
+
+3. **Create new feature branch:**
+   ```bash
+   git checkout -b feature/<new-task>
+   ```
+
+4. **Or create worktree for isolation:**
+   ```bash
+   git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   ```
+
+## Worktree Management
+
+### When to Use Worktrees
+- ✅ Working on shared files (high conflict risk)
+- ✅ Multiple agents working simultaneously
+- ✅ Need complete file system isolation
+
+### When NOT to Use Worktrees
+- ❌ Simple feature work (use branch)
+- ❌ Single agent working
+- ❌ Low conflict risk
+
+### Worktree Cleanup
+- **After merge:** Always remove worktree
+- **If abandoned:** Remove worktree and delete branch
+- **If continuing:** Keep worktree until merge
+
+## Error Prevention
+
+**If you see these, clean up immediately:**
+
+- Multiple branches with similar names (e.g., `feature/foo`, `feature/foo-rebased`)
+- Worktrees pointing to merged branches
+- Temp branches older than a few days
+- Untracked files accumulating in main repo
+- Branches that are merged but still exist locally
+
+## Related Documentation
+
+- `.cursor/rules/branching.mdc` - Branch isolation rules
+- `.cursor/rules/cicd.mdc` - CI/CD cleanup steps
+- `docs/development/AGENT_COORDINATION.md` - Work coordination
+- `docs/development/REPOSITORY_STATE_ASSESSMENT.md` - State assessment

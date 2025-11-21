@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Converter from '../components/Converter.astro';
+---
+
+<BaseLayout title="HTML Viewer & Converter">
+  <main class="container mx-auto px-4 py-8 max-w-6xl">
+    <header class="mb-8 text-center">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        HTML Viewer & Converter
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Convert markdown files, logs, and text into beautiful, shareable HTML
+      </p>
+    </header>
+
+    <Converter />
+  </main>
+</BaseLayout>
+

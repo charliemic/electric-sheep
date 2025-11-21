@@ -12,6 +12,11 @@ alwaysApply: true
 3. ✅ Maintain holistic design ecosystem - consistent across the app
 4. ✅ Use design system components and standards
 5. ✅ Consider user experience flow and information hierarchy
+6. ✅ **Consider accessibility in design decisions** - Design for all abilities from the start
+7. ✅ **Minimize cognitive load** - Reduce decision points, use familiar patterns
+8. ✅ **Support customization** - Allow users to adjust text size, colors, layout density
+9. ✅ **Respect sensory preferences** - No auto-play media, animation control, haptic control
+10. ✅ **Use plain language** - No idioms, metaphors, cultural references
 
 ## Core UX Principles
 
@@ -21,6 +26,9 @@ alwaysApply: true
 - ✅ **Clear Affordances**: Buttons look clickable, inputs look editable, cards look interactive
 - ✅ **Minimal Cognitive Load**: Reduce decision points, use familiar patterns
 - ✅ **Progressive Disclosure**: Show essential information first, details on demand
+- ✅ **Plain Language**: Use straightforward, unambiguous language (no idioms, metaphors, cultural references)
+- ✅ **Explicit Instructions**: Provide clear, step-by-step guidance for complex tasks
+- ✅ **Predictable Behavior**: Interface responds predictably to user actions
 
 ### Task-Orientation
 - ✅ **Primary Task First**: Most important action/input is most prominent
@@ -44,7 +52,7 @@ alwaysApply: true
   - Screen edge padding: `Spacing.md` (16.dp)
   - Element gaps: `Spacing.sm` (8.dp) or `Spacing.md` (16.dp)
   - Icon to text: `Spacing.xs` (4.dp)
-- ✅ **Never Hardcode Spacing**: Use `Spacing` object, not magic numbers
+- ✅ **CRITICAL: Never Hardcode Spacing**: **NEVER use hardcoded spacing values like `16.dp`, `24.dp`, etc.** - ALWAYS use `Spacing` object values
 
 **Location:** `app/src/main/.../ui/theme/Spacing.kt`
 
@@ -139,7 +147,7 @@ alwaysApply: true
 ### Before Creating/Modifying UI
 - [ ] Primary task clearly defined and prominent
 - [ ] Information hierarchy is clear (headings, body, metadata)
-- [ ] Spacing uses standard `Spacing` object values
+- [ ] **No hardcoded spacing values** - ALL spacing uses `Spacing` object values
 - [ ] Colors come from `MaterialTheme.colorScheme`
 - [ ] Typography follows hierarchy standards
 - [ ] Buttons have consistent width on same screen
@@ -156,6 +164,12 @@ alwaysApply: true
 - [ ] Feedback is clear and timely (loading, success, errors)
 - [ ] Cognitive load is minimized
 - [ ] Progressive disclosure used for complex information
+- [ ] Plain language used (no idioms, metaphors, cultural references)
+- [ ] Explicit instructions provided for complex tasks
+- [ ] Predictable interface behavior
+- [ ] Sensory considerations (no auto-play media, animation control)
+- [ ] Customization options available (text size, colors, layout density)
+- [ ] Error messages are explicit and actionable
 
 ## Implementation Examples
 
@@ -199,15 +213,26 @@ Column(
 }
 ```
 
-### Bad: Inconsistent Spacing
+### Bad: Inconsistent Spacing (NEVER DO THIS)
 ```kotlin
-// Don't mix different spacing values without reason
+// ❌ BAD: Hardcoded spacing values
 Column {
     Text("Title")
-    Spacer(Modifier.height(8.dp))  // Use Spacing.sm instead
+    Spacer(Modifier.height(8.dp))  // ❌ Use Spacing.sm instead
     Text("Subtitle")
-    Spacer(Modifier.height(24.dp))  // Use Spacing.lg instead
+    Spacer(Modifier.height(24.dp))  // ❌ Use Spacing.lg instead
     Text("Content")
+    modifier = Modifier.padding(bottom = 24.dp)  // ❌ Use Spacing.lg instead
+}
+
+// ✅ GOOD: Use Spacing object
+Column {
+    Text("Title")
+    Spacer(Modifier.height(Spacing.sm))  // ✅ Correct
+    Text("Subtitle")
+    Spacer(Modifier.height(Spacing.lg))  // ✅ Correct
+    Text("Content")
+    modifier = Modifier.padding(bottom = Spacing.lg)  // ✅ Correct
 }
 ```
 
@@ -234,22 +259,34 @@ OutlinedButton(modifier = Modifier.fillMaxWidth()) { /* ... */ }
 - UX principles (comprehensibility, task-orientation, holistic design)
 - Information hierarchy and visual flow
 - Component standards and patterns
+- Sensory considerations (animations, sounds, visual complexity)
+- Cognitive load reduction
+- Plain language and clear communication
 
 **Accessibility Rule Focus:**
 - WCAG compliance (contrast ratios, touch targets)
 - Screen reader support (content descriptions, semantic roles)
 - Error announcements and live regions
 - Keyboard navigation
+- Programmatic accessibility (semantics, roles, state descriptions)
+- All disability types (visual, hearing, motor, cognitive, neurodivergent, etc.)
 
 **Overlap:**
 - Both rules require using theme colors (design for consistency, accessibility for contrast)
 - Both rules require standard spacing (design for consistency, accessibility for touch targets)
 - Both rules require clear error messages (design for comprehensibility, accessibility for announcements)
+- Both rules require plain language (design for comprehensibility, accessibility for cognitive disabilities)
+- Both rules require sensory considerations (design for UX, accessibility for neurodivergent users)
+- Both rules require predictable behavior (design for UX, accessibility for cognitive/neurodivergent users)
+- When implementing UI, consider both accessibility and design requirements together
 
 ## Related Documentation
 
 - `docs/architecture/UX_PRINCIPLES.md` - Complete UX design principles and standards
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md` - Typography system details
 - `docs/architecture/ICON_LOGO_DESIGN.md` - Icon and logo design principles
+- `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` - Comprehensive accessibility guide (design considerations for all disability types)
+- `docs/architecture/NEURODIVERSITY_INCLUSIVE_DESIGN.md` - Neurodiversity-inclusive design principles
 - `app/src/main/.../ui/theme/` - Design system implementation (Spacing, Color, Type, Theme)
 - `app/src/main/.../ui/components/Accessible*.kt` - Design system components
+- `.cursor/rules/accessibility.mdc` - Accessibility requirements and implementation guidelines

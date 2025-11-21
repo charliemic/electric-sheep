@@ -1,0 +1,238 @@
+---
+alwaysApply: true
+---
+
+# Frequent Commits Safety Net
+
+## CRITICAL: Commit Frequently to Prevent Work Loss
+
+**When implementing features or making changes:**
+1. ✅ **Commit frequently** - Even if work is incomplete (use WIP commits)
+2. ✅ **Commit after each logical step** - Don't wait until feature is complete
+3. ✅ **Commit before risky operations** - Before refactoring, large changes, or experiments
+4. ✅ **Commit after fixing tests** - Preserve working state
+5. ✅ **Commit local only** - No need to push every commit (push when ready for review)
+
+## Why Frequent Commits Matter
+
+**Frequent commits provide:**
+- ✅ **Safety net** - Work is preserved even if something goes wrong
+- ✅ **Recovery point** - Easy to revert to last known good state
+- ✅ **Progress tracking** - See incremental progress
+- ✅ **Reduced risk** - Less work lost if interrupted or errors occur
+- ✅ **Confidence** - Safe to experiment knowing you can revert
+
+**Remember:** Commits are local by default - you can always squash or amend before pushing.
+
+## Commit Frequency Guidelines
+
+### When to Commit
+
+**Commit immediately after:**
+- ✅ Completing a small logical unit of work (e.g., adding a function, fixing a bug)
+- ✅ Making tests pass
+- ✅ Fixing a compilation error
+- ✅ Adding a new file or component
+- ✅ Completing a refactoring step
+- ✅ Before starting a risky change or experiment
+- ✅ After 15-30 minutes of work (even if incomplete)
+
+**Don't wait for:**
+- ❌ Feature to be complete
+- ❌ All tests to pass (commit working progress)
+- ❌ Code review (commit locally, push when ready)
+- ❌ Perfect code (commit incremental improvements)
+
+### Commit Frequency Targets
+
+**Minimum frequency:**
+- ✅ **At least every 30 minutes** of active work
+- ✅ **After each logical step** (function added, test fixed, etc.)
+- ✅ **Before risky operations** (refactoring, large changes)
+
+**Ideal frequency:**
+- ✅ **Every 15-20 minutes** during active development
+- ✅ **After each small milestone** (component added, test passing, etc.)
+
+## Work-in-Progress (WIP) Commits
+
+### When to Use WIP Commits
+
+**Use WIP commits for:**
+- ✅ Incomplete features (work in progress)
+- ✅ Experimental changes (testing approaches)
+- ✅ Partial implementations (saving progress)
+- ✅ Before risky refactoring (safety checkpoint)
+
+### WIP Commit Format
+
+```bash
+# Standard WIP commit
+git commit -m "WIP: <description of what you're working on>"
+
+# Examples:
+git commit -m "WIP: adding user authentication flow"
+git commit -m "WIP: refactoring error handling"
+git commit -m "WIP: experimenting with new UI layout"
+```
+
+**WIP commit message format:**
+```
+WIP: <brief description>
+
+[optional: what's done, what's next]
+```
+
+**Examples:**
+```bash
+git commit -m "WIP: user authentication
+
+- Added login screen UI
+- Next: implement auth logic"
+```
+
+### Cleaning Up WIP Commits
+
+**Before pushing or creating PR:**
+- ✅ Squash WIP commits into meaningful commits
+- ✅ Use `git rebase -i` to clean up commit history
+- ✅ Convert WIP commits to proper commit messages
+
+**Example cleanup:**
+```bash
+# Interactive rebase to clean up commits
+git rebase -i HEAD~5  # Clean up last 5 commits
+
+# Or squash all WIP commits into one
+git reset --soft HEAD~3  # Keep changes, remove last 3 commits
+git commit -m "feat: add user authentication"
+```
+
+## Commit Safety Checklist
+
+**Before each commit:**
+- [ ] Verify you're on a feature branch (not `main`)
+- [ ] Stage relevant changes: `git add <files>`
+- [ ] Write descriptive commit message
+- [ ] Commit: `git commit -m "message"`
+
+**After each commit:**
+- [ ] Verify commit succeeded: `git log -1`
+- [ ] Continue working or take a break knowing work is saved
+
+## Integration with Workflow
+
+### During Development
+
+**Typical workflow:**
+1. Make small change (add function, fix bug, etc.)
+2. **Commit immediately** (even if incomplete)
+3. Continue to next change
+4. Repeat
+
+**Example session:**
+```bash
+# Start work
+git checkout -b feature/new-feature
+
+# Make change 1
+# ... edit files ...
+git add .
+git commit -m "WIP: adding initial structure"
+
+# Make change 2
+# ... edit files ...
+git add .
+git commit -m "WIP: implementing core logic"
+
+# Make change 3
+# ... edit files ...
+git add .
+git commit -m "WIP: adding tests"
+
+# All tests pass - commit as complete
+git commit -m "feat: add new feature"
+```
+
+### Before Risky Operations
+
+**Always commit before:**
+- Large refactoring
+- Experimental changes
+- Deleting code
+- Changing architecture
+- Updating dependencies
+
+**Example:**
+```bash
+# Commit current state
+git add .
+git commit -m "WIP: checkpoint before refactoring"
+
+# Now safe to refactor
+# ... make changes ...
+
+# Commit refactoring
+git add .
+git commit -m "refactor: simplify error handling"
+```
+
+## Helper Script: Quick WIP Commit
+
+**Use this helper for quick WIP commits:**
+
+```bash
+# Quick WIP commit (if script exists)
+./scripts/wip-commit.sh "description of work"
+```
+
+**Manual quick commit:**
+```bash
+# Stage all changes and commit as WIP
+git add -A
+git commit -m "WIP: $(date +%H:%M) - <brief description>"
+```
+
+## Pre-Work Check Integration
+
+**The pre-work check will remind you:**
+- ✅ Check for uncommitted changes before starting new work
+- ✅ Commit or stash existing work before switching tasks
+- ✅ Remind about frequent commit practice
+
+## Best Practices
+
+### DO ✅
+- Commit frequently (every 15-30 minutes)
+- Use WIP commits for incomplete work
+- Commit after each logical step
+- Commit before risky operations
+- Commit locally (no need to push every time)
+- Clean up WIP commits before pushing/PR
+
+### DON'T ❌
+- Don't wait for perfect code before committing
+- Don't wait for feature completion
+- Don't accumulate hours of uncommitted work
+- Don't skip commits "because it's not done yet"
+- Don't worry about commit history (can clean up later)
+
+## Recovery from Work Loss
+
+**If work is lost (crash, interruption, etc.):**
+1. Check git reflog: `git reflog`
+2. Find last commit: `git log --all --oneline`
+3. Recover from last commit: `git checkout <commit-hash>`
+4. Create new branch from recovered state
+
+**Why this works:**
+- Frequent commits mean less work lost
+- Git history preserves all committed work
+- Easy to recover from any commit point
+
+## Related Documentation
+
+- `.cursor/rules/branching.mdc` - Branch isolation and commit rules
+- `.cursor/rules/cicd.mdc` - CI/CD and push requirements
+- `scripts/pre-work-check.sh` - Pre-work validation
+- `scripts/wip-commit.sh` - Quick WIP commit helper (if exists)

@@ -1,0 +1,35 @@
+{
+    "recommendations": [
+        // Kotlin Support
+        "fwcd.kotlin",
+        "mathiasfrohlich.kotlin",
+        // Java Support (for Android)
+        "vscjava.vscode-java-pack",
+        // Gradle Support
+        "naco-siren.gradle-language-support",
+        "vscjava.vscode-gradle",
+        // Android Support
+        "adelphes.android-dev-ext",
+        // Git & Version Control
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Git Worktree support (via GitLens)
+        // Note: No dedicated worktree extension, but GitLens provides branch visualization
+        // Code Quality
+        "sonarsource.sonarlint-vscode",
+        // Markdown (for extensive docs)
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        // YAML (for feature flags, test scenarios)
+        "redhat.vscode-yaml",
+        // Shell Scripts
+        "timonwong.shellcheck",
+        // Python (for scripts)
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        // General Productivity
+        "ms-vscode.vscode-json",
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker"
+    ]
+}
