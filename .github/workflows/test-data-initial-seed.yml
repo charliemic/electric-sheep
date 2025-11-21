@@ -1,19 +1,27 @@
 name: Seed Test Data (Initial Setup)
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger from any branch
     inputs:
       project_ref:
         description: 'Supabase Project Reference ID (leave empty to use SUPABASE_PROJECT_REF_STAGING)'
         required: false
         type: string
+      environment:
+        description: 'Environment to seed (staging or production)'
+        required: false
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
 
 jobs:
   seed-test-data:
     name: Seed Test Data
     runs-on: ubuntu-latest
     environment:
-      name: staging  # Use staging environment for test data
+      name: ${{ github.event.inputs.environment || 'staging' }}  # Use input or default to staging
     
     steps:
       - name: Checkout code
@@ -43,17 +51,26 @@ jobs:
           echo "Logging in to Supabase..."
           supabase login --token "$SUPABASE_ACCESS_TOKEN"
       
-      - name: Link to staging project
+      - name: Link to Supabase project
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+          SUPABASE_DB_PASSWORD: ${{ github.event.inputs.environment == 'production' && secrets.SUPABASE_DB_PASSWORD || secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Use staging project ref if available, otherwise fall back to production or workflow input
-          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
-          if [ -z "$PROJECT_REF" ]; then
-            echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch"
-            exit 1
+          # Determine project ref based on environment
+          if [ "$ENVIRONMENT" = "production" ]; then
+            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            if [ -z "$PROJECT_REF" ]; then
+              echo "ERROR: SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch project_ref input"
+              exit 1
+            fi
+          else
+            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            if [ -z "$PROJECT_REF" ]; then
+              echo "ERROR: SUPABASE_PROJECT_REF_STAGING or SUPABASE_PROJECT_REF secret is not set, or provide via workflow_dispatch project_ref input"
+              exit 1
+            fi
           fi
-          echo "Linking to project: $PROJECT_REF"
+          echo "Linking to $ENVIRONMENT project: $PROJECT_REF"
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
             echo "Warning: SUPABASE_DB_PASSWORD_STAGING or SUPABASE_DB_PASSWORD not set. CLI will attempt to use PAT for database connection."
           fi
@@ -61,12 +78,18 @@ jobs:
       
       - name: Get Supabase URL
         id: supabase-url
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
         run: |
           # Get Supabase URL from linked project or construct from project ID
           SUPABASE_URL=$(supabase status 2>/dev/null | grep "API URL" | awk '{print $3}' || echo "")
           if [ -z "$SUPABASE_URL" ]; then
             # Fallback: construct from project ID
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            if [ "$ENVIRONMENT" = "production" ]; then
+              PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            else
+              PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
+            fi
             SUPABASE_URL="https://${PROJECT_REF}.supabase.co"
           fi
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
@@ -88,10 +111,11 @@ jobs:
       
       - name: Create test users
         env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SECRET_KEY: ${{ github.event.inputs.environment == 'production' && secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
-          echo "Creating test users in Supabase Auth..."
+          echo "Creating test users in Supabase Auth ($ENVIRONMENT)..."
           bash supabase/scripts/create-test-users.sh
       
       - name: Ensure generate_mood_score function exists
@@ -118,7 +142,8 @@ jobs:
         run: |
           echo "Verifying test data was seeded..."
           # Query to check test users and their mood entries
-          supabase db execute "
+          echo "Running verification query..."
+          VERIFICATION_OUTPUT=$(supabase db execute "
             SELECT 
               u.email,
               COUNT(m.id) as entry_count,
@@ -129,7 +154,20 @@ jobs:
             WHERE u.email LIKE 'test-%@electric-sheep.test'
             GROUP BY u.email
             ORDER BY u.email;
-          " || echo "Warning: Could not verify data (this is non-critical)"
+          " 2>&1) || {
+            echo "Warning: Could not verify data (this is non-critical)"
+            exit 0
+          }
+          echo "$VERIFICATION_OUTPUT"
+          
+          # Check if we got results
+          if echo "$VERIFICATION_OUTPUT" | grep -q "entry_count"; then
+            echo "✅ Verification query returned results"
+            USER_COUNT=$(echo "$VERIFICATION_OUTPUT" | grep -c "test-.*@electric-sheep.test" || echo "0")
+            echo "Found $USER_COUNT test users with data"
+          else
+            echo "⚠️ Verification query did not return expected format"
+          fi
       
       - name: Summary
         if: always()
@@ -139,6 +177,8 @@ jobs:
           echo "- **Time**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Trigger**: Manual (workflow_dispatch)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Users Created:" >> $GITHUB_STEP_SUMMARY
           echo "- 8 test users (2 tech levels × 4 mood patterns)" >> $GITHUB_STEP_SUMMARY
