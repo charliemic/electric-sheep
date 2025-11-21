@@ -118,55 +118,34 @@ jobs:
           echo "Creating test users in Supabase Auth ($ENVIRONMENT)..."
           bash supabase/scripts/create-test-users.sh
       
-      - name: Get database connection string
-        id: db-url
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
-          SUPABASE_DB_PASSWORD: ${{ github.event.inputs.environment == 'production' && secrets.SUPABASE_DB_PASSWORD || secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          # Get project ref
-          if [ "$ENVIRONMENT" = "production" ]; then
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
-          else
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}"
-          fi
-          
-          # URL encode the password to handle special characters
-          # Use Python for URL encoding (available in GitHub Actions)
-          ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$SUPABASE_DB_PASSWORD', safe=''))")
-          
-          # Construct database URL
-          # Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-          DB_URL="postgresql://postgres:${ENCODED_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres"
-          echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
-          echo "Database URL configured (password hidden)"
-      
       - name: Ensure generate_mood_score function exists
         env:
-          DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Ensuring generate_mood_score function exists..."
-          psql "$DB_URL" -f supabase/seed/functions/generate_mood_score.sql || {
+          # Use supabase db execute with SQL content as string
+          cat supabase/seed/functions/generate_mood_score.sql | supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" || {
             echo "Warning: Failed to create function (may already exist)"
           }
       
       - name: Load baseline mood data
         env:
-          DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Loading baseline mood data (30 days)..."
-          psql "$DB_URL" -f supabase/seed/002_load_baseline_mood_data.sql || {
+          # Use supabase db execute with SQL file content
+          cat supabase/seed/002_load_baseline_mood_data.sql | supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" || {
             echo "Warning: Some data may already exist (this is expected if re-running)"
           }
       
       - name: Verify data was seeded
         env:
-          DB_URL: ${{ steps.db-url.outputs.db_url }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Verifying test data was seeded..."
           # Query to check test users and their mood entries
           echo "Running verification query..."
-          psql "$DB_URL" -c "
+          supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" "
             SELECT 
               u.email,
               COUNT(m.id) as entry_count,
