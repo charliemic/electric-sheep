@@ -51,6 +51,26 @@ Agent usage tracking is integrated with:
 - **Migration**: `supabase/migrations/20251121210227_create_agent_usage_table.sql`
 - **Insertion**: Uses PostgREST API via `scripts/lib/supabase-postgrest.sh`
 
+### Environment Variables
+
+**Local Development:**
+```bash
+export SUPABASE_URL="https://xxx.supabase.co"
+export SUPABASE_SECRET_KEY="sb_secret_..."
+```
+
+**GitHub Actions (Automatic):**
+The system automatically uses GitHub Actions secrets when running in CI:
+- `SUPABASE_URL`: Constructed from project ref or from `supabase status`
+- `SUPABASE_SECRET_KEY`: Uses `SUPABASE_SECRET_KEY_STAGING` (staging) or `SUPABASE_SECRET_KEY` (production)
+
+**Pattern (matches existing workflows):**
+```yaml
+env:
+  SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+  SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+```
+
 ### Temporary: Local JSON (Only if Supabase unavailable)
 - **Location**: `development-metrics/agent-usage/usage_*.json`
 - **Purpose**: Temporary storage if Supabase env vars not set
