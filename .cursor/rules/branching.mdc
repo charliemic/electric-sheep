@@ -143,6 +143,53 @@ Before starting any work, you MUST:
 - ❌ Uncommitted work on `main` → Move to feature branch
 - ❌ File system conflicts → Use git worktree for isolation
 
+## Post-Merge Cleanup (MANDATORY)
+
+**After a PR is merged, you MUST clean up:**
+
+1. **Switch to main branch:**
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. **Delete merged feature branch:**
+   ```bash
+   git branch -d feature/<branch-name>
+   # Use -D if branch has unmerged commits (shouldn't happen if PR merged)
+   ```
+
+3. **Remove worktree if one was used:**
+   ```bash
+   git worktree remove ../electric-sheep-<task-name>
+   # Or if worktree directory was deleted manually:
+   git worktree prune
+   ```
+
+4. **Delete duplicate/old branches:**
+   ```bash
+   # Check for duplicate branches (e.g., -rebased, -old, -backup)
+   git branch | grep <branch-name>
+   # Delete if duplicate: git branch -D <duplicate-branch>
+   ```
+
+5. **Delete temp/test branches:**
+   ```bash
+   # Delete branches starting with temp/, tmp/, test-merge, etc.
+   git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
+   ```
+
+**Why this matters:**
+- Prevents branch clutter
+- Avoids confusion about which branch to use
+- Keeps repository state clean
+- Makes it easier to identify active work
+
+**Best Practice:**
+- Always start new work from a fresh `main` branch
+- Never continue work on a merged branch
+- Create a new feature branch for follow-up work
+
 ## Multi-Agent Coordination
 
 **Always:**
