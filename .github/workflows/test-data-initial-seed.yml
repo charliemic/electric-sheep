@@ -86,43 +86,14 @@ jobs:
           echo "Creating test users in Supabase Auth ($ENVIRONMENT)..."
           bash supabase/scripts/create-test-users.sh
       
-      - name: Ensure generate_mood_score function exists
+      - name: Load baseline mood data via HTTP API
+        env:
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
-          echo "Ensuring generate_mood_score function exists..."
-          # Use HTTP-based approach: create temporary migration and push via supabase db push
-          # This matches the working pattern of user setup (HTTP API via Management API)
-          # Migration name must match pattern: YYYYMMDDHHMMSS_name.sql
-          MIGRATION_NAME="$(date +%Y%m%d%H%M%S)_generate_mood_score"
-          mkdir -p supabase/migrations
-          cp supabase/seed/functions/generate_mood_score.sql "supabase/migrations/${MIGRATION_NAME}.sql"
-          if supabase db push; then
-            echo "✓ Function created successfully"
-            # Clean up temp migration file after successful push
-            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
-          else
-            echo "Warning: Failed to create function (may already exist)"
-            # Clean up temp migration file on failure
-            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
-          fi
-      
-      - name: Load baseline mood data
-        run: |
-          echo "Loading baseline mood data (30 days)..."
-          # Use HTTP-based approach: create temporary migration and push via supabase db push
-          # This matches the working pattern of user setup (HTTP API via Management API)
-          # Migration name must match pattern: YYYYMMDDHHMMSS_name.sql
-          MIGRATION_NAME="$(date +%Y%m%d%H%M%S)_load_baseline_mood_data"
-          mkdir -p supabase/migrations
-          cp supabase/seed/002_load_baseline_mood_data.sql "supabase/migrations/${MIGRATION_NAME}.sql"
-          if supabase db push; then
-            echo "✓ Baseline mood data loaded successfully"
-            # Clean up temp migration file after successful push
-            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
-          else
-            echo "Warning: Some data may already exist (this is expected if re-running)"
-            # Clean up temp migration file on failure
-            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
-          fi
+          echo "Loading baseline mood data via PostgREST API (HTTP REST, same pattern as user creation)..."
+          echo "This bypasses the need for supabase link and db execute"
+          ./supabase/scripts/load-mood-data-via-api.sh
       
       - name: Verify data was seeded
         env:
