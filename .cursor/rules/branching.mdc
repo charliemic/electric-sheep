@@ -160,6 +160,15 @@ This script automatically verifies:
 
 **Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 
+**CRITICAL: Commit Frequently (Safety Net)**
+- ✅ **Commit frequently** - Every 15-30 minutes, even if work is incomplete
+- ✅ **Use WIP commits** - `git commit -m "WIP: <description>"` for incomplete work
+- ✅ **Commit after each logical step** - Don't wait for feature completion
+- ✅ **Commit before risky operations** - Before refactoring, large changes, experiments
+- ✅ **Local commits only** - No need to push every commit (push when ready for review)
+
+**See:** `.cursor/rules/frequent-commits.mdc` for complete frequent commit guidelines
+
 ## Error Prevention
 
 **If you detect these conditions, STOP and fix:**
