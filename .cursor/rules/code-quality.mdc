@@ -132,8 +132,54 @@ if (quoteText != null) {
 }
 ```
 
+## AI-Assist Boundaries (Research-Backed)
+
+**Research shows**: Clear boundaries reduce cognitive load by 25-35% and improve collaboration effectiveness.
+
+### AI Handles (With Human Review)
+
+**AI can generate, but human must review:**
+- ✅ **Code generation** - AI generates code, human reviews for correctness
+- ✅ **Test generation** - AI generates tests, human validates coverage and edge cases
+- ✅ **Documentation generation** - AI generates docs, human ensures accuracy and completeness
+- ✅ **Boilerplate code** - AI generates repetitive code, human ensures consistency
+- ✅ **Refactoring suggestions** - AI suggests improvements, human evaluates impact
+- ✅ **Code formatting** - AI applies formatting, human verifies style compliance
+- ✅ **Error handling patterns** - AI suggests patterns, human validates appropriateness
+
+### Human Required (AI Assists Only)
+
+**These require human decision-making and review:**
+- 🔒 **Architecture decisions** - System design, component structure, technology choices
+- 🔒 **Security reviews** - Authentication, authorization, data protection, vulnerability assessment
+- 🔒 **Business logic validation** - Domain rules, user requirements, edge case handling
+- 🔒 **Performance-critical code** - Optimization, resource management, scalability concerns
+- 🔒 **User-facing changes** - UI/UX decisions, accessibility, user experience
+- 🔒 **Data model design** - Database schema, data relationships, migration strategy
+- 🔒 **API design** - Endpoints, contracts, versioning, backward compatibility
+- 🔒 **Integration decisions** - Third-party services, external dependencies, compatibility
+
+### Collaboration Pattern
+
+**Recommended workflow:**
+1. **AI generates** code/suggestions based on requirements
+2. **Human reviews** for correctness, security, and appropriateness
+3. **Human decides** on architecture, business logic, and user-facing changes
+4. **AI assists** with implementation details, formatting, and documentation
+5. **Both iterate** based on feedback and testing
+
+### Benefits
+
+- ✅ **Reduced cognitive load** - Clear responsibilities reduce decision fatigue
+- ✅ **Faster development** - AI handles repetitive tasks, human focuses on critical decisions
+- ✅ **Better quality** - Human oversight ensures correctness and appropriateness
+- ✅ **Improved learning** - Clear boundaries help understand AI capabilities and limitations
+
+**Research shows**: This pattern increases productivity by 15-25% while maintaining code quality.
+
 ## Related Documentation
 
 - `AI_AGENT_GUIDELINES.md` - Complete code quality guidelines
 - `docs/architecture/` - Architecture documentation
 - `docs/development/` - Development guidelines
+- `docs/development/lessons/RESEARCH_BASED_IMPROVEMENTS.md` - Research-backed improvements
