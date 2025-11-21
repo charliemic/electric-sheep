@@ -1,0 +1,226 @@
+name: Publish Document to GitHub Pages
+
+on:
+  # Publish documents based on tags
+  # Format: publish-<doc-name>-v<version> or publish-<doc-name>-latest
+  push:
+    tags:
+      - 'publish-*-v*'      # Versioned documents (e.g., publish-cognitive-journey-v1.0.0)
+      - 'publish-*-latest'   # Latest version (e.g., publish-cognitive-journey-latest)
+  # Manual publication
+  workflow_dispatch:
+    inputs:
+      document:
+        description: 'Document name (e.g., cognitive-journey)'
+        required: true
+        type: string
+      version:
+        description: 'Version (e.g., v1.0.0) or "latest"'
+        required: true
+        type: string
+        default: 'latest'
+      source_path:
+        description: 'Path to source document (relative to repo root)'
+        required: true
+        type: string
+
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  detect-document:
+    runs-on: ubuntu-latest
+    outputs:
+      doc_name: ${{ steps.detect.outputs.doc_name }}
+      version: ${{ steps.detect.outputs.version }}
+      is_latest: ${{ steps.detect.outputs.is_latest }}
+      source_path: ${{ steps.detect.outputs.source_path }}
+      output_path: ${{ steps.detect.outputs.output_path }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect document and version
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DOC_NAME="${{ github.event.inputs.document }}"
+            VERSION="${{ github.event.inputs.version }}"
+            SOURCE_PATH="${{ github.event.inputs.source_path }}"
+          elif [[ "${{ github.ref_name }}" =~ ^publish-(.+)-(v.+|latest)$ ]]; then
+            # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
+            TAG="${{ github.ref_name }}"
+            DOC_NAME=$(echo "$TAG" | sed -E 's/^publish-(.+)-(v.+|latest)$/\1/')
+            VERSION=$(echo "$TAG" | sed -E 's/^publish-.+-(v.+|latest)$/\1/')
+            # Try to find document automatically
+            SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+          else
+            echo "Error: Could not parse tag or inputs"
+            exit 1
+          fi
+          
+          if [ "$VERSION" == "latest" ]; then
+            IS_LATEST="true"
+            OUTPUT_PATH="$DOC_NAME.html"
+          else
+            IS_LATEST="false"
+            OUTPUT_PATH="$DOC_NAME/$VERSION.html"
+          fi
+          
+          # Default source path if not provided
+          if [ -z "$SOURCE_PATH" ]; then
+            # Try common locations
+            for loc in "docs/**/$DOC_NAME.md" "docs/**/*$DOC_NAME*.md" "$DOC_NAME.md"; do
+              if find . -path "$loc" -type f | head -1 | read found; then
+                SOURCE_PATH="$found"
+                break
+              fi
+            done
+          fi
+          
+          if [ -z "$SOURCE_PATH" ] || [ ! -f "$SOURCE_PATH" ]; then
+            echo "Error: Source document not found: $SOURCE_PATH"
+            echo "Available markdown files:"
+            find . -name "*.md" -type f | head -10
+            exit 1
+          fi
+          
+          echo "doc_name=$DOC_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_latest=$IS_LATEST" >> $GITHUB_OUTPUT
+          echo "source_path=$SOURCE_PATH" >> $GITHUB_OUTPUT
+          echo "output_path=$OUTPUT_PATH" >> $GITHUB_OUTPUT
+          
+          echo "📄 Document: $DOC_NAME"
+          echo "📌 Version: $VERSION"
+          echo "📂 Source: $SOURCE_PATH"
+          echo "📤 Output: $OUTPUT_PATH"
+          echo "🔖 Latest: $IS_LATEST"
+
+  setup-converter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: html-viewer/package-lock.json
+
+      - name: Install HTML Viewer dependencies
+        working-directory: ./html-viewer
+        run: npm ci
+
+      - name: Upload converter
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-viewer-converter
+          path: html-viewer/
+          retention-days: 1
+
+  convert-document:
+    needs: [detect-document, setup-converter]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download converter
+        uses: actions/download-artifact@v4
+        with:
+          name: html-viewer-converter
+          path: html-viewer/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install converter dependencies
+        working-directory: ./html-viewer
+        run: npm ci
+
+      - name: Convert document to HTML
+        working-directory: ./html-viewer
+        run: |
+          # Use the converter script
+          node scripts/convert-document.js \
+            "${{ github.workspace }}/${{ needs.detect-document.outputs.source_path }}" \
+            "${{ github.workspace }}/dist/${{ needs.detect-document.outputs.output_path }}" \
+            "${{ needs.detect-document.outputs.doc_name }}" \
+            "light"
+        # Fallback to Python script if Node.js conversion fails
+        continue-on-error: true
+
+      - name: Fallback to Python converter
+        if: failure()
+        run: |
+          python3 scripts/md-to-html.py \
+            "${{ needs.detect-document.outputs.source_path }}" \
+            "dist/${{ needs.detect-document.outputs.output_path }}" \
+            "${{ needs.detect-document.outputs.doc_name }}"
+
+      - name: Create index page (if latest)
+        if: needs.detect-document.outputs.is_latest == 'true'
+        run: |
+          mkdir -p dist
+          cat > dist/index.html <<EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url=${{ needs.detect-document.outputs.doc_name }}.html">
+            <title>${{ needs.detect-document.outputs.doc_name }}</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="${{ needs.detect-document.outputs.doc_name }}.html">${{ needs.detect-document.outputs.doc_name }}</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload built document
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-document
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    needs: [detect-document, convert-document]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download built document
+        uses: actions/download-artifact@v4
+        with:
+          name: published-document
+          path: dist
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
+
+      - name: Deployment info
+        run: |
+          echo "✅ Deployed: ${{ needs.detect-document.outputs.doc_name }}"
+          echo "📌 Version: ${{ needs.detect-document.outputs.version }}"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
+

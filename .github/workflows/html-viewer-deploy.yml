@@ -1,0 +1,176 @@
+name: Deploy HTML Viewer to GitHub Pages
+
+on:
+  # Deploy on version tags (e.g., html-viewer-v1.0.0)
+  push:
+    tags:
+      - 'html-viewer-v*'
+  # Deploy "latest" on special tag or branch
+  push:
+    branches:
+      - 'html-viewer-latest'  # Branch for latest deployment
+    tags:
+      - 'html-viewer-latest'   # Tag for latest deployment
+  # Manual deployment with version control
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.0) or "latest"'
+        required: true
+        type: string
+        default: 'latest'
+      deploy_as_latest:
+        description: 'Deploy as latest (root path) - only for manual dispatch'
+        required: false
+        type: boolean
+        default: false
+
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  detect-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_latest: ${{ steps.version.outputs.is_latest }}
+      deploy_path: ${{ steps.version.outputs.deploy_path }}
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            # If deploy_as_latest is true, treat as latest deployment
+            if [ "${{ github.event.inputs.deploy_as_latest }}" == "true" ]; then
+              IS_LATEST="true"
+            elif [ "$VERSION" == "latest" ]; then
+              IS_LATEST="true"
+            else
+              IS_LATEST="false"
+            fi
+          elif [ "${{ startsWith(github.ref, 'refs/tags/html-viewer-latest') }}" == "true" ] || [ "${{ github.ref }}" == "refs/heads/html-viewer-latest" ]; then
+            VERSION="latest"
+            IS_LATEST="true"
+          elif [ "${{ startsWith(github.ref, 'refs/tags/html-viewer-v') }}" == "true" ]; then
+            # Extract version from tag (e.g., html-viewer-v1.0.0 -> v1.0.0)
+            VERSION=$(echo "${{ github.ref_name }}" | sed 's/^html-viewer-//')
+            IS_LATEST="false"
+          else
+            VERSION="latest"
+            IS_LATEST="true"
+          fi
+          
+          # Set deploy path
+          if [ "$IS_LATEST" == "true" ]; then
+            DEPLOY_PATH=""
+          else
+            DEPLOY_PATH="$VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_latest=$IS_LATEST" >> $GITHUB_OUTPUT
+          echo "deploy_path=$DEPLOY_PATH" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION (latest: $IS_LATEST, path: $DEPLOY_PATH)"
+
+  build:
+    needs: detect-version
+    runs-on: ubuntu-latest
+    # Only run if html-viewer files changed or manual trigger
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for version detection
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: html-viewer/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./html-viewer
+        run: npm ci
+
+      - name: Build HTML Viewer
+        working-directory: ./html-viewer
+        run: npm run build
+        env:
+          # For versioned deployments, we'll use a subdirectory approach
+          # Latest uses root (empty base), versions use /v<version>/
+          ASTRO_BASE: ${{ needs.detect-version.outputs.deploy_path && format('/{0}', needs.detect-version.outputs.deploy_path) || '' }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-viewer-build
+          path: html-viewer/dist
+          retention-days: 7
+
+  deploy-versioned:
+    needs: [detect-version, build]
+    if: needs.detect-version.outputs.is_latest == 'false'
+    runs-on: ubuntu-latest
+    # For versioned deployments, we'll store as artifacts and deploy latest with version info
+    # GitHub Pages limitation: can only serve from one directory
+    # Strategy: Deploy versioned builds as downloadable artifacts, or use a version selector
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: html-viewer-build
+          path: dist
+
+      - name: Create version info
+        run: |
+          echo "${{ needs.detect-version.outputs.version }}" > dist/VERSION.txt
+          echo "${{ github.sha }}" > dist/COMMIT.txt
+          echo "${{ github.ref_name }}" > dist/TAG.txt
+
+      - name: Upload versioned artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-viewer-${{ needs.detect-version.outputs.version }}
+          path: dist
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Note version deployment
+        run: |
+          echo "✅ Version ${{ needs.detect-version.outputs.version }} built and stored as artifact"
+          echo "📦 Artifact: html-viewer-${{ needs.detect-version.outputs.version }}"
+          echo "💡 To deploy as latest, tag as 'html-viewer-latest' or use workflow_dispatch with deploy_as_latest=true"
+
+  deploy-latest:
+    needs: [detect-version, build]
+    if: needs.detect-version.outputs.is_latest == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: html-viewer-build
+          path: dist
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Deploy to GitHub Pages (latest)
+        id: deployment
+        uses: actions/deploy-pages@v3
+        with:
+          artifact_name: html-viewer-build
+
