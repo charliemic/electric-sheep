@@ -4,6 +4,20 @@
 **Status**: Pinned (may change later)  
 **Purpose**: Document current state of agent work and session management
 
+## Core Principle: Session = Agent Lifecycle
+
+**Pinned Definition:**
+- **When a session is finished, an agent is finished (for now)**
+- One session = One agent's work
+- Session end = Agent completion
+- No agent continuation across sessions (for now)
+
+**This means:**
+- Session start = Agent starts work
+- Session work = Agent active development
+- Session end = Agent work complete, agent finished
+- New session = New agent (fresh context)
+
 ## Current State
 
 ### Agent Work: ✅ COMPLETE
@@ -44,44 +58,60 @@
 
 ## Session Lifecycle (Current Implementation)
 
-### Session Start
+**Key Principle:** Session end = Agent finished (for now)
+
+### Session Start = Agent Starts
 - Pre-work validation via `./scripts/pre-work-check.sh`
 - Branch setup and coordination check
 - Context review and handover queue check
+- **Agent begins work on this session**
 
-### Session Work
+### Session Work = Agent Active
 - Active development with frequent commits
 - Effectiveness monitoring (if long session)
 - Coordination before shared files
+- **Agent is actively working**
 
-### Session End
-- **Case A (Close Session)**: Work finished, PR merged, cleanup done
-- **Case B (Create Handover)**: More work exists, handover created
+### Session End = Agent Finished
+- **Case A (Close Session)**: Work finished, PR merged, cleanup done → **Agent finished**
+- **Case B (Create Handover)**: More work exists, handover created → **Agent finished, new agent picks up**
 
-**Case A Requirements:**
+**Case A Requirements (Agent Finished):**
 - ✅ PR merged (or work committed)
 - ✅ Branch deleted (if merged)
 - ✅ Worktree removed (if used)
 - ✅ Working directory clean
 - ✅ No uncommitted changes
 - ✅ Coordination doc updated
+- ✅ **Agent work complete, agent finished**
+
+**Case B Requirements (Agent Finished, Handover Created):**
+- ✅ All current work committed
+- ✅ Handover document created
+- ✅ Added to handover queue
+- ✅ Next steps clearly defined
+- ✅ **Agent finished, new agent will continue**
 
 ## Agent Work Patterns (Current)
 
-### Work Completion
+### Work Completion = Agent Finished
 - All planned work committed
 - Tests passing (if applicable)
 - Documentation updated
 - Code reviewed (if applicable)
+- **Agent's work is done, agent is finished**
 
 ### Handover vs Session Close
-- **Close Session (Case A)**: Work finished, no immediate next steps
-- **Create Handover (Case B)**: More work exists, need new agent
+- **Close Session (Case A)**: Work finished, no immediate next steps → **Agent finished**
+- **Create Handover (Case B)**: More work exists, need new agent → **Agent finished, new agent continues**
+
+**Both cases result in agent being finished - difference is whether handover is needed.**
 
 ### Effectiveness Monitoring
 - Detection thresholds: conversation turns > 100, time > 4 hours, etc.
 - Handover recommended when thresholds exceeded
 - Queue system for managing handovers
+- **When thresholds exceeded: Agent finished, handover created for new agent**
 
 ## Files and Documentation
 
@@ -119,11 +149,13 @@
 
 ## Notes
 
+- **Pinned Principle: When a session is finished, an agent is finished (for now)**
 - This is a pinned state - may change later
 - Current implementation represents our best understanding
 - Session lifecycle is now part of standard workflow
 - Agent effectiveness monitoring is operational
 - Handover queue system is ready for use
+- **One session = One agent's complete work cycle**
 
 ## Next Steps (When Session Closes)
 
