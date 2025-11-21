@@ -13,6 +13,14 @@
 #   --response-time N         Response time in seconds (optional)
 #   --prompt-id ID            Link to prompt record (optional)
 #   --no-supabase             Disable Supabase storage (fallback to JSON only)
+#
+# Environment Variables:
+#   SUPABASE_URL              Supabase project URL (required for Supabase storage)
+#   SUPABASE_SECRET_KEY        Supabase secret key (required for Supabase storage)
+#
+#   In GitHub Actions, these are automatically set from secrets:
+#   - SUPABASE_URL: From workflow step outputs or constructed from project ref
+#   - SUPABASE_SECRET_KEY: From secrets.SUPABASE_SECRET_KEY_STAGING or secrets.SUPABASE_SECRET_KEY
 
 set -e
 
