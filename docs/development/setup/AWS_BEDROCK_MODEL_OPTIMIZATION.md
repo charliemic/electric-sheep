@@ -29,6 +29,8 @@ This script will:
 
 ### Manual Setup (Alternative)
 
+**Important**: Cursor settings are stored locally (`.cursor/settings.json` is gitignored) and must be configured manually through the UI. Each team member needs to do this once.
+
 1. **Open Cursor Settings**
    - Press `Cmd + ,` (macOS) or `Ctrl + ,` (Windows/Linux)
 
@@ -38,9 +40,10 @@ This script will:
    - **Primary Model**: `anthropic.claude-sonnet-4-5-20250929-v1:0`
    - **Save**
 
-3. **That's it!** Cursor will use Sonnet for most tasks automatically.
-
-**Note**: The AI assistant will automatically suggest model alternatives when helpful (see Cursor rule: `.cursor/rules/bedrock-model-optimization.mdc`).
+3. **That's it!** 
+   - Cursor will use Sonnet for most tasks automatically
+   - The automatic model optimization rule (`.cursor/rules/bedrock-model-optimization.mdc`) will work once Bedrock is configured
+   - The rule automatically selects optimal models based on prompt complexity (no user action needed)
 
 ### When You Need to Choose a Model
 
