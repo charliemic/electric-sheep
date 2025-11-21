@@ -157,6 +157,32 @@ else
 fi
 echo ""
 
+# 8. Check handover queue
+echo "8️⃣  Checking handover queue..."
+HANDOVER_QUEUE="docs/development/workflow/HANDOVER_QUEUE.md"
+if [ -f "$HANDOVER_QUEUE" ]; then
+    # Count pending handovers
+    PENDING_COUNT=$(grep -c "Status.*pending" "$HANDOVER_QUEUE" 2>/dev/null || echo "0")
+    if [ "$PENDING_COUNT" -gt 0 ]; then
+        echo "   ⚠️  Found $PENDING_COUNT pending handover(s)"
+        echo "   → Review: $HANDOVER_QUEUE"
+        echo "   → Consider picking up pending work before starting new work"
+        echo "   💡 Tip: Check for high-priority handovers first"
+        WARNINGS=$((WARNINGS + 1))
+    else
+        echo "   ✅ No pending handovers"
+    fi
+    
+    # Check if handover needed for current work
+    if [ -f "scripts/detect-handover-needed.sh" ]; then
+        echo "   💡 Check if handover needed: ./scripts/detect-handover-needed.sh"
+    fi
+else
+    echo "   ⚠️  Handover queue not found: $HANDOVER_QUEUE"
+    echo "   → Create if needed for handover management"
+fi
+echo ""
+
 # Summary
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║                    SUMMARY                                  ║"
@@ -167,11 +193,13 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All checks passed! You're ready to start work."
     echo ""
     echo "💡 Next steps:"
-    echo "   1. Search for existing artifacts before creating new ones"
-    echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
-    echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
-    echo "   4. Reference relevant rules: .cursor/rules/"
-    echo "   5. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo "   1. Check handover queue: $HANDOVER_QUEUE (pick up pending work if available)"
+    echo "   2. Search for existing artifacts before creating new ones"
+    echo "   3. Update coordination doc if needed: $COORDINATION_DOC"
+    echo "   4. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
+    echo "   5. Reference relevant rules: .cursor/rules/"
+    echo "   6. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo "   7. 💡 Check if handover needed: ./scripts/detect-handover-needed.sh"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."

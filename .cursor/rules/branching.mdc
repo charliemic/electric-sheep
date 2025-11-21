@@ -316,6 +316,7 @@ Please verify these are correct before cleanup proceeds.
 3. **Natural breakpoint** - Logical stopping point, context switch needed
 4. **Deployment complete** - Changes deployed and validated
 5. **Complex work completed** - Multi-step task finished, integration done
+6. **Effectiveness threshold exceeded** - Agent effectiveness degrading (see detection)
 
 **Handover document should include:**
 - Context of work done
@@ -326,3 +327,38 @@ Please verify these are correct before cleanup proceeds.
 - Open questions/decisions
 
 **See:** `docs/development/workflow/AGENT_HANDOVER_PATTERNS.md` for complete guidelines
+
+## Agent Effectiveness Monitoring
+
+**Research shows**: Agents can become less effective over time due to:
+- Context growth (conversation length, accumulated decisions)
+- Cognitive load accumulation
+- Information overload
+- Conflicting context
+
+**Detection thresholds** (handover recommended when exceeded):
+- Conversation turns > 100
+- Time elapsed > 4 hours
+- Context tokens > 100,000
+- Error rate > 3 failures
+- Repetition count > 3
+
+**Check if handover needed:**
+```bash
+./scripts/detect-handover-needed.sh
+```
+
+**Create handover:**
+```bash
+./scripts/create-handover.sh [task-name]
+```
+
+**Check handover queue:**
+- Review `docs/development/workflow/HANDOVER_QUEUE.md` before starting work
+- Pick highest priority handover if available
+- Update status when working on handover
+
+**See:** 
+- `docs/development/workflow/AGENT_EFFECTIVENESS_DEGRADATION.md` - Degradation analysis
+- `docs/development/workflow/HANDOVER_QUEUE_SYSTEM.md` - Queue system design
+- `docs/development/workflow/HANDOVER_QUEUE.md` - Active queue
