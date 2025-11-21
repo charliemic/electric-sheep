@@ -103,7 +103,6 @@ class PatternRecognizer(
                 return PatternDetectionResult(emptyList(), false, false, false, false)
             }
             
-<<<<<<< HEAD
             // Load templates from directory if provided
             val templates = loadTemplates()
             val detectedPatterns = mutableListOf<DetectedPattern>()
@@ -121,27 +120,9 @@ class PatternRecognizer(
             val hasErrorIcon = detectedPatterns.any { it.name.contains("error", ignoreCase = true) }
             val hasLoadingSpinner = detectedPatterns.any { it.name.contains("loading", ignoreCase = true) || it.name.contains("spinner", ignoreCase = true) }
             val hasSuccessCheckmark = detectedPatterns.any { it.name.contains("success", ignoreCase = true) || it.name.contains("checkmark", ignoreCase = true) }
-            val hasBlockingDialog = detectedPatterns.any { it.name.contains("dialog", ignoreCase = true) || it.name.contains("modal", ignoreCase = true) }
+            val hasBlockingDialog = detectedPatterns.any { it.name.contains("dialog", ignoreCase = true) || it.name.contains("modal", ignoreCase = true) || it.name.contains("popup", ignoreCase = true) }
             
             logger.debug("Pattern detection complete: found ${detectedPatterns.size} patterns")
-=======
-            val detectedPatterns = mutableListOf<DetectedPattern>()
-            
-            // Load and match templates
-            val templates = loadTemplates()
-            for ((name, templateMat) in templates) {
-                val matches = matchTemplate(screenshotMat, templateMat, name)
-                detectedPatterns.addAll(matches)
-            }
-            
-            // Determine high-level patterns from detected matches
-            val hasErrorIcon = detectedPatterns.any { it.name.contains("error", ignoreCase = true) }
-            val hasLoadingSpinner = detectedPatterns.any { it.name.contains("loading", ignoreCase = true) || it.name.contains("spinner", ignoreCase = true) }
-            val hasSuccessCheckmark = detectedPatterns.any { it.name.contains("success", ignoreCase = true) || it.name.contains("checkmark", ignoreCase = true) }
-            val hasBlockingDialog = detectedPatterns.any { it.name.contains("dialog", ignoreCase = true) || it.name.contains("popup", ignoreCase = true) }
-            
-            logger.debug("Detected ${detectedPatterns.size} patterns: ${detectedPatterns.map { it.name }}")
->>>>>>> origin/main
             
             PatternDetectionResult(
                 detectedPatterns = detectedPatterns,
