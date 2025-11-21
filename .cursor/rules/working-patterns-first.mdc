@@ -1,0 +1,167 @@
+# Working Patterns First - Evaluate and Abstract
+
+## CRITICAL: Use Working Approaches First
+
+**When implementing new functionality:**
+1. ✅ **Evaluate existing working patterns** - Check if a similar feature already works
+2. ✅ **Assess appropriateness** - Determine if the working approach fits your use case
+3. ✅ **Build abstractions** - If appropriate, create reusable abstractions from working patterns
+4. ✅ **Don't reinvent** - Avoid trying different approaches when a working one exists
+
+## Decision Process
+
+### Step 1: Find Working Patterns
+
+**Before implementing, search for:**
+- ✅ Similar features that already work
+- ✅ Existing abstractions or libraries
+- ✅ Patterns used elsewhere in the codebase
+- ✅ Well-documented approaches
+
+**Example:**
+- Need to execute SQL? Check how user creation works (HTTP API)
+- Need to query data? Check how feature flags work (HTTP API)
+- Need to authenticate? Check existing auth patterns
+
+### Step 2: Evaluate Appropriateness
+
+**Ask:**
+- ✅ Does the working approach fit this use case?
+- ✅ Are there any constraints that prevent using it?
+- ✅ Is it reliable and well-tested?
+- ✅ Does it have good error handling?
+
+**If YES to all:**
+- ✅ **Use the working approach**
+- ✅ **Build an abstraction** if it will be reused
+
+**If NO:**
+- ⚠️ Document why the working approach doesn't fit
+- ⚠️ Consider alternatives only if necessary
+- ⚠️ Still prefer HTTP-based approaches over CLI/direct DB when possible
+
+### Step 3: Build Abstractions
+
+**When a working pattern exists and is appropriate:**
+
+1. **Create reusable abstractions:**
+   - Extract common functionality to shared libraries
+   - Use consistent patterns across similar features
+   - Document the abstraction clearly
+
+2. **Example: User Setup vs Mood Setup**
+   - ✅ **User Setup**: Uses HTTP API (works)
+   - ❌ **Mood Setup**: Tried CLI SQL execution (failed)
+   - ✅ **Solution**: Use HTTP-based approach (migrations via `supabase db push`) or create HTTP abstraction
+
+3. **Abstraction patterns:**
+   - Shared libraries in `scripts/lib/`
+   - Consistent function naming (`*_admin_*` for admin operations)
+   - Common error handling and validation
+   - Reusable authentication patterns
+
+## Anti-Patterns to Avoid
+
+### ❌ Don't Try Different Approaches Unnecessarily
+
+**Bad:**
+- User creation uses HTTP API (works)
+- Mood data loading tries CLI SQL execution (different approach, fails)
+- Should have used HTTP-based approach from the start
+
+**Good:**
+- User creation uses HTTP API (works)
+- Mood data loading uses HTTP-based migrations (`supabase db push`)
+- Both use HTTP-based approaches consistently
+
+### ❌ Don't Ignore Working Patterns
+
+**Bad:**
+- "Let's try a different approach" without evaluating existing patterns
+- Ignoring working abstractions
+- Reinventing functionality that already works
+
+**Good:**
+- Evaluate existing patterns first
+- Use working approaches when appropriate
+- Build on existing abstractions
+
+### ❌ Don't Skip Abstraction When Appropriate
+
+**Bad:**
+- Copy-paste working code without abstraction
+- Duplicate patterns across multiple files
+- No reusable functions for common operations
+
+**Good:**
+- Extract common patterns to shared libraries
+- Create reusable abstractions
+- Use consistent patterns across codebase
+
+## Examples
+
+### Example 1: Supabase Operations
+
+**Working Pattern (User Setup):**
+```bash
+# Uses HTTP API via curl
+curl -X POST "${SUPABASE_URL}/auth/v1/admin/users" \
+  -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+  -d '{"email": "...", "password": "..."}'
+```
+
+**Should Use for Mood Setup:**
+- ✅ Use HTTP-based approach (migrations via `supabase db push`)
+- ✅ Or create HTTP abstraction for SQL execution
+- ❌ Don't use CLI SQL execution (different approach, unreliable)
+
+**Abstraction:**
+```bash
+# Shared library: scripts/lib/supabase-migration-admin.sh
+migration_admin_execute_sql_file "$sql_file" "$migration_name"
+```
+
+### Example 2: Feature Flags
+
+**Working Pattern:**
+- Uses HTTP API (PostgREST) for queries
+- Uses direct PostgreSQL connection for upserts (when available)
+- Has abstraction in `scripts/lib/supabase-postgrest.sh`
+
+**New Feature Should:**
+- ✅ Use existing PostgREST abstraction
+- ✅ Follow same HTTP-based pattern
+- ❌ Don't create new CLI-based approach
+
+## Implementation Checklist
+
+**Before implementing new functionality:**
+
+- [ ] **Search for working patterns** - Similar features that already work?
+- [ ] **Evaluate appropriateness** - Does the working approach fit?
+- [ ] **Check for abstractions** - Are there reusable libraries?
+- [ ] **Use working approach** - If appropriate, use it
+- [ ] **Build abstraction** - If it will be reused, create shared library
+- [ ] **Document decision** - Why this approach was chosen
+
+**When building abstractions:**
+
+- [ ] **Extract common patterns** - What's reusable?
+- [ ] **Create shared library** - Put in `scripts/lib/`
+- [ ] **Consistent naming** - Follow existing patterns
+- [ ] **Error handling** - Standard error handling
+- [ ] **Documentation** - Clear usage examples
+- [ ] **Update rules** - Document in cursor rules if needed
+
+## Related Patterns
+
+- **HTTP API First**: Prefer HTTP APIs over CLI/direct DB connections
+- **Abstraction Layers**: Build reusable abstractions for common operations
+- **Consistency**: Use same patterns across similar features
+- **Error Handling**: Standard error handling in abstractions
+
+## Related Documentation
+
+- `.cursor/rules/api-patterns.mdc` - API and remote data patterns
+- `scripts/lib/` - Shared libraries and abstractions
+- `USER_VS_MOOD_SETUP_COMPARISON.md` - Example of pattern mismatch

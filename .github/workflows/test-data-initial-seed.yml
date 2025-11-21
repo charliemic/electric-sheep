@@ -119,25 +119,31 @@ jobs:
           bash supabase/scripts/create-test-users.sh
       
       - name: Ensure generate_mood_score function exists
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Ensuring generate_mood_score function exists..."
-          # Read SQL file and execute via supabase db execute (linked project)
-          SQL_CONTENT=$(cat supabase/seed/functions/generate_mood_score.sql)
-          echo "$SQL_CONTENT" | supabase db execute || {
+          # Use HTTP-based approach: create temporary migration and push via supabase db push
+          # This matches the working pattern of user setup (HTTP API)
+          MIGRATION_NAME="temp_generate_mood_score_$(date +%Y%m%d%H%M%S)"
+          mkdir -p supabase/migrations
+          cp supabase/seed/functions/generate_mood_score.sql "supabase/migrations/${MIGRATION_NAME}.sql"
+          supabase db push || {
             echo "Warning: Failed to create function (may already exist)"
+            # Clean up temp migration file
+            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
           }
       
       - name: Load baseline mood data
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Loading baseline mood data (30 days)..."
-          # Read SQL file and execute via supabase db execute (linked project)
-          SQL_CONTENT=$(cat supabase/seed/002_load_baseline_mood_data.sql)
-          echo "$SQL_CONTENT" | supabase db execute || {
+          # Use HTTP-based approach: create temporary migration and push via supabase db push
+          # This matches the working pattern of user setup (HTTP API)
+          MIGRATION_NAME="temp_load_baseline_mood_data_$(date +%Y%m%d%H%M%S)"
+          mkdir -p supabase/migrations
+          cp supabase/seed/002_load_baseline_mood_data.sql "supabase/migrations/${MIGRATION_NAME}.sql"
+          supabase db push || {
             echo "Warning: Some data may already exist (this is expected if re-running)"
+            # Clean up temp migration file
+            rm -f "supabase/migrations/${MIGRATION_NAME}.sql"
           }
       
       - name: Verify data was seeded

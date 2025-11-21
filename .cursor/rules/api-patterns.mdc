@@ -4,6 +4,16 @@ alwaysApply: true
 
 # API and Remote Data Patterns
 
+## CRITICAL: Use Working Patterns First
+
+**Before implementing remote operations:**
+1. ✅ **Evaluate existing working patterns** - Check if similar operations already work (e.g., user creation via HTTP API)
+2. ✅ **Assess appropriateness** - Determine if the working approach fits your use case
+3. ✅ **Build abstractions** - If appropriate, create reusable abstractions from working patterns
+4. ✅ **Don't try different approaches** - Avoid CLI/direct DB when HTTP API works
+
+**See:** `.cursor/rules/working-patterns-first.mdc` for complete guidelines
+
 ## CRITICAL: Remote Operations Requirements
 
 **When implementing remote API calls or data fetching:**
