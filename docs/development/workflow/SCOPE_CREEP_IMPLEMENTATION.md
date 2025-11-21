@@ -1,7 +1,7 @@
 # Scope Creep Detection Implementation
 
 **Date**: 2025-01-20  
-**Purpose**: Implement scope creep detection to flag when sessions expand beyond original scope and suggest starting a new agent.
+**Purpose**: Implement scope creep detection to flag when sessions expand beyond original scope and suggest starting a new Cursor chat session.
 
 ## What Was Created
 
@@ -15,7 +15,7 @@
 - Calculates scope creep score (0-100)
 - Flags when thresholds exceeded (mild/moderate/severe)
 - Provides clear recommendations
-- Makes it easy to start a new agent
+- Makes it easy to start a new chat session
 
 **Integration**: Automatically applied to all Cursor agent sessions.
 
@@ -50,7 +50,7 @@
 **Added**:
 - Step 8: Check for scope creep in existing sessions
 - Automatic scope creep detection
-- Recommendations for starting new agent
+- Recommendations for starting new chat session
 - Integration with session tracking
 
 ## How It Works
@@ -86,8 +86,8 @@
 **Severity Levels**:
 - **NO_SCOPE_CREEP**: Natural, related expansion (continue)
 - **MILD_SCOPE_CREEP**: Some expansion, still focused (monitor)
-- **MODERATE_SCOPE_CREEP**: Significant expansion (consider new agent)
-- **SEVERE_SCOPE_CREEP**: Major expansion (strongly recommend new agent)
+- **MODERATE_SCOPE_CREEP**: Significant expansion (consider new chat session)
+- **SEVERE_SCOPE_CREEP**: Major expansion (strongly recommend new chat session)
 
 ## Usage Examples
 
@@ -116,7 +116,7 @@
 ./scripts/track-session-scope.sh check
 ```
 
-### Example 3: Starting New Agent
+### Example 3: Starting New Chat Session
 
 When scope creep is detected:
 
@@ -140,7 +140,7 @@ When scope creep is detected:
 
 **Why this helps**:
 - ✅ **Automatic detection** - No manual tracking needed
-- ✅ **Clear recommendations** - Know when to switch agents
+- ✅ **Clear recommendations** - Know when to start a new chat
 - ✅ **Easy switching** - Simple 3-step process
 - ✅ **Better focus** - Each session has clear purpose
 - ✅ **Cleaner history** - Easier to review and test
@@ -154,7 +154,7 @@ The pre-work check (`scripts/pre-work-check.sh`) now:
 - Checks for existing active sessions
 - Runs scope creep detection
 - Provides recommendations
-- Suggests starting new agent when appropriate
+- Suggests starting new chat session when appropriate
 
 ### Cursor Rules
 
@@ -189,7 +189,7 @@ Can be analyzed to:
    ./scripts/track-session-scope.sh check
    ```
 
-3. **Start new agent when recommended**:
+3. **Start new chat session when recommended**:
    - Follow the 3-step process
    - Reference previous work
    - Continue with fresh context

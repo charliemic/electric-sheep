@@ -1,6 +1,6 @@
 # Scope Creep Detection - Quick Reference
 
-**Quick guide for detecting scope creep and switching to a new agent session.**
+**Quick guide for detecting scope creep and starting a new Cursor chat session.**
 
 ## Quick Commands
 
@@ -24,16 +24,16 @@
 ./scripts/track-session-scope.sh report
 ```
 
-## When to Start a New Agent
+## When to Start a New Chat Session
 
-**Start a new agent when AI evaluation indicates:**
-- ✅ **SEVERE_SCOPE_CREEP** - Major expansion, strongly recommend new agent
-- ✅ **MODERATE_SCOPE_CREEP** - Significant expansion, consider new agent
+**Start a new Cursor chat session when AI evaluation indicates:**
+- ✅ **SEVERE_SCOPE_CREEP** - Major expansion, strongly recommend new chat
+- ✅ **MODERATE_SCOPE_CREEP** - Significant expansion, consider new chat
 - ✅ Working on unrelated feature (context switch)
 - ✅ Session duration > 3 hours with multiple concerns
 - ✅ Architecture changes beyond original scope
 
-## How to Start a New Agent
+## How to Start a New Chat Session
 
 **3 simple steps:**
 
@@ -43,8 +43,9 @@
    git commit -m "WIP: [brief description]"
    ```
 
-2. **Start new Cursor chat**:
-   - Press `Cmd+L` (Mac) or `Ctrl+L` (Windows/Linux)
+2. **Start new Cursor chat session**:
+   - Click "New Chat" in Cursor UI
+   - Or press `Cmd+L` (Mac) / `Ctrl+L` (Windows/Linux)
 
 3. **Reference previous work**:
    ```
@@ -60,12 +61,12 @@
 
 - **NO_SCOPE_CREEP**: Natural, related expansion (continue)
 - **MILD_SCOPE_CREEP**: Some expansion, still focused (monitor)
-- **MODERATE_SCOPE_CREEP**: Significant expansion (consider new agent)
-- **SEVERE_SCOPE_CREEP**: Major expansion (strongly recommend new agent)
+- **MODERATE_SCOPE_CREEP**: Significant expansion (consider new chat session)
+- **SEVERE_SCOPE_CREEP**: Major expansion (strongly recommend new chat session)
 
 **The AI evaluates context** to understand if expansion is justified or scope creep.
 
-## Benefits of New Agent
+## Benefits of New Chat Session
 
 - ✅ Fresh context (no accumulated complexity)
 - ✅ Better focus on current task
