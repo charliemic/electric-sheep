@@ -252,8 +252,10 @@ def markdown_to_html(md_file, html_file, title):
                 html += f'<pre><code class="language-{code_lang}">\n'
                 in_code_block = True
         elif in_code_block:
-            # Preserve original indentation in code blocks
-            html += line + '\n'
+            # Preserve original line content including indentation
+            # Escape HTML entities to prevent breaking the code block
+            escaped_line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            html += escaped_line + '\n'
         elif stripped.startswith('# '):
             if in_list:
                 html += '</ul>\n' if not stripped.startswith('-') else ''
