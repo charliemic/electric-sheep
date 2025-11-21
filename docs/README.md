@@ -7,7 +7,7 @@ This directory contains all project documentation organized by purpose. Document
 ## 🚀 Quick Start
 
 - **[README.md](../README.md)** - Project overview and quick start
-- **[AI_AGENT_GUIDELINES.md](../AI_AGENT_GUIDELINES.md)** - Complete guidelines for AI agents and developers
+- **[llms.txt](../llms.txt)** - AI agent navigation guide (lightweight, code-first approach)
 - **[Multi-Agent Workflow](development/workflow/MULTI_AGENT_WORKFLOW.md)** - How to work with multiple agents
 
 ## 📚 Active Documentation
@@ -132,7 +132,7 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **Testing:**
 - `docs/testing/guides/` - See [Testing Guides README](testing/guides/README.md)
 - `docs/testing/architecture/` - See [Testing Architecture README](testing/architecture/README.md)
-- `AI_AGENT_GUIDELINES.md` (Testing section)
+- `.cursor/rules/testing.mdc` - Testing requirements
 
 **Setup & Configuration:**
 - `docs/development/setup/` - See [Setup README](development/setup/README.md)
@@ -140,7 +140,7 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **CI/CD:**
 - `docs/development/ci-cd/` - See [CI/CD README](development/ci-cd/README.md)
 - `docs/CI_CD_OPTIMIZATION.md` (root level)
-- `AI_AGENT_GUIDELINES.md` (CI/CD section)
+- `.cursor/rules/cicd.mdc` - CI/CD requirements
 
 **Architecture:**
 - `docs/architecture/` - Core architecture documentation
@@ -151,9 +151,10 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **Accessibility:**
 - `docs/architecture/UX_PRINCIPLES.md`
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md`
-- `AI_AGENT_GUIDELINES.md` (Accessibility section)
+- `.cursor/rules/accessibility.mdc` - Accessibility requirements
 
 ## Related Files
 
-- **[AI_AGENT_GUIDELINES.md](../AI_AGENT_GUIDELINES.md)** - Complete agent guidelines
+- **[llms.txt](../llms.txt)** - AI agent navigation guide
 - **[.cursor/rules/](../.cursor/rules/)** - Cursor rules for automated enforcement
+- **[docs/archive/development/AI_AGENT_GUIDELINES.md](archive/development/AI_AGENT_GUIDELINES.md)** - Archived complete guidelines (replaced by llms.txt)

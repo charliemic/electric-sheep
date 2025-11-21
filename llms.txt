@@ -1,0 +1,114 @@
+# Electric Sheep - AI Agent Navigation Guide
+
+## Quick Start
+- **Rules**: `.cursor/rules/*.mdc` (19 focused rules)
+- **Architecture**: `docs/architecture/decisions/` (key decisions only)
+- **Setup**: `docs/development/setup/README.md`
+- **Code**: `app/src/main/` (read code first!)
+
+## Critical Rules (Always Apply)
+- **Branching**: `.cursor/rules/branching.mdc` - Never work on main, use feature branches
+- **Code Quality**: `.cursor/rules/code-quality.mdc` - Follow existing patterns, write tests
+- **Security**: `.cursor/rules/security.mdc` - Auth, data scoping, no secrets in code
+- **Testing**: `.cursor/rules/testing.mdc` - Keep tests passing, test new features
+
+## When You Need...
+
+### Setup & Configuration
+- **Local setup**: `docs/development/setup/README.md`
+- **Environment switching**: `docs/development/environments/RUNTIME_ENVIRONMENT_SWITCHING.md`
+- **Emulator workflow**: `.cursor/rules/emulator-workflow.mdc`
+
+### Architecture & Patterns
+- **Data layer**: `docs/architecture/DATA_LAYER_ARCHITECTURE.md`
+- **Error handling**: `.cursor/rules/error-handling.mdc` + `docs/architecture/ERROR_HANDLING.md`
+- **Authentication**: `docs/architecture/AUTHENTICATION.md`
+- **Feature flags**: `.cursor/rules/feature-flags.mdc`
+
+### Development Workflow
+- **Pre-work check**: `scripts/pre-work-check.sh` (run before starting)
+- **Branch creation**: `scripts/create-worktree.sh <name>` (for isolation)
+- **Dev reload**: `scripts/dev-reload.sh` (build, install, launch)
+- **Testing**: `./gradlew test` (run frequently)
+
+### Code Patterns (Read Code, Not Docs)
+- **ViewModel**: 
+  - Pattern: `app/src/main/.../ui/screens/mood/MoodManagementViewModel.kt`
+  - Factory: `app/src/main/.../ui/screens/mood/MoodManagementViewModelFactory.kt`
+  - See: `app/src/main/.../ui/viewmodel/` for all examples
+- **Repository**: 
+  - Example: `app/src/main/.../data/repository/MoodRepository.kt`
+  - See: `app/src/main/.../data/repository/` for all examples
+- **Error handling**: 
+  - NetworkError: `app/src/main/.../util/NetworkError.kt`
+  - Result pattern: See repository implementations
+- **UI components**: 
+  - Accessible components: `app/src/main/.../ui/components/Accessible*.kt`
+  - See: `app/src/main/.../ui/components/` for all examples
+
+## Code-First Approach
+
+**Before reading docs, read code:**
+1. Search codebase for similar implementations
+2. Read existing code patterns
+3. Check `.cursor/rules/` for requirements
+4. Read architecture docs only for decisions/context
+
+**Why?** Code is always current. Docs can be outdated.
+
+## Key Principles
+
+### For AI Agents
+- ✅ Read `llms.txt` first for navigation
+- ✅ Read code before reading docs
+- ✅ Use codebase search for patterns
+- ✅ Check rules for requirements
+- ✅ Read architecture docs for context/decisions
+
+### For Humans
+- ✅ Use `llms.txt` to find what you need
+- ✅ Read code examples, not doc examples
+- ✅ Check ADRs for decisions
+- ✅ Use scripts for automation
+
+## Common Tasks
+
+### Starting New Work
+1. Run `./scripts/pre-work-check.sh`
+2. Create branch: `git checkout -b feature/<description>`
+3. Read relevant rule: `.cursor/rules/<topic>.mdc`
+4. Search codebase for similar implementations
+5. Start coding!
+
+### Making Changes
+1. Verify branch (not on main)
+2. Run tests: `./gradlew test`
+3. Make changes
+4. Run tests again
+5. Commit frequently (WIP commits OK)
+
+### Debugging
+1. Read error message carefully
+2. Check official documentation (see `.cursor/rules/documentation-first.mdc`)
+3. Search codebase for similar issues
+4. Check logs: `adb logcat | grep -i electric`
+
+## Documentation Philosophy
+
+**Documentation is a map, not the territory:**
+- Code is the source of truth
+- Docs point to code and decisions
+- Keep docs minimal and focused
+- Auto-generate when possible
+
+## Related Resources
+
+- **Full proposal**: `docs/development/guides/LIGHTWEIGHT_DOCUMENTATION_PROPOSAL.md`
+- **Research**: `docs/learning/workflow-tools/ONLINE_BEST_PRACTICES.md`
+- **Lessons learned**: `docs/learning/blog-posts/AI_DRIVEN_CODING_LESSONS.md`
+
+---
+
+**Last updated**: 2025-01-27  
+**Version**: 1.0 (Proof of Concept)
+
