@@ -257,4 +257,4 @@ development-metrics/    # Development metrics tracking
 
 ## Contributing
 
-See [AI Agent Guidelines](AI_AGENT_GUIDELINES.md) for development best practices and coding standards.
+See [llms.txt](llms.txt) for AI agent navigation and development workflow. For detailed guidelines, see `.cursor/rules/` directory.
