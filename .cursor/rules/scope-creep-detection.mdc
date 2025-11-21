@@ -452,10 +452,38 @@ Action: Strongly recommend new chat session
 - [ ] Easy steps to start new chat session
 - [ ] Context for new chat session
 
+## Session End Requirements
+
+**CRITICAL: Before ending session, verify:**
+
+1. ✅ **PR is merged** (if PR was created)
+2. ✅ **Cleanup is complete** (run `./scripts/post-merge-cleanup.sh <pr-number>`)
+3. ✅ **On main branch** (after cleanup)
+4. ✅ **Merged branches deleted** (no stale branches)
+5. ✅ **Worktrees removed** (if used)
+
+**Use session end check:**
+```bash
+./scripts/session-end-check.sh <pr-number>
+```
+
+**This script will:**
+- Check if PR is merged
+- Run cleanup if merged
+- Verify cleanup completed
+- Report any issues
+
+**Session cannot end until:**
+- PR is merged (if created)
+- Cleanup is complete
+- Repository is in clean state
+
 ## Related Documentation
 
 - `docs/development/workflow/SCOPE_CREEP_DETECTION.md` - Complete scope creep detection guide
 - `scripts/track-session-scope.sh` - Session scope tracking script
+- `scripts/session-end-check.sh` - Session end verification script
+- `scripts/post-merge-cleanup.sh` - Post-merge cleanup automation
 - `docs/development/MULTI_AGENT_WORKFLOW.md` - Multi-agent workflow guidelines
 - `.cursor/rules/prompt-stuck-prevention.mdc` - Prompt stuck prevention (scope creep can cause stuck prompts)
 - `.cursor/rules/branching.mdc` - Branch isolation (use focused branches)
