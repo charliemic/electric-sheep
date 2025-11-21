@@ -4,19 +4,21 @@
 **Status**: Pinned (may change later)  
 **Purpose**: Document current state of agent work and session management
 
-## Core Principle: Session = Agent Lifecycle
+## Core Principle: Agent and Session Definitions
 
-**Pinned Definition:**
-- **When a session is finished, an agent is finished (for now)**
-- One session = One agent's work
-- Session end = Agent completion
-- No agent continuation across sessions (for now)
+**Pinned Definitions:**
+- **Agent** = Prompting in Cursor on repeat until archived
+- **Agent finished** = When you archive it (stop prompting that agent)
+- **Session** = The period of work/activity
+- **Session finished** = When prompting is done, you archive it
+- **Session might continue** = If work passes to another agent, session isn't complete
+- **Session complete** = All work done, no handover needed
 
 **This means:**
-- Session start = Agent starts work
-- Session work = Agent active development
-- Session end = Agent work complete, agent finished
-- New session = New agent (fresh context)
+- Agent finished = You archive the agent (stop prompting)
+- Session finished = You archive the session (stop prompting)
+- Session complete = All work done, no handover needed
+- Session continues = Handover to new agent (session not complete)
 
 ## Current State
 

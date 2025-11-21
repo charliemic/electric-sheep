@@ -1,99 +1,75 @@
 # Terminology Clarification: Session vs Agent
 
 **Date**: 2025-11-21  
-**Purpose**: Clarify what "session" and "agent finished" mean in different contexts
+**Purpose**: Define what "session" and "agent finished" mean
 
-## User's Context
+## Definitions
 
-**For you:**
-- **Session** = A prompt/conversation
-- **Session finished** = When you archive the prompt/conversation
-- **Session is ephemeral** - Each prompt is a new session
+### Agent
+- **Agent** = Prompting in Cursor on repeat until archived
+- **Agent finished** = When you archive it (stop prompting that agent)
+- **Agent is ephemeral** - Each archived agent is done
 
-## My Context (What I've Been Using)
+### Session
+- **Session** = The period of work/activity
+- **Session finished** = When prompting is done, you archive it
+- **Session might continue** = If work passes to another agent, session isn't complete
+- **Session complete** = All work done, no handover needed
 
-**What I've been calling "session":**
-- **Session** = A work period where an agent completes a piece of work
-  - Could span multiple prompts/conversations
-  - Includes: multiple commits, PR creation, deployment, cleanup
-  - Example: "AI optimization work session" = all work from start to PR merge
-  
-- **Session Start** = Agent begins work on a task
-- **Session Work** = Agent actively developing (multiple prompts)
-- **Session End** = Work complete, PR merged, cleanup done
+### Work Period
+- **Not needed** - Moot when you stop
+- Work happens during the session, but we don't need a separate term
 
-**What I've been calling "agent finished":**
-- **Agent finished** = The agent's work is complete for that work period
-  - All planned work done
-  - PR created/merged
-  - Cleanup complete
-  - Agent's responsibility ends
+## What This Means
 
-## The Mismatch
+**Agent Finished:**
+- You archive the agent (stop prompting)
+- That specific agent instance is done
+- Agent's work might be complete, or might need handover
 
-**Problem:**
-- You: Session = single prompt (archived when done)
-- Me: Session = work period (multiple prompts, PR, cleanup)
+**Session Finished:**
+- You archive the session (stop prompting)
+- Session might be complete (all work done)
+- Or session might continue with new agent (handover)
 
-**This creates confusion:**
-- I say "session finished" meaning "work period complete"
-- You hear "session finished" meaning "prompt archived"
-- These are different things!
+**Session Complete:**
+- All work is done
+- No handover needed
+- Session is finished AND complete
 
-## What I Actually Mean
-
-**When I say "session finished":**
-- I mean: The agent's work period is complete
-- This includes: All commits done, PR ready/merged, cleanup done
-- This is NOT about archiving a prompt
-
-**When I say "agent finished":**
-- I mean: The agent's work is complete
-- The agent has finished its assigned task
-- No more work needed from this agent
-
-## Questions to Align
-
-1. **What should we call a work period?** (multiple prompts, commits, PR)
-   - Option A: "Work period" or "Task period"
-   - Option B: "Agent lifecycle" or "Agent work cycle"
-   - Option C: Something else?
-
-2. **What should we call a single prompt/conversation?**
-   - Keep "session" for this?
-   - Or use "conversation" or "prompt"?
-
-3. **What does "agent finished" mean?**
-   - Agent's work is complete?
-   - Agent's prompt is archived?
-   - Both?
-
-## Proposed Alignment
-
-**Terminology:**
-- **Session** = Single prompt/conversation (your definition) ✅
-- **Work Period** = Multiple prompts, commits, PR (what I was calling "session")
-- **Agent Finished** = Agent's work period is complete (all work done, PR merged)
-
-**So:**
-- One **work period** = Multiple **sessions** (prompts)
-- **Work period finished** = Agent finished
-- **Session finished** = Prompt archived (your definition)
+**Session Incomplete (Handover):**
+- Work not done, but agent finished
+- Handover created for new agent
+- Session continues with new agent
 
 ## Current State
 
-**In my context:**
-- **Work period**: AI optimization work (23 commits, PR #41)
-- **Status**: Work period ready to finish (PR pending merge)
-- **Agent finished**: Will happen when PR merged and cleanup done
+**Current situation:**
+- **Agent**: This agent instance (prompting in Cursor)
+- **Session**: AI optimization work (23 commits, PR #41)
+- **Agent finished**: When you archive this agent
+- **Session status**: 
+  - If work complete → Session complete, agent finished
+  - If work incomplete → Session continues, handover needed
 
-**In your context:**
-- **Session**: This current prompt/conversation
-- **Session finished**: When you archive this prompt
+**The pinned principle:**
+- "When a session is finished, an agent is finished" 
+- **Means**: When you archive the session, you archive the agent
+- **But**: Session might continue with new agent if handover needed
 
-**The work period spans multiple sessions (prompts), but the agent finishes when the work period is complete.**
+## Clarification Needed
+
+**The pinned principle needs updating:**
+- Current: "When session finished, agent finished"
+- Reality: Session might continue with new agent (handover)
+- Better: "When agent finished, session might continue with new agent"
+
+**Or:**
+- "Session finished" = You archive it (work done or not)
+- "Session complete" = All work done, no handover
+- "Session continues" = Handover to new agent
 
 ---
 
-**Next Step**: Let's align terminology so we're both clear on what we mean!
+**Next Step**: Update the pinned principle to match these definitions!
 
