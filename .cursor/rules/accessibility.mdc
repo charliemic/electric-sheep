@@ -30,7 +30,7 @@ alwaysApply: true
 - ✅ **Semantic Roles**: Use appropriate semantic roles (Button, Image, etc.)
 - ✅ **State Announcements**: Announce dynamic state changes (loading, errors, success)
 - ✅ **Error Annotations**: Use `error()` semantics for error states
-- ✅ **Live Regions**: Use `liveRegion` for dynamic content updates
+- ✅ **Live Regions (CRITICAL)**: **ALWAYS use `liveRegion` for content that changes dynamically** (quotes, status messages, dynamic text, etc.)
 
 ## Component Accessibility Checklist
 
@@ -109,6 +109,28 @@ Text(
         liveRegion = LiveRegionMode.Polite
         contentDescription = "Error: $errorMessage"
     }
+)
+```
+
+### Accessible Dynamic Content (REQUIRED)
+```kotlin
+// ✅ GOOD: Dynamic content with live region
+var quoteText by remember { mutableStateOf<String?>(null) }
+
+quoteText?.let { text ->
+    Text(
+        text = text,
+        modifier = Modifier.semantics {
+            liveRegion = LiveRegionMode.Polite  // REQUIRED for dynamic content
+            contentDescription = "Inspirational quote: $text"
+        }
+    )
+}
+
+// ❌ BAD: Dynamic content without live region
+Text(
+    text = quoteText ?: "",
+    // Missing liveRegion - screen readers won't announce updates
 )
 ```
 

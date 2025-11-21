@@ -44,7 +44,7 @@ alwaysApply: true
   - Screen edge padding: `Spacing.md` (16.dp)
   - Element gaps: `Spacing.sm` (8.dp) or `Spacing.md` (16.dp)
   - Icon to text: `Spacing.xs` (4.dp)
-- ✅ **Never Hardcode Spacing**: Use `Spacing` object, not magic numbers
+- ✅ **CRITICAL: Never Hardcode Spacing**: **NEVER use hardcoded spacing values like `16.dp`, `24.dp`, etc.** - ALWAYS use `Spacing` object values
 
 **Location:** `app/src/main/.../ui/theme/Spacing.kt`
 
@@ -139,7 +139,7 @@ alwaysApply: true
 ### Before Creating/Modifying UI
 - [ ] Primary task clearly defined and prominent
 - [ ] Information hierarchy is clear (headings, body, metadata)
-- [ ] Spacing uses standard `Spacing` object values
+- [ ] **No hardcoded spacing values** - ALL spacing uses `Spacing` object values
 - [ ] Colors come from `MaterialTheme.colorScheme`
 - [ ] Typography follows hierarchy standards
 - [ ] Buttons have consistent width on same screen
@@ -199,15 +199,26 @@ Column(
 }
 ```
 
-### Bad: Inconsistent Spacing
+### Bad: Inconsistent Spacing (NEVER DO THIS)
 ```kotlin
-// Don't mix different spacing values without reason
+// ❌ BAD: Hardcoded spacing values
 Column {
     Text("Title")
-    Spacer(Modifier.height(8.dp))  // Use Spacing.sm instead
+    Spacer(Modifier.height(8.dp))  // ❌ Use Spacing.sm instead
     Text("Subtitle")
-    Spacer(Modifier.height(24.dp))  // Use Spacing.lg instead
+    Spacer(Modifier.height(24.dp))  // ❌ Use Spacing.lg instead
     Text("Content")
+    modifier = Modifier.padding(bottom = 24.dp)  // ❌ Use Spacing.lg instead
+}
+
+// ✅ GOOD: Use Spacing object
+Column {
+    Text("Title")
+    Spacer(Modifier.height(Spacing.sm))  // ✅ Correct
+    Text("Subtitle")
+    Spacer(Modifier.height(Spacing.lg))  // ✅ Correct
+    Text("Content")
+    modifier = Modifier.padding(bottom = Spacing.lg)  // ✅ Correct
 }
 ```
 
