@@ -123,8 +123,9 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Ensuring generate_mood_score function exists..."
-          # Use supabase db execute with SQL content as string
-          cat supabase/seed/functions/generate_mood_score.sql | supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" || {
+          # Read SQL file and execute via supabase db execute (linked project)
+          SQL_CONTENT=$(cat supabase/seed/functions/generate_mood_score.sql)
+          echo "$SQL_CONTENT" | supabase db execute || {
             echo "Warning: Failed to create function (may already exist)"
           }
       
@@ -133,8 +134,9 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
         run: |
           echo "Loading baseline mood data (30 days)..."
-          # Use supabase db execute with SQL file content
-          cat supabase/seed/002_load_baseline_mood_data.sql | supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" || {
+          # Read SQL file and execute via supabase db execute (linked project)
+          SQL_CONTENT=$(cat supabase/seed/002_load_baseline_mood_data.sql)
+          echo "$SQL_CONTENT" | supabase db execute || {
             echo "Warning: Some data may already exist (this is expected if re-running)"
           }
       
@@ -145,7 +147,7 @@ jobs:
           echo "Verifying test data was seeded..."
           # Query to check test users and their mood entries
           echo "Running verification query..."
-          supabase db execute --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF || github.event.inputs.project_ref }}.supabase.co:5432/postgres" "
+          supabase db execute "
             SELECT 
               u.email,
               COUNT(m.id) as entry_count,
