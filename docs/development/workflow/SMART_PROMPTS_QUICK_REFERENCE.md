@@ -2,7 +2,11 @@
 
 ## Core Concept
 
-**AI uses sub-prompt to evaluate context** → Decides prompt level → Executes appropriately
+**AI uses sub-prompt to evaluate context** → Detects multi-agent context → Decides prompt level → Executes appropriately
+
+**Project Context:**
+- **Learning project** - No real end users
+- **More aggressive optimization** - 85% routine operations → PROCEED (vs. 70% for production)
 
 ## Sub-Prompt (Internal AI Evaluation)
 
@@ -30,6 +34,7 @@ Decide: PROCEED / QUICK_CONFIRM / FULL_REVIEW / BLOCK
 ## Context Factors (For AI Evaluation)
 
 The AI considers:
+- **Multi-agent context**: 2+ agents active? (lowers thresholds, 20-45 sec context switching cost)
 - **Change scope**: Single file vs system-wide
 - **Change type**: Docs vs feature vs config
 - **Dependencies**: Isolated vs core infrastructure
@@ -37,6 +42,7 @@ The AI considers:
 - **Coordination**: Other agents, shared files
 - **Complexity**: Simple vs complex
 - **User confidence**: Explicit vs uncertain
+- **Learning project**: No real users = more aggressive optimization
 
 ## Key Principles
 
@@ -45,7 +51,21 @@ The AI considers:
 3. **Context-aware** - Considers full situation
 4. **Adaptive** - Learns from patterns
 
+## Learning Project Thresholds
+
+**More Aggressive (vs. Production):**
+- **85% commits** → PROCEED (vs. 70% for production)
+- **80% pushes** → PROCEED (vs. 50% for production)
+- **70% CI/CD changes** → PROCEED (vs. 50% QUICK_CONFIRM for production)
+
+**Still Protected:**
+- Main branch (rule-required, always block)
+- Shared files (coordination needed)
+- Security (still need review)
+- Major architecture (learning opportunity)
+
 ## Full Documentation
 
-See `docs/development/workflow/SMART_PROMPTS_ARCHITECTURE.md` for complete architecture.
+- `docs/development/workflow/SMART_PROMPTS_ARCHITECTURE.md` - Complete architecture
+- `docs/development/workflow/SMART_PROMPTS_COMPREHENSIVE_OPTIMIZATION.md` - Optimization analysis (learning project context)
 
