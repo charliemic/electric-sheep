@@ -25,11 +25,13 @@ jobs:
       - name: Get Supabase URL
         id: supabase-url
         run: |
-          # Determine environment (staging for PRs, production for main)
-          if [ "${{ github.base_ref }}" = "main" ]; then
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-          else
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          # Metrics collection ALWAYS uses production (real data)
+          # Schema deployments go through staging first, but metrics data goes to production
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+          
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: SUPABASE_PROJECT_REF secret is not set"
+            exit 1
           fi
           
           # Try to get from linked project, or construct from project ID
@@ -44,12 +46,12 @@ jobs:
           fi
           
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
-          echo "Using Supabase URL: $SUPABASE_URL"
+          echo "Using Supabase URL (PRODUCTION): $SUPABASE_URL"
       
       - name: Setup environment
         env:
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SECRET_KEY: ${{ github.base_ref == 'main' && secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           echo "SUPABASE_URL=$SUPABASE_URL" >> $GITHUB_ENV
           echo "SUPABASE_SECRET_KEY=$SUPABASE_SECRET_KEY" >> $GITHUB_ENV
@@ -102,12 +104,13 @@ jobs:
       - name: Get Supabase URL
         id: supabase-url
         run: |
-          # Determine environment based on branch
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
-          if [ "$BRANCH" = "main" ]; then
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
-          else
-            PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF }}"
+          # Metrics collection ALWAYS uses production (real data)
+          # Schema deployments go through staging first, but metrics data goes to production
+          PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF }}"
+          
+          if [ -z "$PROJECT_REF" ]; then
+            echo "Error: SUPABASE_PROJECT_REF secret is not set"
+            exit 1
           fi
           
           # Try to get from linked project, or construct from project ID
@@ -122,12 +125,12 @@ jobs:
           fi
           
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
-          echo "Using Supabase URL: $SUPABASE_URL"
+          echo "Using Supabase URL (PRODUCTION): $SUPABASE_URL"
       
       - name: Setup environment
         env:
           SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
-          SUPABASE_SECRET_KEY: ${{ github.event.workflow_run.head_branch == 'main' && secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           echo "SUPABASE_URL=$SUPABASE_URL" >> $GITHUB_ENV
           echo "SUPABASE_SECRET_KEY=$SUPABASE_SECRET_KEY" >> $GITHUB_ENV
