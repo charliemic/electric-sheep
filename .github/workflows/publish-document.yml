@@ -1,8 +1,12 @@
 name: Publish Document to GitHub Pages
 
 on:
-  # Publish documents based on tags
-  # Format: publish-<doc-name>-v<version> or publish-<doc-name>-latest
+  # Publish documents based on branch pushes
+  # Format: publish/<doc-name> or publish/<doc-name>-v<version>
+  push:
+    branches:
+      - 'publish/**'        # Any branch starting with publish/ (e.g., publish/cognitive-journey)
+  # Also support tags for backward compatibility
   push:
     tags:
       - 'publish-*-v*'      # Versioned documents (e.g., publish-cognitive-journey-v1.0.0)
@@ -58,6 +62,23 @@ jobs:
             DOC_NAME="${{ github.event.inputs.document }}"
             VERSION="${{ github.event.inputs.version }}"
             SOURCE_PATH="${{ github.event.inputs.source_path }}"
+          elif [[ "${{ github.ref_name }}" =~ ^publish/ ]]; then
+            # Extract from branch: publish/<doc-name> or publish/<doc-name>-v<version>
+            BRANCH="${{ github.ref_name }}"
+            # Remove 'publish/' prefix
+            REST="${BRANCH#publish/}"
+            # Check if ends with -v* (versioned) or treat as latest
+            if [[ "$REST" =~ -(v.+)$ ]]; then
+              # Extract version (e.g., v1.0.0)
+              VERSION="${BASH_REMATCH[1]}"
+              # Remove version suffix to get doc name
+              DOC_NAME="${REST%-${VERSION}}"
+            else
+              DOC_NAME="$REST"
+              VERSION="latest"
+            fi
+            # Try to find document automatically
+            SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
           elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
             # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
             TAG="${{ github.ref_name }}"
@@ -80,7 +101,8 @@ jobs:
             # Try to find document automatically
             SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
           else
-            echo "Error: Could not parse tag or inputs"
+            echo "Error: Could not parse branch/tag or inputs"
+            echo "Expected: publish/<doc-name> branch or publish-<doc-name>-* tag"
             exit 1
           fi
           
