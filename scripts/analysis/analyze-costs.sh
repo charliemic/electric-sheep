@@ -97,8 +97,12 @@ TOTAL_INTERACTIONS=0
 # Use case statements instead of associative arrays (bash 3.2 compatibility)
 # We'll use a simpler approach with temporary files or direct calculation
 
+# Temporary files for aggregation (bash 3.2 compatible - no associative arrays)
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf $TEMP_DIR" EXIT
+
+# Aggregate data from Supabase
 if [ "$USE_SUPABASE" = true ]; then
-    # Query Supabase
     echo "Querying Supabase for agent usage data..." >&2
     
     # Calculate date filter
@@ -116,31 +120,88 @@ if [ "$USE_SUPABASE" = true ]; then
     
     # Query Supabase via PostgREST
     FILTER="created_at=gte.$CUTOFF_DATE"
-    SELECT="agent_model,agent_company,agent_provider,task_type,total_cost,total_tokens"
+    SELECT="agent_model,agent_company,agent_provider,task_type,total_cost,total_tokens,input_tokens,output_tokens"
     
     if [ -f "$LIB_DIR/supabase-postgrest.sh" ]; then
         source "$LIB_DIR/supabase-postgrest.sh"
-        postgrest_query "agent_usage" "$FILTER" "$SELECT"
-        
-        if [ -n "$POSTGREST_QUERY_RESULT" ]; then
-            # Process Supabase results using jq or python
-            if command -v jq &> /dev/null; then
-                echo "$POSTGREST_QUERY_RESULT" | jq -r '.[] | "\(.agent_model)|\(.agent_company)|\(.agent_provider)|\(.task_type)|\(.total_cost)|\(.total_tokens)"' | while IFS='|' read -r MODEL COMPANY PROVIDER TASK_TYPE COST TOKENS; do
-                    TOTAL_COST=$(echo "$TOTAL_COST + $COST" | bc)
-                    TOTAL_INTERACTIONS=$((TOTAL_INTERACTIONS + 1))
-                    # Aggregate logic here (simplified - would need proper aggregation)
-                done
+        if postgrest_query "agent_usage" "$FILTER" "$SELECT"; then
+            if [ -n "$POSTGREST_QUERY_RESULT" ] && [ "$POSTGREST_QUERY_RESULT" != "[]" ]; then
+                # Process Supabase results using jq
+                if command -v jq &> /dev/null; then
+                    # Aggregate using jq and write to temp files
+                    echo "$POSTGREST_QUERY_RESULT" | jq -r '.[] | "\(.agent_model)|\(.agent_company)|\(.agent_provider)|\(.task_type)|\(.total_cost)|\(.total_tokens)|\(.input_tokens)|\(.output_tokens)"' | while IFS='|' read -r MODEL COMPANY PROVIDER TASK_TYPE COST TOKENS INPUT OUTPUT; do
+                        # Skip invalid entries
+                        if [ -z "$COST" ] || [ "$COST" = "null" ] || [ "$COST" = "0" ]; then
+                            continue
+                        fi
+                        
+                        # Accumulate totals
+                        TOTAL_COST=$(echo "$TOTAL_COST + $COST" | bc)
+                        TOTAL_INTERACTIONS=$((TOTAL_INTERACTIONS + 1))
+                        
+                        # Aggregate by model (using temp files)
+                        MODEL_FILE="$TEMP_DIR/model_${MODEL//\//_}"
+                        if [ -f "$MODEL_FILE" ]; then
+                            OLD_COST=$(cat "$MODEL_FILE" | cut -d'|' -f1)
+                            OLD_COUNT=$(cat "$MODEL_FILE" | cut -d'|' -f2)
+                            NEW_COST=$(echo "$OLD_COST + $COST" | bc)
+                            NEW_COUNT=$((OLD_COUNT + 1))
+                            echo "$NEW_COST|$NEW_COUNT" > "$MODEL_FILE"
+                        else
+                            echo "$COST|1" > "$MODEL_FILE"
+                        fi
+                        
+                        # Aggregate by company
+                        COMPANY_FILE="$TEMP_DIR/company_${COMPANY//\//_}"
+                        if [ -f "$COMPANY_FILE" ]; then
+                            OLD_COST=$(cat "$COMPANY_FILE" | cut -d'|' -f1)
+                            OLD_COUNT=$(cat "$COMPANY_FILE" | cut -d'|' -f2)
+                            NEW_COST=$(echo "$OLD_COST + $COST" | bc)
+                            NEW_COUNT=$((OLD_COUNT + 1))
+                            echo "$NEW_COST|$NEW_COUNT" > "$COMPANY_FILE"
+                        else
+                            echo "$COST|1" > "$COMPANY_FILE"
+                        fi
+                        
+                        # Aggregate by task type
+                        TASK_FILE="$TEMP_DIR/task_${TASK_TYPE//\//_}"
+                        if [ -f "$TASK_FILE" ]; then
+                            OLD_COST=$(cat "$TASK_FILE" | cut -d'|' -f1)
+                            OLD_COUNT=$(cat "$TASK_FILE" | cut -d'|' -f2)
+                            NEW_COST=$(echo "$OLD_COST + $COST" | bc)
+                            NEW_COUNT=$((OLD_COUNT + 1))
+                            echo "$NEW_COST|$NEW_COUNT" > "$TASK_FILE"
+                        else
+                            echo "$COST|1" > "$TASK_FILE"
+                        fi
+                        
+                        # Aggregate by provider
+                        PROVIDER_FILE="$TEMP_DIR/provider_${PROVIDER//\//_}"
+                        if [ -f "$PROVIDER_FILE" ]; then
+                            OLD_COST=$(cat "$PROVIDER_FILE" | cut -d'|' -f1)
+                            OLD_COUNT=$(cat "$PROVIDER_FILE" | cut -d'|' -f2)
+                            NEW_COST=$(echo "$OLD_COST + $COST" | bc)
+                            NEW_COUNT=$((OLD_COUNT + 1))
+                            echo "$NEW_COST|$NEW_COUNT" > "$PROVIDER_FILE"
+                        else
+                            echo "$COST|1" > "$PROVIDER_FILE"
+                        fi
+                    done
+                else
+                    echo "Warning: jq not found, cannot parse Supabase results" >&2
+                    echo "Install jq or use --source json to analyze local JSON files" >&2
+                    USE_SUPABASE=false
+                fi
             else
-                echo "Warning: jq not found, cannot parse Supabase results"
-                echo "Install jq or use --source json to analyze local JSON files"
+                echo "No data found in Supabase for period: $PERIOD" >&2
                 USE_SUPABASE=false
             fi
         else
-            echo "Warning: No data returned from Supabase"
+            echo "Warning: Failed to query Supabase, falling back to JSON" >&2
             USE_SUPABASE=false
         fi
     else
-        echo "Warning: supabase-postgrest.sh not found, falling back to JSON"
+        echo "Warning: supabase-postgrest.sh not found, falling back to JSON" >&2
         USE_SUPABASE=false
     fi
 fi
