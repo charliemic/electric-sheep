@@ -126,9 +126,34 @@ echo "7️⃣  Checking working directory..."
 if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
     echo "   ⚠️  WARNING: You have uncommitted changes"
     echo "   → Commit or stash before starting new work"
+    echo "   💡 Tip: Use WIP commits frequently to prevent work loss"
+    echo "   → Quick commit: git add -A && git commit -m \"WIP: <description>\""
     WARNINGS=$((WARNINGS + 1))
 else
     echo "   ✅ Working directory is clean"
+fi
+echo ""
+
+# 7.5. Reminder about frequent commits
+echo "7️⃣.5️⃣  Frequent commits safety net..."
+if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
+    # Check last commit time
+    LAST_COMMIT_TIME=$(git log -1 --format=%ct 2>/dev/null || echo "0")
+    CURRENT_TIME=$(date +%s)
+    TIME_SINCE_COMMIT=$((CURRENT_TIME - LAST_COMMIT_TIME))
+    
+    if [ "$TIME_SINCE_COMMIT" -gt 1800 ]; then  # 30 minutes
+        echo "   💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+        echo "   → Last commit: $((TIME_SINCE_COMMIT / 60)) minutes ago"
+        echo "   → Use WIP commits for incomplete work: git commit -m \"WIP: <description>\""
+        echo "   → Check .cursor/rules/frequent-commits.mdc for guidelines"
+    else
+        echo "   ✅ Good commit frequency (last commit < 30 min ago)"
+    fi
+else
+    echo "   💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo "   → Use WIP commits for incomplete work"
+    echo "   → Check .cursor/rules/frequent-commits.mdc for guidelines"
 fi
 echo ""
 
@@ -146,6 +171,7 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
     echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
     echo "   4. Reference relevant rules: .cursor/rules/"
+    echo "   5. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."
