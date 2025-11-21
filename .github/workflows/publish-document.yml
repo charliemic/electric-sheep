@@ -8,8 +8,7 @@ on:
       - 'main'              # Publish from main branch
     paths:
       - 'docs/**/*.md'      # Only trigger when markdown files in docs/ change
-  # Also support tags for backward compatibility
-  push:
+    # Also support tags for backward compatibility
     tags:
       - 'publish-*-v*'      # Versioned documents (e.g., publish-cognitive-journey-v1.0.0)
       - 'publish-*-latest'   # Latest version (e.g., publish-cognitive-journey-latest)
