@@ -3,10 +3,14 @@
 --
 -- It checks if data exists and only inserts missing data.
 -- Data is generated up until yesterday (to avoid partial day data).
-
--- Ensure the generate_mood_score function exists
--- Note: Function should be created separately before running this script
--- Or include the function SQL inline here if needed
+--
+-- Prerequisites:
+--   1. generate_mood_score() function must exist
+--      Run: supabase db execute < supabase/seed/functions/generate_mood_score.sql
+--      Or use: ./supabase/scripts/seed-test-data.sh (creates function automatically)
+--   2. Test users must exist in auth.users
+--      Run: ./supabase/scripts/create-test-users.sh
+--      Or use: ./supabase/scripts/seed-test-data.sh (creates users automatically)
 
 DO $$
 DECLARE
@@ -22,6 +26,7 @@ DECLARE
     user_exists BOOLEAN;
     data_exists BOOLEAN;
     entries_created INTEGER := 0;
+    actual_user_id UUID;
     
     -- Test users with their patterns
     test_users CURSOR FOR
@@ -50,26 +55,31 @@ BEGIN
     -- Process each test user
     FOR test_user IN test_users
     LOOP
-        -- Check if user exists
+        -- Check if user exists by email (users have UUIDs, not string IDs)
         SELECT EXISTS(
             SELECT 1 FROM auth.users 
-            WHERE id::TEXT = test_user.user_id
+            WHERE email = test_user.email
         ) INTO user_exists;
         
         IF NOT user_exists THEN
-            RAISE WARNING 'User % does not exist. Skipping. Run create-test-users.sh first.', test_user.user_id;
+            RAISE WARNING 'User with email % does not exist. Skipping. Run create-test-users.sh first.', test_user.email;
             CONTINUE;
         END IF;
+        
+        -- Get the actual user UUID
+        SELECT id INTO actual_user_id
+        FROM auth.users
+        WHERE email = test_user.email;
         
         -- Check if data already exists for this user
         SELECT EXISTS(
             SELECT 1 FROM public.moods
-            WHERE user_id::TEXT = test_user.user_id
+            WHERE user_id = actual_user_id
             LIMIT 1
         ) INTO data_exists;
         
         IF data_exists THEN
-            RAISE NOTICE 'Data already exists for user %. Skipping.', test_user.user_id;
+            RAISE NOTICE 'Data already exists for user %. Skipping.', test_user.email;
             CONTINUE;
         END IF;
         
@@ -100,7 +110,7 @@ BEGIN
                 updated_at
             ) VALUES (
                 mood_entry_id,
-                test_user.user_id::UUID,
+                actual_user_id,
                 mood_score,
                 mood_timestamp,
                 mood_timestamp,
