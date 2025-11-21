@@ -41,10 +41,11 @@ alwaysApply: true
 ## Test Requirements
 
 ### When Implementing Features
-- ✅ **Add Tests**: Write tests alongside implementation, not after
-- ✅ **Test New Functionality**: Every new feature needs tests
+- ✅ **REQUIRED: Add Tests**: Write tests alongside implementation, not after
+- ✅ **REQUIRED: Test New Functionality**: Every new feature, class, and function MUST have tests
 - ✅ **Test Edge Cases**: Test boundary conditions, null values, and error scenarios
 - ✅ **Test Error Handling**: Test error paths and failure scenarios
+- ✅ **Test Coverage**: Aim for >80% code coverage for new code
 
 ### Test Structure (AAA Pattern)
 ```kotlin
@@ -80,12 +81,13 @@ fun `should do something when condition is met`() {
 - Fix failing tests immediately
 
 ### DON'T ❌
-- Don't skip tests for non-trivial code
+- **NEVER skip tests** - All new functionality MUST have tests (not just "non-trivial" code)
 - Don't leave tests in a failing state
 - Don't test implementation details
 - Don't create brittle tests that break on refactoring
 - Don't accumulate test failures
 - Don't commit failing tests
+- Don't create PRs without tests for new functionality
 
 ## Refactoring with Tests
 
