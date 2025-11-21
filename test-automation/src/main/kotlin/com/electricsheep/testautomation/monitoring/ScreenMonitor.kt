@@ -33,12 +33,8 @@ class ScreenMonitor(
     private val screenshotDir: File,
     private val monitoringIntervalMs: Long = 1000, // Default: 1 second
     private val testStartTime: Long = System.currentTimeMillis(),
-<<<<<<< HEAD
     private val attentionManager: AttentionManager? = null, // Optional attention manager
     private val screenEvaluator: ScreenEvaluator? = null // Optional screen evaluator for visual analysis
-=======
-    private val attentionManager: AttentionManager? = null // Optional attention manager
->>>>>>> origin/main
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private var monitoringJob: Job? = null
@@ -68,7 +64,7 @@ class ScreenMonitor(
                 while (isMonitoring) {
                     // Capture and analyze screen state
                     val currentState = captureAndAnalyzeState()
-<<<<<<< HEAD
+                    
                     // Only log meaningful state changes (errors, loading, screen names)
                     if (currentState.hasErrors && currentState.errorMessages.isNotEmpty()) {
                         logger.info("⚠️  Error on screen: ${currentState.errorMessages.first()}")
@@ -83,12 +79,6 @@ class ScreenMonitor(
                         if (fromScreen != toScreen) {
                             logger.info("🔄 Screen changed: $fromScreen → $toScreen")
                         }
-=======
-                    
-                    // Report state change if detected
-                    if (currentState.hasChangedFrom(lastState)) {
-                        logger.info("🔄 State change detected: ${lastState?.screenName ?: "unknown"} → ${currentState.screenName ?: "unknown"}")
->>>>>>> origin/main
                         if (currentState.hasErrors && currentState.errorMessages.isNotEmpty()) {
                             logger.warn("⚠️ Monitor detected errors: ${currentState.errorMessages.joinToString("; ")}")
                         }
