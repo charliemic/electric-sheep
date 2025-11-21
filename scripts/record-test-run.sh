@@ -72,8 +72,9 @@ JSON_PAYLOAD=$(cat <<EOF
 EOF
 )
 
-# Insert into metrics.test_runs (PostgREST uses schema-qualified table name)
-if postgrest_insert "metrics.test_runs" "$JSON_PAYLOAD" "true"; then
+# Insert into test_runs (PostgREST searches exposed schemas - metrics schema is in config.toml)
+# Note: PostgREST doesn't use schema-qualified names in URLs, just table name
+if postgrest_insert "test_runs" "$JSON_PAYLOAD" "true"; then
     # Calculate pass rate for display
     if [ "$TOTAL_TESTS" -gt 0 ]; then
         PASS_RATE=$(echo "scale=2; $PASSED_TESTS * 100 / $TOTAL_TESTS" | bc)

@@ -63,8 +63,9 @@ JSON_PAYLOAD=$(cat <<EOF
 EOF
 )
 
-# Insert into metrics.deployment_events (PostgREST uses schema-qualified table name)
-if postgrest_insert "metrics.deployment_events" "$JSON_PAYLOAD" "true"; then
+# Insert into deployment_events (PostgREST searches exposed schemas - metrics schema is in config.toml)
+# Note: PostgREST doesn't use schema-qualified names in URLs, just table name
+if postgrest_insert "deployment_events" "$JSON_PAYLOAD" "true"; then
     echo -e "${GREEN}✓ Recorded deployment: $DEPLOYMENT_ID ($ENVIRONMENT/$STATUS)${NC}"
     exit 0
 else

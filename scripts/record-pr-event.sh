@@ -66,8 +66,9 @@ JSON_PAYLOAD=$(cat <<EOF
 EOF
 )
 
-# Insert into metrics.pr_events (PostgREST uses schema-qualified table name)
-if postgrest_insert "metrics.pr_events" "$JSON_PAYLOAD" "true"; then
+# Insert into pr_events (PostgREST searches exposed schemas - metrics schema is in config.toml)
+# Note: PostgREST doesn't use schema-qualified names in URLs, just table name
+if postgrest_insert "pr_events" "$JSON_PAYLOAD" "true"; then
     echo -e "${GREEN}✓ Recorded PR event: $EVENT_TYPE for PR #$PR_NUMBER${NC}"
     exit 0
 else
