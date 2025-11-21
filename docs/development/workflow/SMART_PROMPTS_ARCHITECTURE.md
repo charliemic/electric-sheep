@@ -7,6 +7,17 @@
 
 Instead of file-based rules, this architecture uses **AI context evaluation** to assess risk and determine when prompts are needed. The AI agent evaluates multiple contextual factors holistically to make intelligent decisions about workflow controls.
 
+**Project Context:**
+- **Learning project** - No real end users
+- **Public but experimental** - Safety less critical than production
+- **Learning-focused** - Prompts that teach are valuable, but overhead still matters
+- **Experimentation encouraged** - More aggressive optimization justified
+
+**Impact on Thresholds:**
+- **More aggressive PROCEED** - 85% of routine operations (vs. 70% for production)
+- **Lower risk tolerance** - Can experiment freely
+- **Still protect critical** - Main branch, security, shared files
+
 ## Core Principle
 
 **Context-Driven, Not Rule-Driven**

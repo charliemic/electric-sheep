@@ -13,6 +13,12 @@ alwaysApply: true
 4. ✅ Never merge if CI checks fail
 5. ✅ Fix CI failures before requesting review
 
+**Smart Prompts Context:**
+- **Learning project**: 70% of routine CI/CD changes → PROCEED automatically (no prompt)
+- **Routine fixes**: Version updates, config tweaks → PROCEED
+- **Major changes**: New workflows, security → FULL_REVIEW
+- See `.cursor/rules/smart-prompts.mdc` for evaluation criteria
+
 ## CI/CD Workflow
 
 ### Local Development → CI/CD Progression
