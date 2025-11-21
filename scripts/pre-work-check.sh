@@ -171,6 +171,45 @@ else
 fi
 echo ""
 
+# 8. Check for scope creep (existing session)
+echo "8️⃣  Checking for scope creep..."
+if [ -f "scripts/track-session-scope.sh" ]; then
+    SESSIONS_DIR="development-metrics/sessions"
+    CURRENT_SESSION_FILE="$SESSIONS_DIR/.current-session-id"
+    
+    if [ -f "$CURRENT_SESSION_FILE" ]; then
+        SESSION_ID=$(cat "$CURRENT_SESSION_FILE")
+        SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
+        
+        if [ -f "$SESSION_FILE" ]; then
+            echo "   → Active session detected: $SESSION_ID"
+            echo "   → Checking for scope creep..."
+            echo ""
+            
+            # Run scope creep check (suppress errors if script has issues)
+            if ./scripts/track-session-scope.sh check 2>/dev/null; then
+                echo ""
+                echo "   💡 To start a new chat session:"
+                echo "   → Commit current work: git commit -m \"WIP: [description]\""
+                echo "   → Click 'New Chat' in Cursor or press Cmd+L (Mac) / Ctrl+L (Windows/Linux)"
+                echo "   → Reference: \"Continuing from [previous task]\""
+            else
+                echo "   ⚠️  Could not check scope creep (script may need updates)"
+            fi
+        else
+            echo "   ✅ No active session detected"
+            echo "   💡 To track session scope: ./scripts/track-session-scope.sh start \"<task>\""
+        fi
+    else
+        echo "   ✅ No active session detected"
+        echo "   💡 To track session scope: ./scripts/track-session-scope.sh start \"<task>\""
+    fi
+else
+    echo "   💡 Scope creep detection available: ./scripts/track-session-scope.sh"
+    echo "   → Check .cursor/rules/scope-creep-detection.mdc for guidelines"
+fi
+echo ""
+
 # Summary
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║                    SUMMARY                                  ║"
@@ -185,7 +224,8 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
     echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
     echo "   4. Reference relevant rules: .cursor/rules/"
-    echo "   5. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo "   5. Track session scope: ./scripts/track-session-scope.sh start \"<task>\""
+    echo "   6. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."
