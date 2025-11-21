@@ -189,9 +189,9 @@ if [ -f "scripts/track-session-scope.sh" ]; then
             # Run scope creep check (suppress errors if script has issues)
             if ./scripts/track-session-scope.sh check 2>/dev/null; then
                 echo ""
-                echo "   💡 To start a new agent session:"
+                echo "   💡 To start a new chat session:"
                 echo "   → Commit current work: git commit -m \"WIP: [description]\""
-                echo "   → Start new Cursor chat (Cmd+L)"
+                echo "   → Click 'New Chat' in Cursor or press Cmd+L (Mac) / Ctrl+L (Windows/Linux)"
                 echo "   → Reference: \"Continuing from [previous task]\""
             else
                 echo "   ⚠️  Could not check scope creep (script may need updates)"

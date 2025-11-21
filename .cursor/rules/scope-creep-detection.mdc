@@ -4,43 +4,43 @@ alwaysApply: true
 
 # Scope Creep Detection and Agent Switching
 
-## CRITICAL: Detect Scope Creep and Suggest New Agent
+## CRITICAL: Detect Scope Creep and Suggest New Chat Session
 
 **When working on tasks:**
 1. ✅ **Monitor session scope** - Track what the session was originally intended to do
 2. ✅ **Detect scope expansion** - Identify when tasks expand beyond original intent
 3. ✅ **Flag scope creep** - Alert user when scope is expanding significantly
-4. ✅ **Suggest new agent** - Recommend starting a new agent session when scope creeps
-5. ✅ **Make switching easy** - Provide clear guidance on how to start a new agent
+4. ✅ **Suggest new chat** - Recommend starting a new Cursor chat session when scope creeps
+5. ✅ **Make switching easy** - Provide clear guidance on how to start a new chat session
 
 ## Scope Creep Indicators
 
-### Warning Signs (Consider New Agent)
+### Warning Signs (Consider New Chat Session)
 
 **Task Expansion:**
 - ⚠️ Original task: "Fix login bug"
 - ⚠️ Current work: "Fix login bug, add error handling, improve UX, add tests, update docs"
-- **Action**: Flag as scope creep, suggest new agent
+- **Action**: Flag as scope creep, suggest new chat session
 
 **File Count Growth:**
 - ⚠️ Started with: 1-2 files
 - ⚠️ Now modifying: 5+ files across multiple directories
-- **Action**: Flag as scope creep, suggest new agent
+- **Action**: Flag as scope creep, suggest new chat session
 
 **Time/Duration:**
 - ⚠️ Session duration: > 2 hours of active work
 - ⚠️ Multiple unrelated tasks completed in same session
-- **Action**: Flag as scope creep, suggest new agent
+- **Action**: Flag as scope creep, suggest new chat session
 
 **Context Switching:**
 - ⚠️ Started: Feature A
 - ⚠️ Now working on: Feature B (unrelated)
-- **Action**: Flag as scope creep, suggest new agent
+- **Action**: Flag as scope creep, suggest new chat session
 
 **Complexity Growth:**
 - ⚠️ Started: Simple fix
 - ⚠️ Now: Architecture changes, multiple components, cross-cutting concerns
-- **Action**: Flag as scope creep, suggest new agent
+- **Action**: Flag as scope creep, suggest new chat session
 
 ### Scope Creep Thresholds
 
@@ -54,14 +54,14 @@ alwaysApply: true
 - 4-6 additional files beyond original scope
 - 3-4 additional tasks (some unrelated)
 - Session duration: 2-3 hours
-- **Action**: Flag to user, suggest considering new agent
+- **Action**: Flag to user, suggest considering new chat session
 
-**Severe Scope Creep (Strongly Recommend New Agent):**
+**Severe Scope Creep (Strongly Recommend New Chat Session):**
 - 7+ additional files beyond original scope
 - 5+ additional tasks (many unrelated)
 - Session duration: 3+ hours
 - Multiple context switches
-- **Action**: Strongly recommend new agent session
+- **Action**: Strongly recommend starting a new Cursor chat session
 
 ## Detection Logic: AI-Based Context Evaluation
 
@@ -119,7 +119,7 @@ Current Scope:
 
 3. **Evaluate complexity and focus:**
    - Has the session become **unfocused** with multiple unrelated concerns?
-   - Would a **new agent** help maintain focus and clarity?
+   - Would a **new chat session** help maintain focus and clarity?
    - Is the accumulated context making responses **slower** or **less accurate**?
 
 4. **Assess session health:**
@@ -152,15 +152,15 @@ Evaluation Questions:
 2. Is the expansion natural progression or scope creep?
 3. Are additional files necessary for the original task or tangential?
 4. Has the session become unfocused with multiple unrelated concerns?
-5. Would a new agent help maintain focus and clarity?
+5. Would a new chat session help maintain focus and clarity?
 6. Is the accumulated context making responses slower or less accurate?
 7. Is the session still productive or becoming unwieldy?
 
 Based on this holistic evaluation, determine:
 - NO_SCOPE_CREEP: Expansion is natural, related, and manageable
 - MILD_SCOPE_CREEP: Some expansion, but still focused and manageable
-- MODERATE_SCOPE_CREEP: Significant expansion, consider new agent
-- SEVERE_SCOPE_CREEP: Major expansion, strongly recommend new agent
+- MODERATE_SCOPE_CREEP: Significant expansion, consider new chat session
+- SEVERE_SCOPE_CREEP: Major expansion, strongly recommend new chat session
 
 Provide:
 - Severity: [none/mild/moderate/severe]
@@ -172,8 +172,8 @@ Provide:
 
 - **NO_SCOPE_CREEP**: Tasks are related, expansion is natural, session is still focused
 - **MILD_SCOPE_CREEP**: Some expansion, but tasks are related and manageable
-- **MODERATE_SCOPE_CREEP**: Significant expansion, some unrelated tasks, consider new agent
-- **SEVERE_SCOPE_CREEP**: Major expansion, multiple unrelated tasks, strongly recommend new agent
+- **MODERATE_SCOPE_CREEP**: Significant expansion, some unrelated tasks, consider new chat session
+- **SEVERE_SCOPE_CREEP**: Major expansion, multiple unrelated tasks, strongly recommend new chat session
 
 ## Agent Response Behavior
 
@@ -192,7 +192,7 @@ Current session has expanded beyond original scope:
 
 Analysis: Tasks are related (error handling is natural for bug fixes), but expansion is noticeable.
 
-Recommendation: Continue if manageable, but consider starting a new agent for unrelated tasks.
+Recommendation: Continue if manageable, but consider starting a new chat session for unrelated tasks.
 ```
 
 **Moderate Scope Creep:**
@@ -208,11 +208,11 @@ Current session has significantly expanded:
 Analysis: Some tasks are related (error handling, tests), but UX improvements may be tangential. 
 Session is becoming less focused with multiple concerns.
 
-Recommendation: Consider starting a new agent session for better focus and context management.
+Recommendation: Consider starting a new Cursor chat session for better focus and context management.
 
-To start a new agent:
+To start a new chat session:
 1. Complete current task or commit WIP
-2. Start new Cursor chat session (Cmd+L)
+2. Click "New Chat" in Cursor or press Cmd+L (Mac) / Ctrl+L (Windows/Linux)
 3. Reference completed work: "Continue from [previous task]"
 ```
 
@@ -229,18 +229,18 @@ Analysis: Tasks have diverged significantly from original scope. Multiple unrela
 and architecture changes suggest the session has lost focus. Accumulated context may be 
 slowing responses and reducing clarity.
 
-Strong Recommendation: Start a new agent session.
+Strong Recommendation: Start a new Cursor chat session.
 
-Benefits of new agent:
+Benefits of a new chat session:
 - Fresh context (no accumulated complexity)
 - Better focus on current task
 - Cleaner git history
 - Easier to review and test
 - Faster, more accurate responses
 
-To start a new agent:
+To start a new chat session:
 1. Commit current work (WIP is fine): git commit -m "WIP: [current state]"
-2. Start new Cursor chat session (Cmd+L)
+2. Click "New Chat" in Cursor or press Cmd+L (Mac) / Ctrl+L (Windows/Linux)
 3. Reference: "Continuing from [previous task], current state: [brief description]"
 ```
 
@@ -278,7 +278,7 @@ Recommendation: Continue with current session.
 4. **Assess session health** - is it still productive or becoming unwieldy?
 5. **Flag when appropriate** with clear reasoning
 6. **Provide clear recommendation** based on AI evaluation
-7. **Make it easy to start new agent** with simple steps
+7. **Make it easy to start new chat session** with simple steps
 
 ### AI Evaluation Triggers
 
@@ -297,19 +297,19 @@ Recommendation: Continue with current session.
 - Store AI evaluation results (severity, reasoning, recommendation)
 - Analyze patterns over time to improve detection
 
-## When to Start New Agent
+## When to Start New Chat Session
 
 ### Recommended Scenarios
 
-**Start new agent when:**
-- ✅ Scope creep score > 70 (severe)
+**Start a new Cursor chat session when:**
+- ✅ AI evaluation indicates SEVERE_SCOPE_CREEP
 - ✅ Working on unrelated feature (context switch)
 - ✅ Session duration > 3 hours
 - ✅ Multiple unrelated tasks completed
 - ✅ Architecture changes (beyond original scope)
-- ✅ User explicitly requests new agent
+- ✅ User explicitly requests new chat
 
-### How to Start New Agent
+### How to Start New Chat Session
 
 **Simple process:**
 1. **Commit current work** (WIP is fine):
@@ -319,26 +319,26 @@ Recommendation: Continue with current session.
    ```
 
 2. **Start new Cursor chat session**:
-   - Press `Cmd+L` (Mac) or `Ctrl+L` (Windows/Linux)
-   - Or click "New Chat" in Cursor UI
+   - Click "New Chat" in Cursor UI
+   - Or press `Cmd+L` (Mac) / `Ctrl+L` (Windows/Linux)
 
 3. **Reference previous work**:
    ```
-   Continuing from previous session:
+   Continuing from previous chat session:
    - Completed: [what was done]
    - Current state: [brief description]
    - Next task: [what to do next]
    ```
 
-4. **Provide context**:
+4. **Provide context** (optional but helpful):
    - Branch name
    - Files modified
    - Current state of work
    - What needs to be done next
 
-## Benefits of New Agent Session
+## Benefits of New Chat Session
 
-**Why start a new agent:**
+**Why start a new chat session:**
 - ✅ **Fresh context** - No accumulated complexity from previous tasks
 - ✅ **Better focus** - Agent focuses on current task only
 - ✅ **Cleaner history** - Easier to review and understand
@@ -357,7 +357,7 @@ Recommendation: Continue with current session.
 - ✅ Complete one task before starting another
 - ✅ Use feature branches for each focused task
 - ✅ Commit frequently (safety net)
-- ✅ Start new agent for unrelated tasks
+- ✅ Start new chat session for unrelated tasks
 
 **Task definition:**
 - ✅ Single, focused goal
@@ -384,7 +384,7 @@ Original: "Fix login validation bug"
 Current: "Fix bug + add error handling + improve UX"
 Score: 60 (moderate)
 
-Action: Flag to user, suggest considering new agent
+Action: Flag to user, suggest considering new chat session
 ```
 
 ### Example 3: Severe Scope Creep (Strongly Recommend)
@@ -394,7 +394,7 @@ Original: "Fix login validation bug"
 Current: "Fix bug + error handling + UX + tests + docs + refactor + new feature"
 Score: 85 (severe)
 
-Action: Strongly recommend new agent session
+Action: Strongly recommend new chat session
 ```
 
 ## Integration with Other Rules
@@ -409,13 +409,13 @@ Action: Strongly recommend new agent session
 
 **Pre-work check should:**
 - Check for existing active sessions
-- Suggest starting new agent if scope is too broad
+- Suggest starting new chat session if scope is too broad
 - Reference scope creep detection
 
 **During work:**
 - Monitor scope expansion
 - Flag when thresholds exceeded
-- Suggest new agent when appropriate
+- Suggest new chat session when appropriate
 
 ## Checklist: AI-Based Scope Creep Detection
 
@@ -448,9 +448,9 @@ Action: Strongly recommend new agent session
 **Agent should provide:**
 - [ ] AI evaluation result (severity: none/mild/moderate/severe)
 - [ ] Clear reasoning for the evaluation
-- [ ] Recommendation (continue/monitor/consider new agent/strongly recommend new agent)
-- [ ] Easy steps to start new agent
-- [ ] Context for new agent session
+- [ ] Recommendation (continue/monitor/consider new chat session/strongly recommend new chat session)
+- [ ] Easy steps to start new chat session
+- [ ] Context for new chat session
 
 ## Related Documentation
 

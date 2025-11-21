@@ -83,11 +83,12 @@ When a user requests an action, the AI **internally uses a sub-prompt** to evalu
 **Flow:**
 1. **User requests action** (e.g., "Commit these changes")
 2. **AI gathers context** (files, branch, state, coordination, CI, etc.)
-3. **AI uses sub-prompt internally** to evaluate risk holistically
-4. **AI gets decision** from sub-prompt: PROCEED / QUICK_CONFIRM / FULL_REVIEW / BLOCK
-5. **AI executes** with appropriate prompt level (or skips if PROCEED)
+3. **CRITICAL: Check rule-required actions first** - If action is required by rules (marked "IMMEDIATELY"/"MANDATORY"/"CRITICAL"), always PROCEED
+4. **If not rule-required, AI uses sub-prompt internally** to evaluate risk holistically
+5. **AI gets decision** from sub-prompt: PROCEED / QUICK_CONFIRM / FULL_REVIEW / BLOCK
+6. **AI executes** with appropriate prompt level (or skips if PROCEED)
 
-**Key Point:** The sub-prompt evaluation happens **internally** - the AI reasons about the context naturally, not using rigid formulas.
+**Key Point:** **Rule-required actions always PROCEED** - they bypass evaluation because they're mandated by rules. Only non-rule-required actions are evaluated.
 
 ### Sub-Prompt Template
 
@@ -96,7 +97,12 @@ When a user requests an action, the AI **internally uses a sub-prompt** to evalu
 ```
 [INTERNAL EVALUATION SUB-PROMPT]
 
-Evaluate the risk of [ACTION] given this context:
+STEP 1: Check if action is rule-required
+- Is this action REQUIRED by a rule (e.g., "IMMEDIATELY", "MANDATORY", "CRITICAL")?
+- If YES → PROCEED immediately (no evaluation needed)
+- If NO → Continue to STEP 2
+
+STEP 2: Evaluate the risk of [ACTION] given this context:
 
 CONTEXT:
 - Action: [what user wants to do]
@@ -130,6 +136,8 @@ Respond: [DECISION] - [brief reasoning]
 ```
 
 **The AI uses natural reasoning** - no formulas, no rigid scores, just intelligent evaluation of the full context.
+
+**CRITICAL:** Rule-required actions (marked with "IMMEDIATELY", "MANDATORY", "CRITICAL" in rules) always PROCEED - they bypass evaluation.
 
 ### Decision Outcomes
 
@@ -166,7 +174,26 @@ The AI considers:
 
 ## Context Evaluation Examples
 
-### Example 1: PROCEED - Skip Prompt
+### Example 1: Rule-Required Action (Always PROCEED)
+
+**User Request:** "End session" (while on main branch with changes)
+
+**AI Sub-Prompt Evaluation:**
+```
+[INTERNAL EVALUATION]
+
+STEP 1: Check if action is rule-required
+- Action: End session, but on main branch with uncommitted changes
+- Rule check: `.cursor/rules/branching.mdc` says "If on main branch, IMMEDIATELY create isolated worktree"
+- This is a RULE-REQUIRED action (marked with "IMMEDIATELY")
+- DECISION: PROCEED immediately - create branch/worktree automatically
+
+[AI executes: Creates feature branch immediately, no prompt]
+```
+
+**User sees:** `✅ Created feature branch and moved changes` (no prompt)
+
+### Example 2: PROCEED - Skip Prompt
 
 **User Request:** "Add a comment to this function"
 
@@ -174,7 +201,11 @@ The AI considers:
 ```
 [INTERNAL EVALUATION]
 
-Evaluate the risk of adding a comment given this context:
+STEP 1: Check if action is rule-required
+- Action: Add comment
+- Not rule-required → Continue to STEP 2
+
+STEP 2: Evaluate the risk of adding a comment given this context:
 
 CONTEXT:
 - Action: Add comment to function
@@ -853,10 +884,11 @@ DECISION: FULL_REVIEW
 **When user requests action:**
 
 1. **Gather context** (files, branch, state, coordination, etc.)
-2. **Use sub-prompt to evaluate** (internally, natural reasoning)
-3. **Get decision** (PROCEED/QUICK_CONFIRM/FULL_REVIEW/BLOCK)
-4. **Execute with appropriate prompt level** (or skip if PROCEED)
-5. **Learn from outcome** (refine evaluation for future)
+2. **CRITICAL: Check if rule-required first** - If rule says "IMMEDIATELY"/"MANDATORY"/"CRITICAL", always PROCEED
+3. **If not rule-required, use sub-prompt to evaluate** (internally, natural reasoning)
+4. **Get decision** (PROCEED/QUICK_CONFIRM/FULL_REVIEW/BLOCK)
+5. **Execute with appropriate prompt level** (or skip if PROCEED)
+6. **Learn from outcome** (refine evaluation for future)
 
 **Sub-prompt evaluation should be:**
 - **Fast**: < 1 second evaluation
@@ -864,6 +896,8 @@ DECISION: FULL_REVIEW
 - **Natural**: Uses AI reasoning, not rigid formulas
 - **Adaptive**: Learns from patterns
 - **Transparent**: User can see reasoning if needed (optional)
+
+**CRITICAL: Rule-required actions always PROCEED** - they bypass evaluation because they're mandated by rules.
 
 ### For Users
 

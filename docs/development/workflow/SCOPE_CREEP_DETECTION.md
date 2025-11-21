@@ -1,6 +1,6 @@
 # Scope Creep Detection and Agent Switching
 
-**Purpose**: Detect when a Cursor agent session is expanding beyond its original scope and suggest starting a new agent session for better focus and context management.
+**Purpose**: Detect when a Cursor chat session is expanding beyond its original scope and suggest starting a new chat session for better focus and context management.
 
 ## Overview
 
@@ -12,7 +12,7 @@ Scope creep occurs when a session that started with a focused task gradually exp
 - Messier git history
 - Increased risk of errors
 
-**Solution**: Detect scope creep automatically and suggest starting a new agent session when appropriate.
+**Solution**: Detect scope creep automatically and suggest starting a new Cursor chat session when appropriate.
 
 ## Scope Creep Indicators
 
@@ -61,13 +61,13 @@ Scope creep occurs when a session that started with a focused task gradually exp
 - Significant expansion, some unrelated tasks
 - Session becoming less focused
 - Multiple concerns being addressed
-- **Action**: Flag to user, suggest considering new agent
+- **Action**: Flag to user, suggest considering new chat session
 
 ### Severe Scope Creep
 - Major expansion, multiple unrelated tasks
 - Session has lost focus
 - Architecture changes beyond original scope
-- **Action**: Strongly recommend new agent session
+- **Action**: Strongly recommend new chat session
 
 ## Detection System: AI-Based Context Evaluation
 
@@ -129,22 +129,22 @@ The Cursor rule (`.cursor/rules/scope-creep-detection.mdc`) automatically:
 3. Calculates scope creep score
 4. Flags when thresholds are exceeded
 5. Provides clear recommendations
-6. Makes it easy to start a new agent
+6. Makes it easy to start a new chat session
 
-## When to Start a New Agent
+## When to Start a New Chat Session
 
 ### Recommended Scenarios
 
-Start a new agent session when:
+Start a new Cursor chat session when:
 
 - ✅ Scope creep score > 70 (severe)
 - ✅ Working on unrelated feature (context switch)
 - ✅ Session duration > 3 hours
 - ✅ Multiple unrelated tasks completed
 - ✅ Architecture changes (beyond original scope)
-- ✅ User explicitly requests new agent
+- ✅ User explicitly requests new chat
 
-### How to Start a New Agent
+### How to Start a New Chat Session
 
 **Simple 3-step process:**
 
@@ -155,8 +155,8 @@ Start a new agent session when:
    ```
 
 2. **Start new Cursor chat session**:
-   - Press `Cmd+L` (Mac) or `Ctrl+L` (Windows/Linux)
-   - Or click "New Chat" in Cursor UI
+   - Click "New Chat" in Cursor UI
+   - Or press `Cmd+L` (Mac) / `Ctrl+L` (Windows/Linux)
 
 3. **Reference previous work**:
    ```
@@ -172,9 +172,9 @@ Start a new agent session when:
    - Current state of work
    - What needs to be done next
 
-## Benefits of New Agent Session
+## Benefits of New Chat Session
 
-**Why start a new agent:**
+**Why start a new chat session:**
 
 - ✅ **Fresh context** - No accumulated complexity from previous tasks
 - ✅ **Better focus** - Agent focuses on current task only
@@ -195,7 +195,7 @@ Start a new agent session when:
 - ✅ Complete one task before starting another
 - ✅ Use feature branches for each focused task
 - ✅ Commit frequently (safety net)
-- ✅ Start new agent for unrelated tasks
+- ✅ Start new chat session for unrelated tasks
 
 **Task definition guidelines:**
 
@@ -263,7 +263,7 @@ Action: Strongly recommend new agent session
 The pre-work check (`scripts/pre-work-check.sh`) should:
 
 - Check for existing active sessions
-- Suggest starting new agent if scope is too broad
+- Suggest starting new chat session if scope is too broad
 - Reference scope creep detection
 
 ### During Work
@@ -272,8 +272,8 @@ The agent should:
 
 - Monitor scope expansion
 - Flag when thresholds exceeded
-- Suggest new agent when appropriate
-- Make it easy to start new agent
+- Suggest new chat session when appropriate
+- Make it easy to start new chat session
 
 ### Post-Work
 
