@@ -267,7 +267,6 @@ class ScreenMonitor(
                     )
                 }
                 
-<<<<<<< HEAD
                 // Visual analysis: Use ScreenEvaluator if available for detailed visual analysis
                 val evaluation = if (screenEvaluator != null) {
                     try {
