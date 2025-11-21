@@ -50,6 +50,89 @@ git checkout -b feature/<task-description>
 - `app/.../data/DataModule.kt`
 - `app/build.gradle.kts`, `build.gradle.kts`
 
+**If modifying shared files:**
+1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
+2. Document your changes in coordination doc
+3. Consider using git worktree for isolation
+4. Coordinate with other agents if needed
+
+## Workflow Enforcement
+
+**When user asks you to make changes:**
+
+1. **MANDATORY: Run pre-work check first:**
+   ```bash
+   ./scripts/pre-work-check.sh
+   ```
+   This will:
+   - Verify you're not on main
+   - Check for remote updates
+   - Run coordination checks
+   - Discover relevant rules
+   - Identify available tools
+
+2. **If on main, STOP and create branch:**
+   ```bash
+   git checkout -b feature/<task-description>
+   # Or for file system isolation:
+   ./scripts/create-worktree.sh <task-name>
+   ```
+
+3. **Discover relevant rules:**
+   ```bash
+   ./scripts/discover-rules.sh <task-keyword>
+   ```
+   Read the suggested rules and reference them explicitly in your implementation.
+
+4. **Before modifying files, check coordination:**
+   ```bash
+   ./scripts/check-agent-coordination.sh
+   ```
+   This will:
+   - Check for shared file conflicts
+   - Warn about high-risk files
+   - Suggest worktree usage if needed
+
+5. **After work, update coordination doc:**
+   - Mark work as "In Progress" or "Complete"
+   - List files you modified
+
+## Commit Rules
+
+**Before committing:**
+
+1. ✅ **Pre-commit hook runs automatically** - Prevents commits to main
+2. ✅ Verify you're on a feature branch (not `main`)
+3. ✅ Use descriptive commit messages
+4. ✅ Keep commits atomic (one logical change)
+5. ✅ Run tests: `./gradlew test` (all tests must pass)
+
+**Commit message format:**
+```
+<type>: <description>
+
+[optional body]
+[optional: AI-generated code indicator]
+```
+
+**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+**AI Code Provenance (Optional but Recommended):**
+- If code was AI-generated: Add `[AI]` prefix or note in body
+- If code was AI-generated with human edits: Note significant edits
+- Example: `feat: [AI] Add user authentication flow` or `feat: Add feature (AI-generated, human-reviewed)`
+
+**Research shows**: Tracking AI code provenance improves learning and prompt effectiveness
+
+**CRITICAL: Commit Frequently (Safety Net)**
+- ✅ **Commit frequently** - Every 15-30 minutes, even if work is incomplete
+- ✅ **Use WIP commits** - `git commit -m "WIP: <description>"` for incomplete work
+- ✅ **Commit after each logical step** - Don't wait for feature completion
+- ✅ **Commit before risky operations** - Before refactoring, large changes, experiments
+- ✅ **Local commits only** - No need to push every commit (push when ready for review)
+
+**See:** `.cursor/rules/frequent-commits.mdc` for complete frequent commit guidelines
+
 ## Related Rules
 - `.cursor/rules/branch-synchronization.mdc` - **CRITICAL**: Branch sync and conflict prevention
 - `.cursor/rules/frequent-commits.mdc` - Commit frequency guidelines
