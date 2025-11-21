@@ -57,11 +57,33 @@ jobs:
             DOC_NAME="${{ github.event.inputs.document }}"
             VERSION="${{ github.event.inputs.version }}"
             SOURCE_PATH="${{ github.event.inputs.source_path }}"
+<<<<<<< Updated upstream
           elif [[ "${{ github.ref_name }}" =~ ^publish-(.+)-(v.+|latest)$ ]]; then
             # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
             TAG="${{ github.ref_name }}"
             DOC_NAME=$(echo "$TAG" | sed -E 's/^publish-(.+)-(v.+|latest)$/\1/')
             VERSION=$(echo "$TAG" | sed -E 's/^publish-.+-(v.+|latest)$/\1/')
+=======
+          elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
+            # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
+            TAG="${{ github.ref_name }}"
+            # Remove 'publish-' prefix
+            REST="${TAG#publish-}"
+            # Check if ends with -latest or -v*
+            if [[ "$REST" =~ -latest$ ]]; then
+              DOC_NAME="${REST%-latest}"
+              VERSION="latest"
+            elif [[ "$REST" =~ -(v.+)$ ]]; then
+              # Extract version (e.g., v1.0.0)
+              VERSION="${BASH_REMATCH[1]}"
+              # Remove version suffix to get doc name
+              DOC_NAME="${REST%-${VERSION}}"
+            else
+              echo "Error: Could not parse tag format: $TAG"
+              echo "Expected: publish-<doc-name>-v<version> or publish-<doc-name>-latest"
+              exit 1
+            fi
+>>>>>>> Stashed changes
             # Try to find document automatically
             SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
           else
@@ -107,6 +129,7 @@ jobs:
           echo "📤 Output: $OUTPUT_PATH"
           echo "🔖 Latest: $IS_LATEST"
 
+<<<<<<< Updated upstream
   setup-converter:
     runs-on: ubuntu-latest
     steps:
@@ -133,11 +156,16 @@ jobs:
 
   convert-document:
     needs: [detect-document, setup-converter]
+=======
+  convert-document:
+    needs: [detect-document]
+>>>>>>> Stashed changes
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+<<<<<<< Updated upstream
       - name: Download converter
         uses: actions/download-artifact@v4
         with:
@@ -171,13 +199,35 @@ jobs:
           python3 scripts/md-to-html.py \
             "${{ needs.detect-document.outputs.source_path }}" \
             "dist/${{ needs.detect-document.outputs.output_path }}" \
+=======
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create GitHub Pages directory
+        run: |
+          mkdir -p .github-pages
+
+      - name: Convert document to HTML
+        run: |
+          # Use the existing Python converter script
+          python3 scripts/md-to-html.py \
+            "${{ needs.detect-document.outputs.source_path }}" \
+            ".github-pages/${{ needs.detect-document.outputs.output_path }}" \
+>>>>>>> Stashed changes
             "${{ needs.detect-document.outputs.doc_name }}"
 
       - name: Create index page (if latest)
         if: needs.detect-document.outputs.is_latest == 'true'
         run: |
+<<<<<<< Updated upstream
           mkdir -p dist
           cat > dist/index.html <<EOF
+=======
+          mkdir -p .github-pages
+          cat > .github-pages/index.html <<EOF
+>>>>>>> Stashed changes
           <!DOCTYPE html>
           <html>
           <head>
@@ -195,7 +245,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: published-document
+<<<<<<< Updated upstream
           path: dist/
+=======
+          path: .github-pages/
+>>>>>>> Stashed changes
           retention-days: 7
 
   deploy:
@@ -209,7 +263,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: published-document
+<<<<<<< Updated upstream
           path: dist
+=======
+          path: .github-pages
+>>>>>>> Stashed changes
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -217,6 +275,12 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
+<<<<<<< Updated upstream
+=======
+        with:
+          # Deploy from .github-pages directory
+          artifact_name: published-document
+>>>>>>> Stashed changes
 
       - name: Deployment info
         run: |
