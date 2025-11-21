@@ -57,13 +57,6 @@ jobs:
             DOC_NAME="${{ github.event.inputs.document }}"
             VERSION="${{ github.event.inputs.version }}"
             SOURCE_PATH="${{ github.event.inputs.source_path }}"
-<<<<<<< Updated upstream
-          elif [[ "${{ github.ref_name }}" =~ ^publish-(.+)-(v.+|latest)$ ]]; then
-            # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
-            TAG="${{ github.ref_name }}"
-            DOC_NAME=$(echo "$TAG" | sed -E 's/^publish-(.+)-(v.+|latest)$/\1/')
-            VERSION=$(echo "$TAG" | sed -E 's/^publish-.+-(v.+|latest)$/\1/')
-=======
           elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
             # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
             TAG="${{ github.ref_name }}"
@@ -83,7 +76,6 @@ jobs:
               echo "Expected: publish-<doc-name>-v<version> or publish-<doc-name>-latest"
               exit 1
             fi
->>>>>>> Stashed changes
             # Try to find document automatically
             SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
           else
