@@ -1,0 +1,411 @@
+---
+alwaysApply: true
+---
+
+# Prompt Stuck Prevention and Recovery
+
+## CRITICAL: Detect and Prevent Stuck Prompts
+
+**When processing user prompts:**
+1. ✅ **Detect stuck patterns** - Recognize when prompts may be getting stuck
+2. ✅ **Optimize prompt structure** - Place critical info at start/end, reduce complexity
+3. ✅ **Break down complex tasks** - Split large tasks into smaller steps
+4. ✅ **Monitor prompt health** - Track completion status and response times
+5. ✅ **Recover gracefully** - Provide recovery strategies when prompts get stuck
+
+## Common Causes of Stuck Prompts
+
+### 1. Prompt Complexity and Ambiguity
+- **Issue**: Ambiguous or overly complex prompts confuse models
+- **Symptoms**: No response, partial response, repeated attempts
+- **Solution**: Ensure prompts are clear, concise, and well-structured
+
+### 2. "Lost in the Middle" Effect
+- **Issue**: Models struggle to retain information in the middle of long contexts
+- **Symptoms**: Model ignores critical information placed mid-prompt
+- **Solution**: Place critical information at the **beginning** or **end** of prompts
+
+### 3. Contextual Overhead
+- **Issue**: Excessive low-utility tokens overwhelm the model
+- **Symptoms**: Slow responses, incomplete outputs, timeouts
+- **Solution**: Compress prompts, remove unnecessary context, focus on essentials
+
+### 4. Tool Call Loops
+- **Issue**: Agent gets stuck in repeated tool calls without progress
+- **Symptoms**: Same tools called repeatedly, no new information gathered
+- **Solution**: Detect loops, break cycles, simplify approach
+
+### 5. Ambiguous Instructions
+- **Issue**: Unclear what action to take or which approach to use
+- **Symptoms**: Agent asks for clarification repeatedly, makes no progress
+- **Solution**: Provide explicit, actionable instructions with clear success criteria
+
+## Prompt Optimization Guidelines
+
+### Structure Prompts Strategically
+
+**✅ GOOD: Critical info at start/end**
+```
+1. [CRITICAL CONTEXT] - What needs to be done
+2. [BACKGROUND] - Why and context
+3. [DETAILS] - How and specifics
+4. [SUCCESS CRITERIA] - How to know it's done
+```
+
+**❌ BAD: Critical info buried in middle**
+```
+1. Background context...
+2. More context...
+3. [CRITICAL INSTRUCTION BURIED HERE]
+4. More context...
+5. Even more context...
+```
+
+### Break Down Complex Tasks
+
+**✅ GOOD: Step-by-step approach**
+```
+"Step 1: Research existing patterns
+Step 2: Evaluate appropriateness  
+Step 3: Implement if appropriate
+Step 4: Test and verify"
+```
+
+**❌ BAD: Single complex instruction**
+```
+"Research existing patterns, evaluate if appropriate, implement if so, test and verify, and also consider edge cases and error handling while maintaining consistency with existing code patterns"
+```
+
+### Reduce Contextual Overhead
+
+**✅ GOOD: Focused, essential context**
+```
+"Fix the login bug in AuthScreen.kt. 
+The issue: null pointer when email is empty.
+Solution: Add null check before validation."
+```
+
+**❌ BAD: Excessive context**
+```
+"Fix the login bug in AuthScreen.kt. This is part of the authentication flow which was implemented last month. The screen uses Material 3 components and follows our design system. The issue occurs when... [500 more words of context]"
+```
+
+## Detection: When Prompts Are Getting Stuck
+
+### Warning Signs
+
+**Detect these patterns:**
+- ⚠️ **No response after 30+ seconds** - Agent may be stuck
+- ⚠️ **Repeated tool calls** - Same tools called multiple times without progress
+- ⚠️ **Partial responses** - Agent starts but doesn't complete
+- ⚠️ **Asking for clarification repeatedly** - Agent doesn't understand task
+- ⚠️ **Tool errors without recovery** - Agent doesn't adapt when tools fail
+- ⚠️ **Context size warnings** - Approaching or exceeding context limits
+
+### Detection Checklist
+
+**Before processing a prompt, check:**
+- [ ] Is the prompt clear and unambiguous?
+- [ ] Are critical instructions at start/end?
+- [ ] Is the task broken into manageable steps?
+- [ ] Is unnecessary context removed?
+- [ ] Are success criteria defined?
+- [ ] Is the prompt length reasonable (< 2000 words for complex tasks)?
+
+**During processing, monitor:**
+- [ ] Response time (should respond within 30 seconds)
+- [ ] Tool call patterns (detect loops)
+- [ ] Progress indicators (is agent making progress?)
+- [ ] Error patterns (repeated failures?)
+
+## Recovery Strategies
+
+### Strategy 1: Simplify and Restart
+
+**When stuck, simplify the prompt:**
+```
+Original: "Research, evaluate, implement, test, and document the feature..."
+Simplified: "Step 1: Research existing patterns. Stop and wait for confirmation before proceeding."
+```
+
+**Action**: Break into smaller steps, complete one at a time
+
+### Strategy 2: Reposition Critical Information
+
+**When critical info is ignored:**
+```
+Original: [Background] [Critical instruction in middle] [More background]
+Repositioned: "CRITICAL: [Instruction]. Background: [Context]"
+```
+
+**Action**: Move critical instructions to the very beginning
+
+### Strategy 3: Reduce Context
+
+**When context is overwhelming:**
+```
+Original: [2000 words of context] [Task]
+Reduced: [200 words of essential context] [Task]
+```
+
+**Action**: Remove non-essential context, focus on what's needed
+
+### Strategy 4: Change Approach
+
+**When current approach isn't working:**
+```
+Original: "Use complex multi-step approach..."
+Alternative: "Use simple, direct approach: [Single clear action]"
+```
+
+**Action**: Try a different, simpler approach
+
+### Strategy 5: Explicit Timeout and Recovery
+
+**When truly stuck:**
+```
+"If no progress after 60 seconds, stop and report:
+- What was attempted
+- Where it got stuck  
+- What information is needed
+- Suggested next step"
+```
+
+**Action**: Set explicit timeouts, report status, request guidance
+
+## Implementation: Prompt Health Monitoring
+
+### Track Prompt Metrics
+
+**Enhance prompt tracking to include:**
+- ✅ **Completion status** - Did prompt complete successfully?
+- ✅ **Response time** - How long did it take?
+- ✅ **Tool call count** - How many tools were called?
+- ✅ **Error count** - How many errors occurred?
+- ✅ **Recovery attempts** - How many times did we recover?
+
+**Example enhanced prompt record:**
+```json
+{
+  "timestamp": "2025-01-20T12:00:00Z",
+  "prompt": "...",
+  "promptLength": 500,
+  "wordCount": 75,
+  "completionStatus": "success|stuck|timeout|error",
+  "responseTimeSeconds": 15.3,
+  "toolCallCount": 5,
+  "errorCount": 0,
+  "recoveryAttempts": 0,
+  "stuckIndicators": []
+}
+```
+
+### Prompt Health Indicators
+
+**Healthy prompt:**
+- ✅ Response time < 30 seconds
+- ✅ Tool calls make progress (new information gathered)
+- ✅ No repeated errors
+- ✅ Clear completion status
+
+**Unhealthy prompt (may be stuck):**
+- ⚠️ Response time > 60 seconds
+- ⚠️ Tool calls repeat without progress
+- ⚠️ Multiple errors without recovery
+- ⚠️ No clear completion status
+
+## Best Practices for Prompt Design
+
+### DO ✅
+
+**Structure:**
+- ✅ Place critical instructions at **start** or **end**
+- ✅ Break complex tasks into **numbered steps**
+- ✅ Define **clear success criteria**
+- ✅ Use **explicit, actionable language**
+- ✅ **Remove unnecessary context** (keep only essentials)
+
+**Clarity:**
+- ✅ Use **plain language** (no idioms, metaphors)
+- ✅ Be **specific** about what needs to be done
+- ✅ Provide **examples** when helpful
+- ✅ State **constraints** explicitly
+- ✅ Define **expected output** format
+
+**Recovery:**
+- ✅ Set **explicit timeouts** for long operations
+- ✅ Provide **fallback strategies**
+- ✅ Request **confirmation** before complex operations
+- ✅ Report **progress** during long operations
+
+### DON'T ❌
+
+**Structure:**
+- ❌ Don't bury critical info in the middle
+- ❌ Don't combine multiple complex tasks in one prompt
+- ❌ Don't include excessive background context
+- ❌ Don't use vague or ambiguous language
+
+**Clarity:**
+- ❌ Don't use idioms or cultural references
+- ❌ Don't assume the model knows context
+- ❌ Don't use implicit requirements
+- ❌ Don't leave success criteria undefined
+
+**Recovery:**
+- ❌ Don't let prompts hang indefinitely
+- ❌ Don't repeat failed approaches without change
+- ❌ Don't ignore stuck indicators
+- ❌ Don't proceed without progress
+
+## Automatic Prompt Optimization
+
+### Before Processing: Analyze and Optimize
+
+**Automatically optimize prompts:**
+
+1. **Detect complexity:**
+   - Long prompts (> 1000 words) → Break into steps
+   - Multiple tasks → Split into separate prompts
+   - Ambiguous language → Request clarification
+
+2. **Reposition critical info:**
+   - If critical instruction in middle → Move to start
+   - If success criteria missing → Add at end
+
+3. **Reduce context:**
+   - Remove redundant information
+   - Keep only essential context
+   - Compress verbose descriptions
+
+4. **Add structure:**
+   - Add numbered steps for complex tasks
+   - Add success criteria if missing
+   - Add explicit timeouts for long operations
+
+### During Processing: Monitor and Recover
+
+**Monitor for stuck indicators:**
+
+1. **Response time monitoring:**
+   - > 30 seconds: Warning
+   - > 60 seconds: Likely stuck, consider recovery
+   - > 120 seconds: Definitely stuck, trigger recovery
+
+2. **Tool call monitoring:**
+   - Same tool called 3+ times: Possible loop
+   - No new information gathered: Stuck
+   - Repeated errors: Need different approach
+
+3. **Progress monitoring:**
+   - No progress after 2 tool calls: May be stuck
+   - Partial completion: May need clarification
+   - Error without recovery: Need intervention
+
+## Recovery Workflow
+
+### Step 1: Detect Stuck State
+
+**Indicators:**
+- Response time > 60 seconds
+- Tool calls repeating without progress
+- Multiple errors without recovery
+- No clear completion status
+
+### Step 2: Attempt Recovery
+
+**Recovery actions (in order):**
+1. **Simplify prompt** - Reduce complexity, focus on core task
+2. **Reposition critical info** - Move important instructions to start
+3. **Reduce context** - Remove non-essential information
+4. **Change approach** - Try different method
+5. **Break into steps** - Split into smaller, manageable tasks
+
+### Step 3: Report Status
+
+**If recovery fails:**
+```
+"⚠️ Prompt appears stuck. Attempted recovery strategies:
+- Simplified prompt
+- Repositioned critical info
+- Reduced context
+
+Current status: [What was attempted]
+Where stuck: [Specific point]
+What's needed: [Information or clarification]
+Suggested next step: [Recommendation]"
+```
+
+### Step 4: Request User Guidance
+
+**If still stuck after recovery attempts:**
+```
+"Prompt is not making progress. Please:
+1. Simplify the request
+2. Break it into smaller steps
+3. Provide more specific instructions
+4. Or try a different approach"
+```
+
+## Metrics and Tracking
+
+### Enhanced Prompt Tracking
+
+**Update `scripts/metrics/capture-prompt.sh` to track:**
+- Completion status (success/stuck/timeout/error)
+- Response time
+- Tool call patterns
+- Error patterns
+- Recovery attempts
+
+### Analysis and Patterns
+
+**Review metrics to identify:**
+- Prompts that frequently get stuck
+- Common stuck patterns
+- Effective recovery strategies
+- Prompt structures that work well
+
+### Historical Session Analysis
+
+**When evaluating historic sessions:**
+1. Identify stuck prompts (long response times, incomplete)
+2. Analyze what caused them (complexity, structure, context)
+3. Document effective recovery strategies
+4. Update prompt templates based on learnings
+
+## Integration with Existing Rules
+
+### Model Optimization
+- **Simple tasks** → Use Haiku (faster, less likely to get stuck)
+- **Complex tasks** → Use Opus (better handling of complexity)
+- **Standard tasks** → Use Sonnet (balanced)
+
+### Documentation First
+- Check documentation before complex operations
+- Use documented patterns to reduce ambiguity
+- Reference existing solutions to avoid reinventing
+
+### Working Patterns First
+- Use existing working patterns (reduces complexity)
+- Build on proven approaches (less likely to get stuck)
+- Avoid trying new approaches when working ones exist
+
+## Checklist: Before Sending Prompt
+
+- [ ] **Critical instructions at start/end** (not buried in middle)
+- [ ] **Task broken into steps** (if complex)
+- [ ] **Unnecessary context removed** (keep only essentials)
+- [ ] **Success criteria defined** (how to know it's done)
+- [ ] **Plain language used** (no idioms, metaphors)
+- [ ] **Explicit and actionable** (clear what to do)
+- [ ] **Reasonable length** (< 2000 words for complex tasks)
+- [ ] **Timeout defined** (for long operations)
+- [ ] **Recovery strategy** (what to do if stuck)
+
+## Related Documentation
+
+- `docs/learning/workflow-tools/PROMPT_HISTORY_ANALYSIS.md` - Analyzing prompt history
+- `scripts/metrics/capture-prompt.sh` - Prompt metrics tracking
+- `development-metrics/README.md` - Metrics collection
+- `.cursor/rules/bedrock-model-optimization.mdc` - Model selection optimization

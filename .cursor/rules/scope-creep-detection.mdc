@@ -1,0 +1,462 @@
+---
+alwaysApply: true
+---
+
+# Scope Creep Detection and Agent Switching
+
+## CRITICAL: Detect Scope Creep and Suggest New Agent
+
+**When working on tasks:**
+1. ✅ **Monitor session scope** - Track what the session was originally intended to do
+2. ✅ **Detect scope expansion** - Identify when tasks expand beyond original intent
+3. ✅ **Flag scope creep** - Alert user when scope is expanding significantly
+4. ✅ **Suggest new agent** - Recommend starting a new agent session when scope creeps
+5. ✅ **Make switching easy** - Provide clear guidance on how to start a new agent
+
+## Scope Creep Indicators
+
+### Warning Signs (Consider New Agent)
+
+**Task Expansion:**
+- ⚠️ Original task: "Fix login bug"
+- ⚠️ Current work: "Fix login bug, add error handling, improve UX, add tests, update docs"
+- **Action**: Flag as scope creep, suggest new agent
+
+**File Count Growth:**
+- ⚠️ Started with: 1-2 files
+- ⚠️ Now modifying: 5+ files across multiple directories
+- **Action**: Flag as scope creep, suggest new agent
+
+**Time/Duration:**
+- ⚠️ Session duration: > 2 hours of active work
+- ⚠️ Multiple unrelated tasks completed in same session
+- **Action**: Flag as scope creep, suggest new agent
+
+**Context Switching:**
+- ⚠️ Started: Feature A
+- ⚠️ Now working on: Feature B (unrelated)
+- **Action**: Flag as scope creep, suggest new agent
+
+**Complexity Growth:**
+- ⚠️ Started: Simple fix
+- ⚠️ Now: Architecture changes, multiple components, cross-cutting concerns
+- **Action**: Flag as scope creep, suggest new agent
+
+### Scope Creep Thresholds
+
+**Mild Scope Creep (Monitor):**
+- 2-3 additional files beyond original scope
+- 1-2 additional related tasks
+- Session duration: 1-2 hours
+- **Action**: Monitor, but continue if manageable
+
+**Moderate Scope Creep (Flag):**
+- 4-6 additional files beyond original scope
+- 3-4 additional tasks (some unrelated)
+- Session duration: 2-3 hours
+- **Action**: Flag to user, suggest considering new agent
+
+**Severe Scope Creep (Strongly Recommend New Agent):**
+- 7+ additional files beyond original scope
+- 5+ additional tasks (many unrelated)
+- Session duration: 3+ hours
+- Multiple context switches
+- **Action**: Strongly recommend new agent session
+
+## Detection Logic: AI-Based Context Evaluation
+
+### Track Original Scope
+
+**At session start, record:**
+- Original task description
+- Initial file count
+- Initial complexity estimate
+- Session start time
+
+**Example:**
+```
+Original Scope:
+- Task: "Fix login validation bug"
+- Files: 1 (LoginScreen.kt)
+- Complexity: Low (single bug fix)
+- Start: 2025-01-20 10:00:00
+```
+
+### Monitor Current Scope
+
+**During session, track:**
+- Current task description
+- Files modified/created
+- Tasks completed
+- Session duration
+- Context switches
+
+**Example:**
+```
+Current Scope:
+- Task: "Fix login bug, add error handling, improve UX, add tests"
+- Files: 6 (LoginScreen.kt, ErrorHandler.kt, LoginViewModel.kt, LoginTest.kt, LoginDocs.md, Theme.kt)
+- Complexity: High (multiple components, cross-cutting)
+- Duration: 2.5 hours
+- Context Switches: 3
+```
+
+### AI-Based Scope Creep Evaluation
+
+**CRITICAL: Use AI context evaluation instead of formula-based scoring.**
+
+**When evaluating scope creep, the AI agent should:**
+
+1. **Analyze the relationship between original and current scope:**
+   - Are the new tasks **related** to the original task or **unrelated**?
+   - Is the expansion **natural progression** (fixing bug → adding tests) or **scope creep** (fixing bug → redesigning entire auth system)?
+   - Are the additional files **necessary** for the original task or **tangential**?
+
+2. **Consider context and intent:**
+   - Was the original task too narrow? (e.g., "fix bug" when it really needed "fix bug + error handling")
+   - Is the expansion **justified** by the original problem, or is it **feature creep**?
+   - Are we solving the **same problem** in more depth, or **different problems**?
+
+3. **Evaluate complexity and focus:**
+   - Has the session become **unfocused** with multiple unrelated concerns?
+   - Would a **new agent** help maintain focus and clarity?
+   - Is the accumulated context making responses **slower** or **less accurate**?
+
+4. **Assess session health:**
+   - Is the session **still productive** or becoming **unwieldy**?
+   - Would starting fresh help with **clarity** and **organization**?
+   - Are we **accumulating technical debt** by continuing in the same session?
+
+**AI Evaluation Prompt (Internal):**
+
+```
+[SCOPE CREEP EVALUATION]
+
+Evaluate whether this session has experienced scope creep:
+
+Original Scope:
+- Task: [original task]
+- Files: [original files]
+- Complexity: [original complexity]
+- Start: [start time]
+
+Current Scope:
+- Task: [current task]
+- Files: [current files]
+- Complexity: [current complexity]
+- Duration: [duration]
+- Context Switches: [count]
+
+Evaluation Questions:
+1. Are the new tasks related to the original task or unrelated?
+2. Is the expansion natural progression or scope creep?
+3. Are additional files necessary for the original task or tangential?
+4. Has the session become unfocused with multiple unrelated concerns?
+5. Would a new agent help maintain focus and clarity?
+6. Is the accumulated context making responses slower or less accurate?
+7. Is the session still productive or becoming unwieldy?
+
+Based on this holistic evaluation, determine:
+- NO_SCOPE_CREEP: Expansion is natural, related, and manageable
+- MILD_SCOPE_CREEP: Some expansion, but still focused and manageable
+- MODERATE_SCOPE_CREEP: Significant expansion, consider new agent
+- SEVERE_SCOPE_CREEP: Major expansion, strongly recommend new agent
+
+Provide:
+- Severity: [none/mild/moderate/severe]
+- Reasoning: [explain why]
+- Recommendation: [continue/monitor/consider_new_agent/strongly_recommend_new_agent]
+```
+
+**Evaluation Criteria:**
+
+- **NO_SCOPE_CREEP**: Tasks are related, expansion is natural, session is still focused
+- **MILD_SCOPE_CREEP**: Some expansion, but tasks are related and manageable
+- **MODERATE_SCOPE_CREEP**: Significant expansion, some unrelated tasks, consider new agent
+- **SEVERE_SCOPE_CREEP**: Major expansion, multiple unrelated tasks, strongly recommend new agent
+
+## Agent Response Behavior
+
+### When Scope Creep Detected (AI Evaluation)
+
+**The AI agent should automatically evaluate scope creep and respond appropriately:**
+
+**Mild Scope Creep:**
+```
+⚠️ Scope Creep Detected (Mild)
+
+Current session has expanded beyond original scope:
+- Original: Fix login bug (1 file)
+- Current: Fix login bug + error handling (3 files)
+- Duration: 1.5 hours
+
+Analysis: Tasks are related (error handling is natural for bug fixes), but expansion is noticeable.
+
+Recommendation: Continue if manageable, but consider starting a new agent for unrelated tasks.
+```
+
+**Moderate Scope Creep:**
+```
+⚠️ Scope Creep Detected (Moderate)
+
+Current session has significantly expanded:
+- Original: Fix login bug (1 file)
+- Current: Fix login bug + error handling + UX improvements + tests (6 files)
+- Duration: 2.5 hours
+- Context switches: 3
+
+Analysis: Some tasks are related (error handling, tests), but UX improvements may be tangential. 
+Session is becoming less focused with multiple concerns.
+
+Recommendation: Consider starting a new agent session for better focus and context management.
+
+To start a new agent:
+1. Complete current task or commit WIP
+2. Start new Cursor chat session (Cmd+L)
+3. Reference completed work: "Continue from [previous task]"
+```
+
+**Severe Scope Creep:**
+```
+🚨 Significant Scope Creep Detected (Severe)
+
+Current session has expanded far beyond original scope:
+- Original: Fix login bug (1 file)
+- Current: Multiple features across 8 files, 2.5 hours, 4 context switches
+- Complexity: High (architecture changes, cross-cutting concerns)
+
+Analysis: Tasks have diverged significantly from original scope. Multiple unrelated features 
+and architecture changes suggest the session has lost focus. Accumulated context may be 
+slowing responses and reducing clarity.
+
+Strong Recommendation: Start a new agent session.
+
+Benefits of new agent:
+- Fresh context (no accumulated complexity)
+- Better focus on current task
+- Cleaner git history
+- Easier to review and test
+- Faster, more accurate responses
+
+To start a new agent:
+1. Commit current work (WIP is fine): git commit -m "WIP: [current state]"
+2. Start new Cursor chat session (Cmd+L)
+3. Reference: "Continuing from [previous task], current state: [brief description]"
+```
+
+**No Scope Creep:**
+```
+✅ No Scope Creep Detected
+
+Current session remains focused:
+- Original: Fix login bug (1 file)
+- Current: Fix login bug + related error handling (2 files)
+- Duration: 0.5 hours
+
+Analysis: Expansion is natural and related to the original task. Session remains focused and manageable.
+
+Recommendation: Continue with current session.
+```
+
+## Implementation: AI-Based Automatic Detection
+
+### Track Session State
+
+**Agent should track:**
+- Original task description (from first user message)
+- Files modified/created (from git status or file operations)
+- Session duration (from timestamps)
+- Task count (from user messages)
+- Context switches (from topic changes)
+
+### Automatic AI Evaluation
+
+**Agent should automatically:**
+1. **Periodically evaluate scope** using AI context evaluation (after significant changes or every 30-60 minutes)
+2. **Analyze relationship** between original and current scope
+3. **Consider context and intent** - is expansion justified or scope creep?
+4. **Assess session health** - is it still productive or becoming unwieldy?
+5. **Flag when appropriate** with clear reasoning
+6. **Provide clear recommendation** based on AI evaluation
+7. **Make it easy to start new agent** with simple steps
+
+### AI Evaluation Triggers
+
+**Evaluate scope creep when:**
+- Task description changes significantly
+- File count increases by 3+ files
+- Session duration exceeds 1 hour
+- User switches to unrelated topic
+- Agent notices context becoming unwieldy
+- User explicitly asks about scope
+
+### Integration with Metrics
+
+**Use existing metrics system:**
+- Track session scope in `development-metrics/sessions/`
+- Store AI evaluation results (severity, reasoning, recommendation)
+- Analyze patterns over time to improve detection
+
+## When to Start New Agent
+
+### Recommended Scenarios
+
+**Start new agent when:**
+- ✅ Scope creep score > 70 (severe)
+- ✅ Working on unrelated feature (context switch)
+- ✅ Session duration > 3 hours
+- ✅ Multiple unrelated tasks completed
+- ✅ Architecture changes (beyond original scope)
+- ✅ User explicitly requests new agent
+
+### How to Start New Agent
+
+**Simple process:**
+1. **Commit current work** (WIP is fine):
+   ```bash
+   git add .
+   git commit -m "WIP: [brief description of current state]"
+   ```
+
+2. **Start new Cursor chat session**:
+   - Press `Cmd+L` (Mac) or `Ctrl+L` (Windows/Linux)
+   - Or click "New Chat" in Cursor UI
+
+3. **Reference previous work**:
+   ```
+   Continuing from previous session:
+   - Completed: [what was done]
+   - Current state: [brief description]
+   - Next task: [what to do next]
+   ```
+
+4. **Provide context**:
+   - Branch name
+   - Files modified
+   - Current state of work
+   - What needs to be done next
+
+## Benefits of New Agent Session
+
+**Why start a new agent:**
+- ✅ **Fresh context** - No accumulated complexity from previous tasks
+- ✅ **Better focus** - Agent focuses on current task only
+- ✅ **Cleaner history** - Easier to review and understand
+- ✅ **Faster responses** - Less context to process
+- ✅ **Better organization** - Each session has clear purpose
+- ✅ **Easier testing** - Test one feature at a time
+- ✅ **Cleaner commits** - Logical, focused commits
+
+## Scope Creep Prevention
+
+### Best Practices
+
+**To prevent scope creep:**
+- ✅ Define clear, focused tasks
+- ✅ Break large tasks into smaller, focused sessions
+- ✅ Complete one task before starting another
+- ✅ Use feature branches for each focused task
+- ✅ Commit frequently (safety net)
+- ✅ Start new agent for unrelated tasks
+
+**Task definition:**
+- ✅ Single, focused goal
+- ✅ Clear success criteria
+- ✅ Limited file scope (1-3 files ideal)
+- ✅ Estimated duration (< 2 hours ideal)
+
+## Examples
+
+### Example 1: Mild Scope Creep (Continue)
+
+```
+Original: "Fix typo in LoginScreen.kt"
+Current: "Fix typo + update related comment"
+Score: 35 (mild)
+
+Action: Continue - manageable expansion
+```
+
+### Example 2: Moderate Scope Creep (Flag)
+
+```
+Original: "Fix login validation bug"
+Current: "Fix bug + add error handling + improve UX"
+Score: 60 (moderate)
+
+Action: Flag to user, suggest considering new agent
+```
+
+### Example 3: Severe Scope Creep (Strongly Recommend)
+
+```
+Original: "Fix login validation bug"
+Current: "Fix bug + error handling + UX + tests + docs + refactor + new feature"
+Score: 85 (severe)
+
+Action: Strongly recommend new agent session
+```
+
+## Integration with Other Rules
+
+### Related Rules
+- **Branching** (`.cursor/rules/branching.mdc`) - Use feature branches for focused work
+- **Frequent Commits** (`.cursor/rules/frequent-commits.mdc`) - Commit frequently as safety net
+- **Prompt Stuck Prevention** (`.cursor/rules/prompt-stuck-prevention.mdc`) - Scope creep can cause stuck prompts
+- **Multi-Agent Workflow** (`docs/development/MULTI_AGENT_WORKFLOW.md`) - Guidelines for multiple agents
+
+### Workflow Integration
+
+**Pre-work check should:**
+- Check for existing active sessions
+- Suggest starting new agent if scope is too broad
+- Reference scope creep detection
+
+**During work:**
+- Monitor scope expansion
+- Flag when thresholds exceeded
+- Suggest new agent when appropriate
+
+## Checklist: AI-Based Scope Creep Detection
+
+**Agent should track:**
+- [ ] Original task description
+- [ ] Initial file count
+- [ ] Initial complexity estimate
+- [ ] Session start time
+- [ ] Current file count
+- [ ] Current task description
+- [ ] Session duration
+- [ ] Context switches
+
+**Agent should evaluate (using AI):**
+- [ ] Relationship between original and current tasks (related vs unrelated)
+- [ ] Whether expansion is natural progression or scope creep
+- [ ] Whether additional files are necessary or tangential
+- [ ] Whether session has become unfocused
+- [ ] Whether accumulated context is affecting performance
+- [ ] Whether session is still productive
+
+**Agent should flag:**
+- [ ] When AI evaluation indicates moderate scope creep
+- [ ] When AI evaluation indicates severe scope creep
+- [ ] When unrelated tasks appear
+- [ ] When session duration > 3 hours
+- [ ] When file count grows significantly
+- [ ] When context becomes unwieldy
+
+**Agent should provide:**
+- [ ] AI evaluation result (severity: none/mild/moderate/severe)
+- [ ] Clear reasoning for the evaluation
+- [ ] Recommendation (continue/monitor/consider new agent/strongly recommend new agent)
+- [ ] Easy steps to start new agent
+- [ ] Context for new agent session
+
+## Related Documentation
+
+- `docs/development/workflow/SCOPE_CREEP_DETECTION.md` - Complete scope creep detection guide
+- `scripts/track-session-scope.sh` - Session scope tracking script
+- `docs/development/MULTI_AGENT_WORKFLOW.md` - Multi-agent workflow guidelines
+- `.cursor/rules/prompt-stuck-prevention.mdc` - Prompt stuck prevention (scope creep can cause stuck prompts)
+- `.cursor/rules/branching.mdc` - Branch isolation (use focused branches)
+- `.cursor/rules/frequent-commits.mdc` - Frequent commits (safety net)
