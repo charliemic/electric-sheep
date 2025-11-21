@@ -28,6 +28,9 @@ dependencies {
     // HTTP client for AI API calls
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
+    // OpenCV for pattern recognition (template matching)
+    implementation("nu.pattern:opencv:2.4.9-7")
+    
     // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
@@ -35,6 +38,36 @@ dependencies {
 
 application {
     mainClass.set("com.electricsheep.testautomation.MainKt")
+}
+
+// Task to run OCR integration test
+tasks.register<JavaExec>("testOcr") {
+    group = "verification"
+    description = "Run OCR integration test on a screenshot"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.electricsheep.testautomation.vision.OcrIntegrationTestKt")
+    val screenshotPath = if (project.hasProperty("screenshot")) {
+        project.property("screenshot") as String
+    } else {
+        "test-results/screenshots"
+    }
+    args = listOf(screenshotPath)
+    dependsOn("classes")
+}
+
+// Task to run Pattern Recognition integration test
+tasks.register<JavaExec>("testPatternRecognition") {
+    group = "verification"
+    description = "Run Pattern Recognition integration test on a screenshot"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.electricsheep.testautomation.vision.PatternRecognitionIntegrationTestKt")
+    val screenshotPath = if (project.hasProperty("screenshot")) {
+        project.property("screenshot") as String
+    } else {
+        "test-results/screenshots"
+    }
+    args = listOf(screenshotPath)
+    dependsOn("classes")
 }
 
 java {
