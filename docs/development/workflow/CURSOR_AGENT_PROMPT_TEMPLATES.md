@@ -6,6 +6,12 @@
 
 This guide provides ready-to-use prompts for common workflow scenarios where agent assistance and user input are needed.
 
+**Smart Prompts Context:**
+- **Learning project**: 85% of routine operations → PROCEED automatically (no prompt)
+- **Routine operations**: May execute directly without prompting
+- **Risky operations**: Will still prompt appropriately
+- See `.cursor/rules/smart-prompts.mdc` for evaluation criteria
+
 ## Table of Contents
 
 1. [Starting Work](#1-starting-work)
@@ -117,8 +123,13 @@ Use WIP prefix if work is incomplete.
 - Changed files summary
 - Generated commit message
 - Test results (if applicable)
-- Summary before committing
-- Approval prompt
+- Summary before committing (or PROCEED if routine)
+- Approval prompt (or direct execution if PROCEED)
+
+**Smart Prompts Note:**
+- **Routine commits** (isolated, clean branch, no conflicts) → May PROCEED automatically
+- **Complex commits** (shared files, coordination needed) → Will prompt for approval
+- See `.cursor/rules/smart-prompts.mdc` for evaluation criteria
 
 ### 2.2 Push Branch
 
@@ -140,8 +151,13 @@ If this is the first push, set upstream tracking.
 - Commits to push
 - Branch name
 - Upstream tracking status
-- Summary before pushing
-- Approval prompt
+- Summary before pushing (or PROCEED if routine)
+- Approval prompt (or direct execution if PROCEED)
+
+**Smart Prompts Note:**
+- **Routine pushes** (standard push, not force, clean state) → May PROCEED automatically
+- **Complex pushes** (force push, many commits) → Will prompt for approval
+- See `.cursor/rules/smart-prompts.mdc` for evaluation criteria
 
 ### 2.3 Sync with Main
 

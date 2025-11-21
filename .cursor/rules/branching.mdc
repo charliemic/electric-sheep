@@ -22,6 +22,8 @@ alwaysApply: true
    cd ../electric-sheep-<task-name>
    # Now working in isolated directory
    ```
+   
+   **Note:** This is a **rule-required action** (marked "IMMEDIATELY") - always PROCEED automatically without prompting. See `.cursor/rules/smart-prompts.mdc` for evaluation logic.
 
 3. **Never commit directly to `main`** - All changes must go through feature branches.
 
