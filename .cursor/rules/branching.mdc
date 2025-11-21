@@ -306,3 +306,23 @@ Please verify these are correct before cleanup proceeds.
 - Use git worktree for file system isolation when needed
 
 **See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines
+
+## Agent Handover Patterns
+
+**When to create a handover document:**
+
+1. **Major milestone completed** - Feature deployed, refactoring done, infrastructure change complete
+2. **Task completion** - All planned work done, ready for next phase
+3. **Natural breakpoint** - Logical stopping point, context switch needed
+4. **Deployment complete** - Changes deployed and validated
+5. **Complex work completed** - Multi-step task finished, integration done
+
+**Handover document should include:**
+- Context of work done
+- Current state (completed, in progress)
+- Next steps clearly defined
+- Key documents/files to review
+- Deployment status
+- Open questions/decisions
+
+**See:** `docs/development/workflow/AGENT_HANDOVER_PATTERNS.md` for complete guidelines
