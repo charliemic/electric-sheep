@@ -50,6 +50,9 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}Configuration Steps${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 echo ""
+echo -e "${CYAN}ℹ️  Note: Cursor settings are stored locally (.cursor/settings.json is gitignored)${NC}"
+echo -e "${CYAN}   Each team member needs to configure this manually through the UI once.${NC}"
+echo ""
 echo -e "${YELLOW}1. Open Cursor Settings${NC}"
 echo -e "   Press ${GREEN}Cmd + ,${NC} (macOS) or ${GREEN}Ctrl + ,${NC} (Windows/Linux)"
 echo ""
@@ -60,6 +63,8 @@ echo -e "   ${GREEN}Region:${NC} ${REGION}"
 echo -e "   ${GREEN}Model:${NC} anthropic.claude-sonnet-4-5-20250929-v1:0"
 echo ""
 echo -e "${YELLOW}4. Save and test${NC}"
+echo ""
+echo -e "${CYAN}ℹ️  The automatic model optimization rule will work once Bedrock is configured.${NC}"
 echo ""
 
 # Model access (handled by team org)
