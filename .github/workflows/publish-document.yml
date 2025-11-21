@@ -171,6 +171,7 @@ jobs:
           name: published-document
           path: .github-pages/
           retention-days: 7
+          include-hidden-files: true
 
   deploy:
     name: Deploy to GitHub Pages
