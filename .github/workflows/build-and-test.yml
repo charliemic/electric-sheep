@@ -334,9 +334,9 @@ jobs:
   ci-status:
     name: CI Status Check
     needs: [changes, lint, accessibility, test, build-debug, build-release]
-    # Always run if any of the dependent jobs ran (they only run if app-code changed)
-    # Use a more permissive condition to ensure the job runs when needed
-    if: always() && (needs.changes.outputs.app-code == 'true' || needs.lint.result != 'skipped' || needs.test.result != 'skipped')
+    # Always run to ensure the required status check exists for branch protection
+    # This allows PRs with only docs/workflow changes to merge
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -359,10 +359,16 @@ jobs:
               result => result === 'success' || result === 'skipped'
             );
             
+            const allSkipped = Object.values(results).every(
+              result => result === 'skipped'
+            );
+            
             const conclusion = allPassed ? 'success' : 'failure';
-            const message = allPassed 
-              ? 'All CI checks passed successfully'
-              : 'One or more CI checks failed';
+            const message = allSkipped
+              ? 'No app code changes detected - CI checks skipped'
+              : allPassed 
+                ? 'All CI checks passed successfully'
+                : 'One or more CI checks failed';
             
             await github.rest.checks.create({
               owner: context.repo.owner,

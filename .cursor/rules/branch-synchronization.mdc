@@ -1,0 +1,99 @@
+---
+alwaysApply: true
+---
+
+# Branch Synchronization and PR Conflict Prevention
+
+## When This Applies
+- Before starting new work
+- Before creating a PR
+- When working on a feature branch for more than a few hours
+- When other PRs are being merged
+
+## Critical Requirements
+
+### Before Starting Work
+- ✅ **Pull latest main**: `git checkout main && git pull origin main`
+- ✅ **Create branch from updated main**: `git checkout -b feature/<description>`
+- ✅ **Verify branch is current**: Check `pre-work-check.sh` output
+
+### During Work (Regular Sync)
+- ✅ **Sync every 2-4 hours** or when other PRs merge
+- ✅ **Fetch latest**: `git fetch origin`
+- ✅ **Rebase on main**: `git rebase origin/main` (preferred) or `git merge origin/main`
+- ✅ **Resolve conflicts immediately** - Don't accumulate conflicts
+
+### Before Creating PR (MANDATORY)
+- ✅ **Final sync with main**: `git fetch origin && git rebase origin/main`
+- ✅ **All conflicts resolved**: Test after resolving conflicts
+- ✅ **All tests pass**: `./gradlew test`
+- ✅ **Branch is up to date**: No commits behind main
+
+## Implementation
+
+**Automated helpers:**
+- `scripts/pre-work-check.sh` - Checks if main is up to date (warns if not)
+- `git fetch origin` - Fetches latest without merging
+- `git rebase origin/main` - Replays your commits on top of main (preferred)
+- `git merge origin/main` - Merges main into your branch (alternative)
+
+**Sync workflow:**
+```bash
+# 1. Fetch latest (doesn't change your branch)
+git fetch origin
+
+# 2. Rebase on main (preferred - cleaner history)
+git rebase origin/main
+
+# 3. If conflicts occur, resolve them:
+# - Fix conflicts in files
+# - git add <resolved-files>
+# - git rebase --continue
+
+# 4. Push updated branch (use --force-with-lease for safety)
+git push --force-with-lease
+```
+
+## Conflict Prevention Strategy
+
+### Why Conflicts Happen
+- Multiple agents working on same files
+- Long-lived branches (days/weeks)
+- Not syncing regularly with main
+- Modifying shared files without coordination
+
+### Prevention
+1. **Sync frequently** - Every 2-4 hours or when other PRs merge
+2. **Use worktrees** - For shared files (complete isolation)
+3. **Coordinate** - Check `AGENT_COORDINATION.md` before modifying shared files
+4. **Keep branches short-lived** - Complete work quickly, merge often
+5. **Small PRs** - Easier to review, less conflict risk
+
+### Conflict Resolution
+1. **Understand both changes** - Read both implementations
+2. **Preserve functionality** - Don't lose features from either side
+3. **Test thoroughly** - Run tests after resolving
+4. **Document resolution** - Note how conflict was resolved
+
+## Related Rules
+- `.cursor/rules/branching.mdc` - Branch isolation and workflow
+- `.cursor/rules/repository-maintenance.mdc` - Cleanup procedures
+- `.cursor/rules/cicd.mdc` - CI/CD workflow
+
+## Error Prevention
+
+**STOP and fix if:**
+- ❌ Branch is behind main by more than a few commits → Sync immediately
+- ❌ Conflicts detected → Resolve before continuing
+- ❌ Tests failing after sync → Fix before pushing
+- ❌ Force pushing without `--force-with-lease` → Use safe force push
+
+## Examples
+
+**See code examples:**
+- Pre-work check: `scripts/pre-work-check.sh`
+- Sync workflow: `docs/development/workflow/MULTI_AGENT_WORKFLOW.md`
+
+**See documentation:**
+- Multi-agent workflow: `docs/development/workflow/MULTI_AGENT_WORKFLOW.md`
+- Coordination: `docs/development/AGENT_COORDINATION.md`
