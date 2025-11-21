@@ -17,6 +17,53 @@ alwaysApply: true
 
 **After every PR merge, complete this checklist:**
 
+### 0. Check Other Agents and Worktrees (REQUIRED FIRST STEP)
+
+**CRITICAL: Before cleaning up, ALWAYS check and report on other active work:**
+
+```bash
+# List all worktrees with details
+git worktree list
+
+# List all branches (local and remote)
+git branch -a
+
+# Get detailed worktree info
+git worktree list --porcelain | grep -E "^(worktree|HEAD|branch)" | paste - - -
+
+# List feature branches with status
+git branch | grep -E "^  (feature|fix|refactor|docs|test)/"
+git branch -r | grep -E "(feature|fix|refactor|docs|test)/"
+```
+
+**You MUST report to the user:**
+- All active worktrees and their associated branches
+- All feature branches (local and remote) and their status
+- Which branches are merged (safe to delete)
+- Which branches are active (should NOT be deleted)
+- Ask user to verify before proceeding with cleanup
+
+**Example report format:**
+```
+📋 Current Repository State:
+
+Active Worktrees:
+  /path/to/electric-sheep-runtime-visual-evaluation
+    Branch: feature/runtime-visual-evaluation-architecture
+    Status: Active work (has unmerged commits)
+  
+  /path/to/electric-sheep-other-work
+    Branch: feature/other-task
+    Status: Active work (has unmerged commits)
+
+Active Branches:
+  feature/runtime-visual-evaluation-architecture - Active (DO NOT DELETE)
+  feature/other-task - Active (DO NOT DELETE)
+  feature/aws-bedrock-security-goals - MERGED (safe to delete)
+
+Please verify these are correct before cleanup proceeds.
+```
+
 ### 1. Verify Merge Status
 ```bash
 # Check PR status
