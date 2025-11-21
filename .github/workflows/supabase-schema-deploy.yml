@@ -13,8 +13,7 @@ on:
       - main
       - develop
     paths:
-      - 'supabase/migrations/**'
-      - '.github/workflows/supabase-schema-deploy.yml'
+      - 'supabase/**'
   workflow_dispatch: # Allow manual triggering
     inputs:
       project_ref:
@@ -220,7 +219,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     needs: validate-migrations
-    continue-on-error: true  # Non-blocking: failures don't prevent merge
     
     steps:
       - name: Checkout code

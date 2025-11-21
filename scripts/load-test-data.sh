@@ -72,3 +72,5 @@ echo "💡 Test data will be loaded when you sign in with a test user:"
 echo "   Email: test-${TECH_LEVEL,,}-${MOOD_PATTERN,,}@electric-sheep.test"
 echo ""
 
+
+

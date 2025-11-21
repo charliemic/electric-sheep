@@ -172,10 +172,12 @@ class MoodChartDataProcessorTest {
     @Test
     fun `should average multiple moods in same week for weekly view`() {
         // Arrange
-        val baseTime = System.currentTimeMillis()
-        val date = Instant.ofEpochMilli(baseTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
+        // Use a fixed date in the middle of a week to ensure all moods stay in same week
+        val baseDate = LocalDate.of(2024, 6, 12) // Wednesday, June 12, 2024 (middle of week)
+        val baseTime = baseDate
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
         
         // Create moods on different days of the same week
         val moods = listOf(
@@ -184,7 +186,7 @@ class MoodChartDataProcessorTest {
                 id = "2",
                 userId = "user-1",
                 score = 7,
-                timestamp = date.plusDays(1)
+                timestamp = baseDate.plusDays(1)
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
@@ -193,7 +195,7 @@ class MoodChartDataProcessorTest {
                 id = "3",
                 userId = "user-1",
                 score = 3,
-                timestamp = date.plusDays(2)
+                timestamp = baseDate.plusDays(2)
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
@@ -245,10 +247,12 @@ class MoodChartDataProcessorTest {
     @Test
     fun `should average multiple moods in same month for monthly view`() {
         // Arrange
-        val baseTime = System.currentTimeMillis()
-        val date = Instant.ofEpochMilli(baseTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
+        // Use a fixed date in the middle of a month to ensure all moods stay in same month
+        val baseDate = LocalDate.of(2024, 6, 15) // June 15, 2024
+        val baseTime = baseDate
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
         
         // Create moods on different days of the same month
         val moods = listOf(
@@ -257,7 +261,7 @@ class MoodChartDataProcessorTest {
                 id = "2",
                 userId = "user-1",
                 score = 7,
-                timestamp = date.plusDays(10)
+                timestamp = baseDate.plusDays(10)
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
@@ -266,7 +270,7 @@ class MoodChartDataProcessorTest {
                 id = "3",
                 userId = "user-1",
                 score = 3,
-                timestamp = date.plusDays(20)
+                timestamp = baseDate.plusDays(15)
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()

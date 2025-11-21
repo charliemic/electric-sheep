@@ -34,17 +34,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Cache yq binary
-        uses: actions/cache@v4
-        id: cache-yq
-        with:
-          path: /usr/local/bin/yq
-          key: yq-${{ runner.os }}-v4.40.5
-          restore-keys: |
-            yq-${{ runner.os }}-
-      
       - name: Install yq
-        if: steps.cache-yq.outputs.cache-hit != 'true'
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
@@ -157,32 +147,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Cache yq binary
-        uses: actions/cache@v4
-        id: cache-yq
-        with:
-          path: /usr/local/bin/yq
-          key: yq-${{ runner.os }}-v4.40.5
-          restore-keys: |
-            yq-${{ runner.os }}-
-      
-      - name: Install yq
-        if: steps.cache-yq.outputs.cache-hit != 'true'
+      - name: Install required tools
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
-      
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        id: cache-apt
-        with:
-          path: /var/cache/apt
-          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/supabase-feature-flags-deploy.yml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
-      
-      - name: Install PostgreSQL client and jq
-        run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client jq
       
@@ -252,32 +220,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Cache yq binary
-        uses: actions/cache@v4
-        id: cache-yq
-        with:
-          path: /usr/local/bin/yq
-          key: yq-${{ runner.os }}-v4.40.5
-          restore-keys: |
-            yq-${{ runner.os }}-
-      
-      - name: Install yq
-        if: steps.cache-yq.outputs.cache-hit != 'true'
+      - name: Install required tools
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
-      
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        id: cache-apt
-        with:
-          path: /var/cache/apt
-          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/supabase-feature-flags-deploy.yml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
-      
-      - name: Install PostgreSQL client and jq
-        run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client jq
       

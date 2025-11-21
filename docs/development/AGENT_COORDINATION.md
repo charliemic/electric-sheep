@@ -145,8 +145,25 @@ These files are commonly modified and require coordination:
   - Worktree rules expanded with comprehensive patterns
 - **Collision Resolution**: Resolved collision with mood visualization agent by preserving their MoodChart component and removing their Load test data button
 
+### 2025-01-20: Local Setup Cleanup
+- **Task**: Tidy up local branches, worktrees, and untracked files
+- **Branch**: `feature/tidy-up-local-changes`
+- **Status**: ✅ Complete
+- **Actions Taken**:
+  - Cleaned up merged worktrees: `electric-sheep-mood-chart`, `electric-sheep-fix-moodchart`
+  - Pruned stale remote branches
+  - Deleted empty/redundant branches: `fix/add-trivia-flag`, `fix/feature-flag-sync-upsert-isolated`
+  - Created tidy-up branch with 92 files organized (test fixtures, mood chart components, Supabase scripts, documentation)
+  - Created review documents: `LOCAL_SETUP_REVIEW.md`, `UNMERGED_BRANCHES_REVIEW.md`
+- **Remaining Unmerged Branches** (need review):
+  - `feature/trivia-app-initial-setup` - Has unique commit
+  - `feature/trivia-screen` - Has unique commits
+  - `feature/improve-cursor-rules` - Has unique commits
+  - `feature/video-annotation-system` - Needs review
+  - `feature/emulator-setup` - PR merged, may have merge artifacts only
+
 ### Next Coordination Check
-- **Date**: 2025-11-20
-- **Action**: Review all local untracked files and commit appropriate ones
-- **Priority**: High - Get valuable work into version control
+- **Date**: 2025-01-20
+- **Action**: Review unmerged branches and determine if work should be merged or abandoned
+- **Priority**: Medium - Clean up remaining unmerged branches
 
