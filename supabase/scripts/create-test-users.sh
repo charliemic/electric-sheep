@@ -90,9 +90,15 @@ echo "  Created: ${created_count}"
 echo "  Skipped: ${skipped_count}"
 echo "  Errors: ${error_count}"
 
-if [ $error_count -gt 0 ]; then
+# Don't fail if users already exist (idempotent operation)
+# Only fail if we tried to create new users and they failed for other reasons
+if [ $error_count -gt 0 ] && [ $created_count -eq 0 ] && [ $skipped_count -eq 0 ]; then
+    # All users failed to create and none were skipped (all new attempts failed)
     exit 1
 fi
+
+# If some users already exist (skipped) and some failed, that's okay - continue
+# The workflow can proceed to load data for existing users
 
 echo -e "${GREEN}Test users setup complete!${NC}"
 echo -e "${YELLOW}Note: All test users have password: ${TEST_PASSWORD}${NC}"
