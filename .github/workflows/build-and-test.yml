@@ -20,7 +20,6 @@ jobs:
       app-code: ${{ steps.filter.outputs.app-code }}
       docs: ${{ steps.filter.outputs.docs }}
       scripts: ${{ steps.filter.outputs.scripts }}
-      emulator-scripts: ${{ steps.filter.outputs.emulator-scripts }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - name: Checkout code
@@ -43,11 +42,6 @@ jobs:
               - 'README.md'
             scripts:
               - 'scripts/**'
-            emulator-scripts:
-              - 'scripts/emulator-*.sh'
-              - 'scripts/tests/**'
-              - 'docs/development/EMULATOR_MANAGEMENT*.md'
-              - 'Makefile'
             workflows:
               - '.github/workflows/**'
           list-files: shell
@@ -77,7 +71,7 @@ jobs:
 
     - name: Cache Gradle dependencies
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -87,7 +81,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Cache Android build artifacts
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.android/build-cache
@@ -118,7 +112,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -161,7 +155,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -196,7 +190,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -260,7 +254,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -270,7 +264,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.android/build-cache
@@ -305,7 +299,7 @@ jobs:
         accept-android-sdk-licenses: true
 
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
@@ -315,7 +309,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Restore Android build cache
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: |
           ~/.android/build-cache
@@ -332,8 +326,9 @@ jobs:
   # This job creates the "ci-status" check that branch protection requires
   ci-status:
     needs: [changes, lint, accessibility, test, build-debug, build-release]
-    # Only run if app code changed (same condition as other jobs)
-    if: needs.changes.outputs.app-code == 'true'
+    # Always run if any of the dependent jobs ran (they only run if app-code changed)
+    # Use a more permissive condition to ensure the job runs when needed
+    if: always() && (needs.changes.outputs.app-code == 'true' || needs.lint.result != 'skipped' || needs.test.result != 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -380,3 +375,5 @@ jobs:
             if (!allPassed) {
               core.setFailed(message);
             }
+
+  # Emulator Management Scripts Tests

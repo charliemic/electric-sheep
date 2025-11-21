@@ -45,12 +45,12 @@ alwaysApply: true
 
 **Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
 
-## File System Isolation (REQUIRED for Shared Files)
+## File System Isolation (RECOMMENDED)
 
-**When modifying shared files, you MUST use git worktrees:**
+**For complete file system isolation, use git worktrees:**
 
 ```bash
-# Create isolated worktree (MANDATORY for shared files)
+# Create isolated worktree
 git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
 cd ../electric-sheep-<task-name>
 # Work in complete isolation
@@ -60,17 +60,6 @@ cd ../electric-sheep-<task-name>
 - Complete file system isolation
 - No conflicts with other agents
 - Easy cleanup after merge
-- Prevents lost work and collisions
-
-**When worktree is REQUIRED:**
-- Modifying ANY file matching HIGH RISK patterns (see File Coordination section)
-- Multiple agents might modify the same file
-- File is in shared files list
-
-**When worktree is RECOMMENDED:**
-- Modifying MEDIUM-HIGH or MEDIUM RISK files
-- Working on large features that span multiple files
-- Uncertain if other agents are working on related files
 
 ## Pre-Work Checklist (MANDATORY)
 
@@ -78,51 +67,26 @@ Before starting any work, you MUST:
 
 1. ✅ **Verify NOT on main branch** - Check `git status`
 2. ✅ **Create feature branch** - Use proper naming convention
-3. ✅ **Check if files are shared** - Review shared files patterns (see File Coordination section)
-4. ✅ **Use worktree if modifying shared files** - MANDATORY for HIGH RISK files, recommended for others
-5. ✅ **Pull latest main** - `git pull origin main`
-6. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
-7. ✅ **Document your work** - Update coordination doc with your planned changes
+3. ✅ **Consider file system isolation** - Use git worktree if working on shared files
+4. ✅ **Pull latest main** - `git pull origin main`
+5. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
+6. ✅ **Document your work** - Update coordination doc with your planned changes
 
 ## File Coordination
 
 **Before modifying files, check coordination:**
 
-**Shared files (REQUIRE worktree isolation):**
+**Shared files (require coordination):**
+- `app/.../ui/screens/LandingScreen.kt`
+- `app/.../ElectricSheepApplication.kt`
+- `app/.../data/DataModule.kt`
+- `app/build.gradle.kts`, `build.gradle.kts`
 
-**HIGH RISK - MUST use worktree:**
-- `app/.../ui/screens/**/*Screen.kt` (ALL screen files - multiple agents modify screens)
-- `app/.../ui/screens/**/*ViewModel.kt` (ALL ViewModel files - shared state management)
-- `app/.../ui/navigation/*.kt` (Navigation files - central routing, adding screens)
-- `app/.../*Application.kt` (Application class - central initialization, DI setup)
-- `app/.../**/*Module.kt` (DI module files - dependency injection setup)
-- `**/*.gradle.kts` (Build files - dependency management)
-- `gradle.properties` (Gradle properties - build configuration)
-- `settings.gradle.kts` (Settings file - project structure)
-
-**MEDIUM-HIGH RISK - Should use worktree:**
-- `app/.../ui/components/*.kt` (Shared UI components - design system changes)
-- `app/.../**/*Manager.kt` (Manager classes - shared services)
-- `app/.../**/*Provider.kt` (Provider classes - shared providers)
-
-**MEDIUM RISK - Consider worktree:**
-- `app/.../data/repository/*Repository.kt` (Repository files - data access layer)
-- `app/.../ui/theme/*.kt` (Theme files - shared styling)
-- `app/.../config/*.kt` (Config files - shared configuration)
-- `app/.../**/*Factory.kt` (Factory files - ViewModel factories)
-- `app/.../MainActivity.kt` (Main activity - app entry point)
-
-**If modifying ANY shared file:**
-1. **MUST** check `docs/development/AGENT_COORDINATION.md` for conflicts
-2. **MUST** use git worktree for file system isolation (no exceptions for HIGH RISK files)
-3. **MUST** document your changes in coordination doc
-4. **MUST** coordinate with other agents if conflicts detected
-
-**Collision Consequences:**
-- ❌ Changes may be lost or overwritten
-- ❌ Manual conflict resolution required
-- ❌ Work duplication and wasted effort
-- ✅ Use worktree to prevent all of these issues
+**If modifying shared files:**
+1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
+2. Document your changes in coordination doc
+3. Consider using git worktree for isolation
+4. Coordinate with other agents if needed
 
 ## Workflow Enforcement
 
@@ -142,11 +106,9 @@ Before starting any work, you MUST:
 
 3. **Before modifying files, check coordination:**
    - Read `docs/development/AGENT_COORDINATION.md`
-   - Check if files match shared file patterns (see File Coordination section)
-   - **If modifying HIGH RISK shared files, MUST use worktree** (no exceptions)
    - Verify no conflicts with other agents
    - Document your planned changes
-   - Use git worktree for shared files (mandatory for HIGH RISK, recommended for others)
+   - Consider git worktree if modifying shared files
 
 4. **After work, update coordination doc:**
    - Mark work as "In Progress" or "Complete"
@@ -176,48 +138,57 @@ Before starting any work, you MUST:
 
 - ❌ User is on `main` branch → Create feature branch immediately
 - ❌ Branch name doesn't follow convention → Rename branch
-- ❌ Modifying HIGH RISK shared file without worktree → Create worktree immediately
 - ❌ Modifying shared file without coordination → Check coordination doc first
 - ❌ Tests failing → Fix tests before proceeding
 - ❌ Uncommitted work on `main` → Move to feature branch
 - ❌ File system conflicts → Use git worktree for isolation
-- ❌ File matches shared pattern but no worktree → Create worktree before proceeding
 
-## Worktree Cleanup (MANDATORY)
+## Post-Merge Cleanup (MANDATORY)
 
-**After branch is merged or deleted, you MUST:**
+**After a PR is merged, you MUST clean up:**
 
-1. **Remove worktree immediately:**
+1. **Switch to main branch:**
    ```bash
-   # From main repository (not from within the worktree)
-   cd /path/to/main/repo
-   git worktree remove ../electric-sheep-<task-name>
+   git checkout main
+   git pull origin main
    ```
 
-2. **If worktree directory was already deleted:**
+2. **Delete merged feature branch:**
    ```bash
-   # Prune stale worktree references
+   git branch -d feature/<branch-name>
+   # Use -D if branch has unmerged commits (shouldn't happen if PR merged)
+   ```
+
+3. **Remove worktree if one was used:**
+   ```bash
+   git worktree remove ../electric-sheep-<task-name>
+   # Or if worktree directory was deleted manually:
    git worktree prune
    ```
 
-3. **Verify cleanup:**
+4. **Delete duplicate/old branches:**
    ```bash
-   # List all worktrees - should not show merged/deleted branches
-   git worktree list
+   # Check for duplicate branches (e.g., -rebased, -old, -backup)
+   git branch | grep <branch-name>
+   # Delete if duplicate: git branch -D <duplicate-branch>
    ```
 
-**When to clean up:**
-- ✅ **Immediately after branch is merged** - Remove worktree right away
-- ✅ **When branch is deleted** - Remove worktree if branch is abandoned
-- ✅ **Before starting new work** - Check for orphaned worktrees and clean them up
+5. **Delete temp/test branches:**
+   ```bash
+   # Delete branches starting with temp/, tmp/, test-merge, etc.
+   git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
+   ```
 
-**Cleanup Checklist:**
-- [ ] Branch merged or deleted
-- [ ] Worktree removed: `git worktree remove ../electric-sheep-<task-name>`
-- [ ] Verify with: `git worktree list`
-- [ ] Update coordination doc (mark work as complete)
+**Why this matters:**
+- Prevents branch clutter
+- Avoids confusion about which branch to use
+- Keeps repository state clean
+- Makes it easier to identify active work
 
-**CRITICAL:** Orphaned worktrees waste disk space and can cause confusion. Always clean up after your work is merged.
+**Best Practice:**
+- Always start new work from a fresh `main` branch
+- Never continue work on a merged branch
+- Create a new feature branch for follow-up work
 
 ## Multi-Agent Coordination
 
@@ -227,6 +198,5 @@ Before starting any work, you MUST:
 - Update coordination doc when work status changes
 - Coordinate if files overlap with other agents
 - Use git worktree for file system isolation when needed
-- **Remove worktree after branch is merged/deleted**
 
 **See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines
