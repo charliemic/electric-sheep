@@ -65,15 +65,16 @@ for user_id in "${!TEST_USERS[@]}"; do
     
     echo -n "Processing ${email}... "
     
-    # Check if user already exists (using shared library)
-    if auth_admin_user_exists "$user_id" "$email"; then
+    # Check if user already exists by email (Supabase generates UUIDs, not string IDs)
+    if auth_admin_user_exists "" "$email"; then
         echo -e "${YELLOW}SKIPPED (already exists)${NC}"
         skipped_count=$((skipped_count + 1))
         continue
     fi
     
-    # Create user (using shared library)
-    if auth_admin_create_user "$user_id" "$email" "$TEST_PASSWORD" "$display_name"; then
+    # Create user without specifying ID (let Supabase generate UUID)
+    # The string IDs in TEST_USERS are for app-side reference only
+    if auth_admin_create_user "" "$email" "$TEST_PASSWORD" "$display_name"; then
         echo -e "${GREEN}CREATED${NC}"
         created_count=$((created_count + 1))
     else
