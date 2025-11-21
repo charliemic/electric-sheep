@@ -33,6 +33,9 @@ This work continues the AI optimization and cursor rules improvements. The docum
 - ✅ **Deployed to staging** (validated ✅)
 - ✅ **Deployed to production** (validated ✅)
 - ✅ **Handover patterns documented**
+- ✅ **AI-Assist Boundaries documented** (in code-quality.mdc)
+- ✅ **Automated Code Review implemented** (ktlint, detekt, security scanning)
+- ✅ **Learning Loops framework created** (weekly reviews, pattern library)
 
 ### What's Next (High Priority)
 
@@ -48,21 +51,10 @@ This work continues the AI optimization and cursor rules improvements. The docum
    - Track PR cycle time, deployment frequency, test pass rate
    - See: `docs/development/lessons/RESEARCH_BASED_IMPROVEMENTS.md` for details
 
-2. **AI-Assist Boundaries** (25-35% cognitive load reduction)
-   - Document what AI handles vs. human reviews
-   - Add to `.cursor/rules/code-quality.mdc` or create new `ai-boundaries.mdc`
-   - See research document for structure
-
-3. **Automated Code Review** (20-30% time saved)
-   - Add automated checks to CI/CD (formatting, style, security)
-   - Free human reviewers to focus on architecture/logic
-   - See research document for implementation details
-
-4. **Learning Loops** (continuous improvement)
-   - Weekly review: What worked? What didn't?
-   - Document effective prompt patterns
-   - Track rule effectiveness
-   - See research document for structure
+3. **Historical Data Migration** (Optional)
+   - Create script to infer metrics from existing PR/deployment history
+   - Populate metrics tables with historical data
+   - See: `docs/architecture/DEVELOPMENT_METRICS_ARCHITECTURE.md`
 
 ## Key Documents
 
@@ -94,8 +86,10 @@ This work continues the AI optimization and cursor rules improvements. The docum
 ### Phase 1: Quick Wins (1-2 weeks)
 - [x] Planning checklist (done)
 - [x] AI code provenance (done)
-- [ ] Simple metrics tracking (spreadsheet or script)
-- [ ] Document AI-assist boundaries
+- [x] Metrics tracking infrastructure (done)
+- [x] Document AI-assist boundaries (done)
+- [x] Automated code review (done)
+- [x] Learning loops framework (done)
 
 ### Phase 2: Medium Effort (1 month)
 - [ ] Add automated code review to CI/CD
