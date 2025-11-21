@@ -189,7 +189,6 @@ class CursorReportGenerator {
             is com.electricsheep.testautomation.actions.HumanAction.Swipe -> "Swiped ${action.direction}"
             is com.electricsheep.testautomation.actions.HumanAction.WaitFor -> "Waited for: ${action.condition}"
             is com.electricsheep.testautomation.actions.HumanAction.Verify -> "Verified: ${action.condition}"
-            is com.electricsheep.testautomation.actions.HumanAction.ReportIntent -> "Reported intent: ${if (action.achieved) "ACHIEVED" else "FAILED"}"
             is com.electricsheep.testautomation.actions.HumanAction.CaptureState -> "Captured screen state"
             is com.electricsheep.testautomation.actions.HumanAction.NavigateBack -> "Navigated back"
         }

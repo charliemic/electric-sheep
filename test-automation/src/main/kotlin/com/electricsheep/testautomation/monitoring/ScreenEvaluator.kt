@@ -97,9 +97,6 @@ class ScreenEvaluator(
         val overallState = determineOverallState(observations)
         val summary = generateSummary(observations, overallState)
         
-        // Detect keyboard visually
-        val hasKeyboard = detectKeyboard(screenshot)
-        
         return ScreenEvaluation(
             observations = observations,
             overallState = overallState,

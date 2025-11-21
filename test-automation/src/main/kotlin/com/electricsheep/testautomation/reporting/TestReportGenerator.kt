@@ -174,15 +174,6 @@ class TestReportGenerator {
                             appendLine("     Note: Waited but the expected state didn't appear - app may be slow or stuck.")
                         }
                     }
-                    is HumanAction.ReportIntent -> {
-                        if (step.result is ActionResult.Success) {
-                            if (step.action.achieved) {
-                                appendLine("     Note: The test goal was successfully achieved!")
-                            } else {
-                                appendLine("     Note: Unfortunately, the test goal could not be completed.")
-                            }
-                        }
-                    }
                     is HumanAction.Swipe -> {
                         if (step.result is ActionResult.Success) {
                             appendLine("     Note: Swipe gesture completed successfully.")
@@ -635,7 +626,6 @@ class TestReportGenerator {
             is HumanAction.Swipe -> "Swipe ${action.direction}"
             is HumanAction.WaitFor -> "Wait for: ${action.condition}"
             is HumanAction.Verify -> "Verify: ${action.condition}"
-            is HumanAction.ReportIntent -> "Report intent: ${if (action.achieved) "ACHIEVED" else "FAILED"}"
             is HumanAction.CaptureState -> "Capture screen state"
             else -> action::class.simpleName ?: "Unknown action"
         }
@@ -648,14 +638,6 @@ class TestReportGenerator {
             is HumanAction.Swipe -> "Swiped ${action.direction}"
             is HumanAction.WaitFor -> "Waited for the app to ${describeWaitCondition(action.condition)}"
             is HumanAction.Verify -> "Checked if ${describeVerifyCondition(action.condition)}"
-            is HumanAction.ReportIntent -> {
-                val intentAction = action as HumanAction.ReportIntent
-                if (intentAction.achieved) {
-                    "Confirmed that the test goal was achieved"
-                } else {
-                    "Noted that the test goal could not be completed"
-                }
-            }
             is HumanAction.CaptureState -> "Took a screenshot to see what's on screen"
             else -> "Performed action: ${action::class.simpleName ?: "Unknown"}"
         }
@@ -667,7 +649,6 @@ class TestReportGenerator {
             is com.electricsheep.testautomation.actions.WaitCondition.LoadingComplete -> "finish loading"
             is com.electricsheep.testautomation.actions.WaitCondition.ScreenChanged -> "transition to '${condition.expectedScreen}' screen"
             is com.electricsheep.testautomation.actions.WaitCondition.TextAppears -> "display text '${condition.text}'"
-            is com.electricsheep.testautomation.actions.WaitCondition.VisualStateReady -> "reach visual state: ${condition.description}"
             else -> "reach expected state"
         }
     }

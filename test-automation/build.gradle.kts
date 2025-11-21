@@ -37,6 +37,9 @@ dependencies {
     // OCR for text detection from screenshots (optional - using command-line Tesseract for now)
     // implementation("net.sourceforge.tess4j:tess4j:5.8.0")
     
+    // PDF generation for reports
+    implementation("com.itextpdf:itext7-core:8.0.2")
+    
     // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")

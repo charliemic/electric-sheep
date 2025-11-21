@@ -27,11 +27,7 @@ fun main(args: Array<String>) {
     
     // Find a screenshot to test with
     val screenshotDir = File(screenshotPath)
-<<<<<<< HEAD
-    val screenshot = if (screenshotDir.isDirectory) {
-=======
     val screenshot: File? = if (screenshotDir.isDirectory) {
->>>>>>> origin/main
         // Find latest screenshot
         screenshotDir.listFiles { _, name -> name.endsWith(".png") }
             ?.maxByOrNull { it.lastModified() }
@@ -41,11 +37,7 @@ fun main(args: Array<String>) {
         null
     }
     
-<<<<<<< HEAD
-    val screenshotFile: File = screenshot?.takeIf { it.exists() } ?: run {
-=======
     val screenshotFile: File = (screenshot?.takeIf { it.exists() } ?: run {
->>>>>>> origin/main
         logger.error("❌ No screenshot found at: $screenshotPath")
         logger.info("")
         logger.info("Usage:")
@@ -53,11 +45,7 @@ fun main(args: Array<String>) {
         logger.info("  java -cp ... OcrIntegrationTest test-results/screenshots  # Uses latest screenshot")
         System.exit(1)
         throw IllegalStateException("No screenshot found")
-<<<<<<< HEAD
-    }
-=======
     }) as File
->>>>>>> origin/main
     
     logger.info("Testing with screenshot: ${screenshotFile.name}")
     logger.info("")
