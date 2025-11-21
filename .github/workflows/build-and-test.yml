@@ -15,6 +15,7 @@ permissions:
 jobs:
   # Detect which files changed to determine which jobs to run
   changes:
+    name: Detect Changed Files
     runs-on: ubuntu-latest
     outputs:
       app-code: ${{ steps.filter.outputs.app-code }}
@@ -47,6 +48,7 @@ jobs:
           list-files: shell
 
   setup:
+    name: Setup Build Environment
     needs: changes
     # Only run setup if app code changed (needed for lint, test, build jobs)
     if: needs.changes.outputs.app-code == 'true'
@@ -91,6 +93,7 @@ jobs:
           ${{ runner.os }}-android-
 
   lint:
+    name: Run Lint Checks
     needs: [changes, setup]
     # Only run if app code changed
     if: needs.changes.outputs.app-code == 'true'
@@ -134,6 +137,7 @@ jobs:
         retention-days: 7
 
   accessibility:
+    name: Run Accessibility Checks
     needs: [changes, setup]
     # Only run if app code changed
     if: needs.changes.outputs.app-code == 'true'
@@ -169,6 +173,7 @@ jobs:
       continue-on-error: false
 
   test:
+    name: Run Unit Tests
     needs: [changes, setup]
     # Only run if app code changed
     if: needs.changes.outputs.app-code == 'true'
@@ -233,6 +238,7 @@ jobs:
         retention-days: 7
 
   build-debug:
+    name: Build Debug APK
     needs: [changes, setup]
     # Only run if app code changed
     if: needs.changes.outputs.app-code == 'true'
@@ -278,6 +284,7 @@ jobs:
       continue-on-error: false
 
   build-release:
+    name: Build Release AAB
     needs: [changes, setup]
     # Only run if app code changed
     if: needs.changes.outputs.app-code == 'true'
@@ -325,6 +332,7 @@ jobs:
   # Final status check - required by branch protection
   # This job creates the "ci-status" check that branch protection requires
   ci-status:
+    name: CI Status Check
     needs: [changes, lint, accessibility, test, build-debug, build-release]
     # Always run if any of the dependent jobs ran (they only run if app-code changed)
     # Use a more permissive condition to ensure the job runs when needed
