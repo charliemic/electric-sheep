@@ -156,9 +156,17 @@ This script automatically verifies:
 <type>: <description>
 
 [optional body]
+[optional: AI-generated code indicator]
 ```
 
 **Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+**AI Code Provenance (Optional but Recommended):**
+- If code was AI-generated: Add `[AI]` prefix or note in body
+- If code was AI-generated with human edits: Note significant edits
+- Example: `feat: [AI] Add user authentication flow` or `feat: Add feature (AI-generated, human-reviewed)`
+
+**Research shows**: Tracking AI code provenance improves learning and prompt effectiveness
 
 **CRITICAL: Commit Frequently (Safety Net)**
 - ✅ **Commit frequently** - Every 15-30 minutes, even if work is incomplete
