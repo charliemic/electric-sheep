@@ -305,17 +305,6 @@ class ScreenMonitor(
                 // Extract keyboard and blocking elements from evaluation
                 val hasKeyboard = evaluation?.hasKeyboard ?: false
                 val blockingElements = evaluation?.blockingElements ?: emptyList()
-=======
-                // Visual analysis: Basic state tracking
-                // Detailed analysis (errors, loading, screen name) should be done by ScreenEvaluator
-                // This method just tracks that a screenshot exists and is available for analysis
-                
-                val isLoading = false // Would be detected visually from screenshot by ScreenEvaluator
-                val hasErrors = false // Would be detected visually from screenshot by ScreenEvaluator
-                val errorMessages = emptyList<String>() // Would be extracted visually from screenshot by ScreenEvaluator
-                val visibleElements = emptyList<String>() // Would be identified visually from screenshot by ScreenEvaluator
-                val screenName = null // Would be identified visually from screenshot by ScreenEvaluator
->>>>>>> origin/main
                 
                 ScreenState(
                     screenName = screenName,
@@ -326,13 +315,9 @@ class ScreenMonitor(
                     screenshot = screenshot,
                     testStartTime = testStartTime,
                     currentAction = currentAction,
-<<<<<<< HEAD
                     currentIntent = currentIntent,
                     hasKeyboard = hasKeyboard,
                     blockingElements = blockingElements
-=======
-                    currentIntent = currentIntent
->>>>>>> origin/main
                 )
             } catch (e: Exception) {
                 logger.warn("Error analyzing state: ${e.message}")
