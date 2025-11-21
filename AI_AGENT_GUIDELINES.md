@@ -771,12 +771,22 @@ OutlinedTextField(
 - [ ] Semantic roles are defined for custom interactive components
 - [ ] Error states are announced to screen readers
 - [ ] Loading states are communicated to screen readers
-- [ ] Touch targets meet minimum 48dp size
+- [ ] Touch targets meet minimum 48dp size (consider larger for motor disabilities)
 - [ ] Color contrast meets WCAG AA standards
 - [ ] Text fields have proper labels
 - [ ] Tested with TalkBack screen reader
 - [ ] Keyboard navigation works for all interactive elements
 - [ ] Dynamic content changes are announced
+- [ ] No auto-playing media (videos, sounds, music)
+- [ ] Plain language used (no idioms, metaphors, cultural references)
+- [ ] Explicit, actionable error messages
+- [ ] Consider all disability types (visual, hearing, motor, cognitive, neurodivergent, speech, neurological, mental health, chronic conditions, age-related, situational)
+
+**See comprehensive guides:**
+- `.cursor/rules/accessibility.mdc` - Complete accessibility rules and requirements
+- `docs/architecture/COMPREHENSIVE_ACCESSIBILITY_GUIDE.md` - Guide covering all disability types
+- `docs/architecture/NEURODIVERSITY_INCLUSIVE_DESIGN.md` - Neurodiversity-inclusive design principles
+- `docs/architecture/ACCESSIBILITY_IMPLEMENTATION_ROADMAP.md` - Implementation roadmap
 
 ## Android-Specific Guidelines
 
