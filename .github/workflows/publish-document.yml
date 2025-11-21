@@ -121,77 +121,13 @@ jobs:
           echo "📤 Output: $OUTPUT_PATH"
           echo "🔖 Latest: $IS_LATEST"
 
-<<<<<<< Updated upstream
-  setup-converter:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: html-viewer/package-lock.json
-
-      - name: Install HTML Viewer dependencies
-        working-directory: ./html-viewer
-        run: npm ci
-
-      - name: Upload converter
-        uses: actions/upload-artifact@v4
-        with:
-          name: html-viewer-converter
-          path: html-viewer/
-          retention-days: 1
-
-  convert-document:
-    needs: [detect-document, setup-converter]
-=======
   convert-document:
     needs: [detect-document]
->>>>>>> Stashed changes
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-<<<<<<< Updated upstream
-      - name: Download converter
-        uses: actions/download-artifact@v4
-        with:
-          name: html-viewer-converter
-          path: html-viewer/
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install converter dependencies
-        working-directory: ./html-viewer
-        run: npm ci
-
-      - name: Convert document to HTML
-        working-directory: ./html-viewer
-        run: |
-          # Use the converter script
-          node scripts/convert-document.js \
-            "${{ github.workspace }}/${{ needs.detect-document.outputs.source_path }}" \
-            "${{ github.workspace }}/dist/${{ needs.detect-document.outputs.output_path }}" \
-            "${{ needs.detect-document.outputs.doc_name }}" \
-            "light"
-        # Fallback to Python script if Node.js conversion fails
-        continue-on-error: true
-
-      - name: Fallback to Python converter
-        if: failure()
-        run: |
-          python3 scripts/md-to-html.py \
-            "${{ needs.detect-document.outputs.source_path }}" \
-            "dist/${{ needs.detect-document.outputs.output_path }}" \
-=======
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -207,19 +143,13 @@ jobs:
           python3 scripts/md-to-html.py \
             "${{ needs.detect-document.outputs.source_path }}" \
             ".github-pages/${{ needs.detect-document.outputs.output_path }}" \
->>>>>>> Stashed changes
             "${{ needs.detect-document.outputs.doc_name }}"
 
       - name: Create index page (if latest)
         if: needs.detect-document.outputs.is_latest == 'true'
         run: |
-<<<<<<< Updated upstream
-          mkdir -p dist
-          cat > dist/index.html <<EOF
-=======
           mkdir -p .github-pages
           cat > .github-pages/index.html <<EOF
->>>>>>> Stashed changes
           <!DOCTYPE html>
           <html>
           <head>
@@ -237,11 +167,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: published-document
-<<<<<<< Updated upstream
-          path: dist/
-=======
           path: .github-pages/
->>>>>>> Stashed changes
           retention-days: 7
 
   deploy:
@@ -255,11 +181,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: published-document
-<<<<<<< Updated upstream
-          path: dist
-=======
           path: .github-pages
->>>>>>> Stashed changes
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -267,16 +189,12 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
-<<<<<<< Updated upstream
-=======
         with:
           # Deploy from .github-pages directory
           artifact_name: published-document
->>>>>>> Stashed changes
 
       - name: Deployment info
         run: |
           echo "✅ Deployed: ${{ needs.detect-document.outputs.doc_name }}"
           echo "📌 Version: ${{ needs.detect-document.outputs.version }}"
           echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
-
