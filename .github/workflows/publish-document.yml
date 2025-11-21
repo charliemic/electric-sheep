@@ -144,7 +144,7 @@ jobs:
           # Use the existing Python converter script
           python3 scripts/md-to-html.py \
             "${{ needs.detect-document.outputs.source_path }}" \
-            ".github-pages/${{ needs.detect-document.outputs.output_path }}" \
+            "${{ github.workspace }}/.github-pages/${{ needs.detect-document.outputs.output_path }}" \
             "${{ needs.detect-document.outputs.doc_name }}"
 
       - name: Create index page (if latest)
