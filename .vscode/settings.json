@@ -1,0 +1,107 @@
+{
+    // Java Configuration
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true,
+    // CRITICAL: Force Gradle to use Java 17 (not Java 24)
+    // This will be auto-detected, but you can override if needed
+    "java.import.gradle.java.home": null,
+    "java.import.gradle.version": null,
+    "java.configuration.runtimes": [],
+    // Java runtime will be auto-detected from JAVA_HOME or system
+    // To manually configure, uncomment and set path:
+    // {
+    //   "name": "JavaSE-17",
+    //   "path": "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home",
+    //   "default": true
+    // }
+    "java.compile.nullAnalysis.mode": "automatic",
+    // Gradle Configuration - Force Java 17
+    "gradle.java.home": null,
+    // If Java 17 is not auto-detected, set this to your Java 17 path:
+    // "gradle.java.home": "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home",
+    // Kotlin Configuration
+    "kotlin.languageServer.enabled": true,
+    // File Exclusions
+    "files.exclude": {
+        "**/.gradle": false,
+        "**/build": true,
+        "**/.idea": false,
+        "**/node_modules": true,
+        "**/.DS_Store": true
+    },
+    // Search Exclusions
+    "search.exclude": {
+        "**/build": true,
+        "**/.gradle": true,
+        "**/node_modules": true,
+        "**/test-results": true,
+        "**/test-automation/build": true
+    },
+    // File Watcher Exclusions (Performance)
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/build/**": true,
+        "**/.gradle/**": true,
+        "**/node_modules/**": true,
+        "**/test-results/**": true
+    },
+    // Editor Settings
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "editor.rulers": [
+        100
+    ],
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    // Kotlin Formatting
+    "[kotlin]": {
+        "editor.defaultFormatter": "fwcd.kotlin",
+        "editor.tabSize": 4
+    },
+    // Markdown Settings (for extensive docs)
+    "[markdown]": {
+        "editor.wordWrap": "on",
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "strings": "off",
+            "other": "off"
+        }
+    },
+    // YAML Settings (for feature flags, test scenarios)
+    "[yaml]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+    },
+    // Shell Script Settings
+    "[shellscript]": {
+        "editor.tabSize": 2
+    },
+    // Python Settings (for scripts)
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    // Git Settings
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    // Terminal Settings
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    // Breadcrumbs
+    "breadcrumbs.enabled": true,
+    "breadcrumbs.filePath": "on",
+    // File Nesting
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.kt": "${capture}.kt.test, ${capture}Test.kt",
+        "*.gradle.kts": "${capture}.gradle.kts, ${capture}.properties",
+        "*.md": "${capture}.md, ${capture}*.md",
+        "*.sh": "${capture}.sh, ${capture}.md",
+        "*.py": "${capture}.py, ${capture}.md"
+    }
+}

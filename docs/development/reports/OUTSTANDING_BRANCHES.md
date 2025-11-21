@@ -33,19 +33,15 @@
 
 ### Unmerged Branches with Unique Work
 
-#### 1. `feature/trivia-app-initial-setup`
-- **Unique Commits**: 1
-- **Commit**: `2cf9cdc feat: Add trivia app initial setup with feature flag`
-- **Status**: Needs review - may be superseded by PR #19
-- **Action**: Review and merge or delete
+#### 1. ~~`feature/trivia-app-initial-setup`~~ ✅ DELETED
+- **Status**: ✅ **DELETED** (2025-11-21) - Work merged via PR #19
+- **Action**: None - Already cleaned up
+- **See**: `TRIVIA_BRANCHES_REVIEW.md` for details
 
-#### 2. `feature/trivia-screen`
-- **Unique Commits**: 2
-- **Commits**:
-  - `9cf5adc docs: Add README for trivia worktree`
-  - `fb85255 feat: Add trivia screen implementation (isolated worktree)`
-- **Status**: Has unique trivia screen work
-- **Action**: Review if trivia screen work is still needed
+#### 2. ~~`feature/trivia-screen`~~ ✅ DELETED
+- **Status**: ✅ **DELETED** (2025-11-21) - Work merged via PR #19
+- **Action**: None - Already cleaned up
+- **See**: `TRIVIA_BRANCHES_REVIEW.md` for details
 
 #### 3. `feature/improve-cursor-rules`
 - **Unique Commits**: 3
