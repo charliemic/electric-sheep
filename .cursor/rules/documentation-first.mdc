@@ -1,0 +1,145 @@
+---
+alwaysApply: true
+---
+
+# Documentation-First Principle
+
+## CRITICAL: Always Check Official Documentation First
+
+**Before implementing fixes, features, or debugging:**
+
+1. ✅ **Check official documentation FIRST** - Don't make assumptions
+2. ✅ **Verify version compatibility** - Use latest/correct versions
+3. ✅ **Follow official patterns** - Use recommended approaches
+4. ✅ **Step back and understand** - Don't try fixes without understanding
+
+## When to Check Documentation
+
+### Before Implementing Features
+- ✅ Read official documentation for the tool/framework/API
+- ✅ Understand recommended patterns and best practices
+- ✅ Check for official examples or tutorials
+- ✅ Verify version compatibility
+
+### When Debugging Failures
+- ✅ Check official troubleshooting guides
+- ✅ Search documentation for error messages
+- ✅ Verify you're using latest/correct versions
+- ✅ Check changelogs or release notes for breaking changes
+- ✅ Look for known issues or migration guides
+
+### When Encountering Errors
+- ✅ Read error messages carefully
+- ✅ Search official documentation for the error
+- ✅ Check version compatibility
+- ✅ Review changelogs for recent changes
+
+### When Unsure About Best Practices
+- ✅ Consult official best practices guides
+- ✅ Check community examples (but prefer official)
+- ✅ Review official patterns and examples
+
+## Implementation Checklist
+
+### Before Starting Work
+- [ ] **Search official documentation** for the tool/framework/API
+- [ ] **Check version compatibility** - Are you using the latest/correct version?
+- [ ] **Review examples** - Look for official examples or tutorials
+- [ ] **Understand the pattern** - What's the recommended approach?
+
+### When Debugging
+- [ ] **Read error messages carefully** - What do they actually say?
+- [ ] **Search documentation** for the error or symptom
+- [ ] **Check version notes** - Has something changed in recent versions?
+- [ ] **Step back** - Understand the problem before trying fixes
+
+### When Implementing
+- [ ] **Follow official patterns** - Use recommended approaches
+- [ ] **Use official examples** as starting points
+- [ ] **Verify compatibility** - Ensure versions match documentation
+- [ ] **Test with official examples** first, then adapt
+
+## Documentation Sources
+
+### Official Documentation
+- **GitHub**: https://docs.github.com
+- **Python**: https://docs.python.org
+- **Kotlin**: https://kotlinlang.org/docs
+- **Android**: https://developer.android.com/docs
+- **Supabase**: https://supabase.com/docs
+
+### Search Strategies
+- Use official documentation search
+- Include version numbers in searches
+- Search for error messages
+- Look for "getting started" or "quick start" guides
+
+### Version Checking
+- Check `package.json`, `build.gradle`, `requirements.txt`
+- Verify against latest stable versions
+- Check changelogs for breaking changes
+
+## Examples
+
+### ✅ Good: Documentation-First Approach
+```
+1. User reports GitHub Pages deployment failing
+2. Agent: "Let me check GitHub's official documentation for GitHub Pages deployment"
+3. Agent searches: "GitHub Actions deploy-pages official documentation"
+4. Agent finds: Official pattern uses upload-pages-artifact@v4 and deploy-pages@v4
+5. Agent updates workflow to match official pattern
+6. ✅ Success on first try
+```
+
+### ❌ Bad: Trial-and-Error Approach
+```
+1. User reports GitHub Pages deployment failing
+2. Agent: "Let me try removing artifact_name parameter"
+3. Fails: "Let me try using download-artifact"
+4. Fails: "Let me try different action versions"
+5. Fails: "Let me try..."
+6. User: "Take a step back, check documentation"
+7. Agent finally checks documentation
+8. ✅ Success after multiple failed attempts
+```
+
+## Integration with Other Rules
+
+### Related Rules
+- **Working Patterns First** (`.cursor/rules/working-patterns-first.mdc`) - Check existing working patterns in codebase (complements documentation-first)
+- **Code Quality** (`.cursor/rules/code-quality.mdc`) - Follow best practices
+- **Error Handling** (`.cursor/rules/error-handling.mdc`) - Proper error handling patterns
+- **API Patterns** (`.cursor/rules/api-patterns.mdc`) - Should check documentation for API patterns
+
+### How Documentation-First and Working-Patterns-First Work Together
+- **Documentation-First**: Check external official documentation (GitHub, Python, Kotlin, Android docs)
+- **Working-Patterns-First**: Check internal codebase for existing working patterns
+- **Together**: First check docs for official patterns, then check codebase for existing implementations
+
+### Workflow Integration
+- Run `./scripts/pre-work-check.sh` before starting
+- Check documentation as part of pre-work validation
+- Verify versions match documentation requirements
+
+## Anti-Patterns to Avoid
+
+### ❌ Don't Make Assumptions
+- Don't assume how tools/APIs work
+- Don't guess at parameter names or formats
+- Don't use outdated patterns without checking
+
+### ❌ Don't Skip Documentation
+- Don't try multiple fixes without checking docs
+- Don't use trial-and-error when documentation exists
+- Don't ignore version compatibility
+
+### ❌ Don't Ignore Official Patterns
+- Don't reinvent when official patterns exist
+- Don't use deprecated approaches
+- Don't skip migration guides
+
+## Related Documentation
+
+- `docs/development/lessons/DOCUMENTATION_FIRST_PRINCIPLE.md` - Complete lesson documentation
+- `AI_AGENT_GUIDELINES.md` - General agent guidelines
+- `.cursor/rules/working-patterns-first.mdc` - Working patterns first principle

@@ -1,4 +1,22 @@
+---
+alwaysApply: false
+---
+
 # Feature Flags Principles and Requirements
+
+## When This Rule Applies
+
+**This rule applies when:**
+- Implementing new features in the app
+- Adding new functionality that should be toggleable
+- Working with feature flag configuration
+- Managing feature rollouts
+
+**This rule does NOT apply to:**
+- Bug fixes (unless they introduce new behavior)
+- Documentation-only changes
+- Infrastructure changes
+- Test-only changes
 
 ## CRITICAL: Always Use Feature Flags for New Features
 
