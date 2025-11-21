@@ -97,26 +97,43 @@ jobs:
       
       - name: Verify data was seeded
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_URL: ${{ steps.supabase-url.outputs.supabase_url }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY_STAGING || secrets.SUPABASE_SECRET_KEY }}
         run: |
-          echo "Verifying test data was seeded..."
-          # Query to check test users and their mood entries
-          echo "Running verification query..."
-          supabase db execute "
-            SELECT 
-              u.email,
-              COUNT(m.id) as entry_count,
-              MIN(DATE(to_timestamp(m.timestamp / 1000))) as earliest_date,
-              MAX(DATE(to_timestamp(m.timestamp / 1000))) as latest_date
-            FROM auth.users u
-            LEFT JOIN public.moods m ON m.user_id = u.id
-            WHERE u.email LIKE 'test-%@electric-sheep.test'
-            GROUP BY u.email
-            ORDER BY u.email;
-          " || {
-            echo "Warning: Could not verify data (this is non-critical)"
-            exit 0
-          }
+          echo "Verifying test data was seeded via PostgREST API..."
+          # Get test users and their mood entry counts via HTTP API
+          # First, get all test users
+          USERS_RESPONSE=$(curl -s -X GET \
+            -H "apikey: ${SUPABASE_SECRET_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+            "${SUPABASE_URL}/auth/v1/admin/users?email=like.test-%40electric-sheep.test" 2>/dev/null || echo "[]")
+          
+          USER_COUNT=$(echo "$USERS_RESPONSE" | jq '.users | length' 2>/dev/null || echo "0")
+          echo "Found $USER_COUNT test users"
+          
+          # For each user, count mood entries
+          TOTAL_ENTRIES=0
+          for i in $(seq 0 $((USER_COUNT - 1))); do
+            USER_ID=$(echo "$USERS_RESPONSE" | jq -r ".users[$i].id" 2>/dev/null)
+            EMAIL=$(echo "$USERS_RESPONSE" | jq -r ".users[$i].email" 2>/dev/null)
+            
+            if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
+              MOODS_RESPONSE=$(curl -s -X GET \
+                -H "apikey: ${SUPABASE_SECRET_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+                "${SUPABASE_URL}/rest/v1/moods?user_id=eq.${USER_ID}&select=id" 2>/dev/null || echo "[]")
+              
+              ENTRY_COUNT=$(echo "$MOODS_RESPONSE" | jq 'length' 2>/dev/null || echo "0")
+              TOTAL_ENTRIES=$((TOTAL_ENTRIES + ENTRY_COUNT))
+              echo "  $EMAIL: $ENTRY_COUNT entries"
+            fi
+          done
+          
+          echo "Total mood entries: $TOTAL_ENTRIES"
+          if [ $TOTAL_ENTRIES -eq 0 ]; then
+            echo "⚠️  Warning: No mood entries found. Data seeding may have failed."
+            exit 1
+          fi
       
       - name: Summary
         if: always()
