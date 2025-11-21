@@ -11,7 +11,7 @@ METRICS_DIR="$PROJECT_ROOT/development-metrics"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Ensure metrics directory exists
-mkdir -p "$METRICS_DIR"/{prompts,builds,tests,complexity,accessibility,coverage}
+mkdir -p "$METRICS_DIR"/{prompts,agent-usage,builds,tests,complexity,accessibility,coverage}
 
 # Function to log metrics
 log_metric() {
