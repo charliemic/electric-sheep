@@ -15,10 +15,12 @@ This document defines the standard workflow for multiple AI agents working simul
 - **Branch naming**: `feature/<task-description>` or `<type>/<task-description>`
 - **Example**: `feature/test-helpers`, `feature/env-switch`, `feature/design-system`
 
-### 2. File System Isolation (RECOMMENDED)
-- **Git Worktrees** - Use separate working directories for complete isolation
+### 2. File System Isolation (MANDATORY)
+- **Git Worktrees** - **MANDATORY**: Use separate working directories for complete isolation
+- **Every agent MUST use worktree** - No exceptions except when coordination explicitly requires shared files
 - **Workspace Separation** - Use separate directory clones if needed
 - **Coordination** - Always check coordination doc before starting
+- **Exception**: Only skip worktree if coordination explicitly requires shared workspace (must be documented in `AGENT_COORDINATION.md`)
 
 ### 3. Coordination Before Conflict
 - Check `AGENT_COORDINATION.md` before starting work
@@ -32,9 +34,9 @@ This document defines the standard workflow for multiple AI agents working simul
 
 ## File System Isolation Strategies
 
-### Strategy 1: Git Worktrees (RECOMMENDED)
+### Strategy 1: Git Worktrees (MANDATORY)
 
-**Git worktrees allow multiple working directories for the same repository, each on a different branch.**
+**CRITICAL: Git worktrees are MANDATORY for all agents. Every agent MUST use a worktree for complete file system isolation.**
 
 #### Benefits
 - ✅ Complete file system isolation - each agent has their own directory
@@ -116,24 +118,27 @@ cd ../electric-sheep-design-system
 - When working on large refactors
 - When multiple agents need to modify the same files simultaneously
 
-### Strategy 3: Branch-Based Isolation (Current Default)
+### Strategy 3: Branch-Based Isolation (Exception Only)
 
-**Use git branches with coordination - works but requires careful coordination.**
+**⚠️ NOT RECOMMENDED: Use git branches with coordination - only as exception when coordination requires shared workspace.**
 
 #### Setup
 - Each agent creates a feature branch
 - All work in same directory
 - Must coordinate through `AGENT_COORDINATION.md`
+- **Exception must be documented** in `AGENT_COORDINATION.md`
 
 #### Limitations
 - ⚠️ File system conflicts possible if agents modify same files
 - ⚠️ Requires careful coordination
 - ⚠️ Branch switching can be error-prone
+- ⚠️ Untracked files can pollute workspace
+- ⚠️ Build errors from other agents' incomplete work
 
-#### When to Use
-- When tasks don't overlap
-- When coordination is easy
-- When disk space is limited
+#### When to Use (Exception Only)
+- **ONLY** when coordination explicitly requires shared workspace
+- **MUST** be documented in `AGENT_COORDINATION.md`
+- **NOT** for normal work - use worktree instead
 
 ## Workflow Steps
 
@@ -142,21 +147,24 @@ cd ../electric-sheep-design-system
 **Before making ANY changes:**
 
 1. **Choose Isolation Strategy**
-   - **Recommended**: Git worktree for file system isolation
-   - **Alternative**: Separate clone for complete isolation
-   - **Fallback**: Branch-based with coordination
+   - **MANDATORY**: Git worktree for file system isolation (required for all agents)
+   - **Alternative**: Separate clone for complete isolation (if worktree not possible)
+   - **Exception**: Only skip isolation if coordination explicitly requires shared workspace (must be documented)
 
-2. **If Using Git Worktree:**
+2. **MANDATORY: Create Git Worktree:**
    ```bash
    # From main repository
    git checkout main
    git pull origin main
    git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
    cd ../electric-sheep-<task-name>
+   # Now working in isolated directory
    ```
 
-3. **If Using Branch-Based:**
+3. **Exception: Branch-Based (Only if coordination requires shared workspace):**
    ```bash
+   # ONLY if coordination explicitly requires shared workspace
+   # Must be documented in AGENT_COORDINATION.md
    git checkout main
    git pull origin main
    git checkout -b feature/<task-name>
