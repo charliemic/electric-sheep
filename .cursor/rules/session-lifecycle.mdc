@@ -1,0 +1,219 @@
+---
+alwaysApply: true
+---
+
+# Session Lifecycle Management
+
+## When This Applies
+At the start and end of every work session.
+
+## CRITICAL: Session Lifecycle
+
+**Every work session has a clear start and end:**
+
+1. **Session Start** - Pre-work validation and setup
+2. **Session Work** - Active development
+3. **Session End** - Cleanup, merge, and closure
+
+## Session Start Checklist
+
+**Before starting ANY work, complete this checklist:**
+
+### 1. Pre-Work Validation (MANDATORY)
+```bash
+./scripts/pre-work-check.sh
+```
+
+This verifies:
+- ✅ Not on `main` branch
+- ✅ Latest `main` pulled
+- ✅ Coordination checked
+- ✅ Handover queue checked
+- ✅ Relevant rules discovered
+- ✅ Available tools identified
+- ✅ Working directory clean
+
+### 2. Branch Setup
+- ✅ Create feature branch (if not exists)
+- ✅ Or use git worktree for isolation
+- ✅ Verify branch naming convention
+
+### 3. Context Review
+- ✅ Review handover queue for pending work
+- ✅ Read relevant documentation
+- ✅ Understand current state
+- ✅ Check deployment status
+
+### 4. Session Initialization
+- ✅ Document session start in coordination doc (if needed)
+- ✅ Set session goals/objectives
+- ✅ Note any constraints or dependencies
+
+## Session Work
+
+**During active development:**
+
+- ✅ Commit frequently (every 15-30 minutes)
+- ✅ Monitor effectiveness (if long session)
+- ✅ Check coordination before shared files
+- ✅ Run tests before committing
+- ✅ Update documentation as needed
+
+**See:** `.cursor/rules/branching.mdc` for complete workflow
+
+## Session End Checklist
+
+**Before closing a session, complete this checklist:**
+
+### 1. Work Completion
+- ✅ All planned work committed
+- ✅ All tests passing
+- ✅ Documentation updated
+- ✅ Code reviewed (if applicable)
+
+### 2. Merge and Cleanup (REQUIRED for Closed Session)
+
+**For Case A (Close Session - Work Finished):**
+- ✅ **PR created and merged** (or work committed to feature branch)
+- ✅ **Branch deleted** (if merged)
+- ✅ **Worktree removed** (if used)
+- ✅ **Working directory clean** (`git status` shows clean)
+- ✅ **No uncommitted changes**
+- ✅ **No untracked files** (or intentionally ignored)
+- ✅ **Coordination doc updated** (status marked complete)
+
+**For Case B (Create Handover - More Work Exists):**
+- ✅ All current work committed
+- ✅ Handover document created
+- ✅ Added to handover queue
+- ✅ Next steps clearly defined
+- ✅ Working directory clean (committed state)
+
+### 3. Session Closure
+
+**Case A: Close Session (Work Finished)**
+```bash
+# Verify merge status
+gh pr view <pr-number> --json state,merged
+
+# If merged, cleanup
+git checkout main
+git pull origin main
+git branch -d feature/<branch-name>
+git worktree remove ../electric-sheep-<task-name>  # if used
+
+# Verify clean state
+git status  # Should show "nothing to commit, working tree clean"
+```
+
+**Case B: Create Handover (More Work Exists)**
+```bash
+# Commit handover document
+git add docs/development/workflow/HANDOVER_QUEUE.md
+git add HANDOVER_PROMPT.md  # or new handover doc
+git commit -m "docs: add handover for <task-name>"
+
+# Verify clean state
+git status  # Should show "nothing to commit, working tree clean"
+```
+
+### 4. Final Verification
+
+**Before declaring session closed:**
+- ✅ `git status` shows clean working tree
+- ✅ All changes committed
+- ✅ PR merged (if applicable)
+- ✅ Branch/worktree cleaned up (if merged)
+- ✅ No pending work (Case A) or handover created (Case B)
+- ✅ Coordination doc updated
+
+## Session States
+
+### Active Session
+- Work in progress
+- Uncommitted changes may exist
+- Branch active
+- Coordination doc shows "In Progress"
+
+### Session Ending
+- All work committed
+- Tests passing
+- Documentation updated
+- Ready for merge or handover
+
+### Session Closed (Case A)
+- ✅ Work finished
+- ✅ PR merged (or committed to feature branch)
+- ✅ Branch deleted (if merged)
+- ✅ Working directory clean
+- ✅ No uncommitted changes
+- ✅ No pending work
+
+### Handover Created (Case B)
+- ✅ Current work committed
+- ✅ Handover document created
+- ✅ Added to queue
+- ✅ Working directory clean
+- ✅ Next agent can pick up
+
+## Integration with Other Rules
+
+### Pre-Work Check
+- Session start is enforced by `pre-work-check.sh`
+- Validates branch, coordination, handover queue
+
+### Branching Rules
+- Session work follows branching isolation rules
+- Session end includes branch cleanup
+
+### Handover Patterns
+- Session end determines: close session vs create handover
+- Handover created when more work exists
+
+### Effectiveness Monitoring
+- Long sessions may trigger handover
+- Effectiveness thresholds guide session end decisions
+
+## Examples
+
+### Example 1: Complete Session (Case A)
+```bash
+# Session work complete
+git add -A
+git commit -m "feat: complete feature X"
+git push origin feature/feature-x
+
+# Create PR, get approval, merge
+
+# Session end cleanup
+git checkout main
+git pull origin main
+git branch -d feature/feature-x
+git status  # Clean ✅
+
+# Session closed
+```
+
+### Example 2: Handover Session (Case B)
+```bash
+# Session work committed
+git add -A
+git commit -m "feat: partial implementation of feature Y"
+git push origin feature/feature-y
+
+# Create handover
+./scripts/create-handover.sh feature-y
+git add docs/development/workflow/HANDOVER_QUEUE.md
+git commit -m "docs: add handover for feature-y"
+git status  # Clean ✅
+
+# Handover created, session ends
+```
+
+## Related Documentation
+
+- `.cursor/rules/branching.mdc` - Branch isolation and workflow
+- `.cursor/rules/agent-effectiveness.mdc` - Effectiveness monitoring
+- `docs/development/workflow/AGENT_HANDOVER_PATTERNS.md` - Handover patterns
+- `scripts/pre-work-check.sh` - Pre-work validation
+- `scripts/post-merge-cleanup.sh` - Post-merge cleanup

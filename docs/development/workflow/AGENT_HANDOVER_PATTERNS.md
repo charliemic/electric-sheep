@@ -67,6 +67,17 @@
    - No effectiveness issues
    - **Action**: Close session
 
+**REQUIRED for Closed Session:**
+- ✅ **PR merged** (or work committed to feature branch)
+- ✅ **Branch deleted** (if merged)
+- ✅ **Worktree removed** (if used)
+- ✅ **Working directory clean** (`git status` shows clean)
+- ✅ **No uncommitted changes**
+- ✅ **No untracked files** (or intentionally ignored)
+- ✅ **Coordination doc updated** (status marked complete)
+
+**See:** `.cursor/rules/session-lifecycle.mdc` for complete session end checklist
+
 ### ❌ Don't Create Handover When:
 
 1. **Mid-Task**

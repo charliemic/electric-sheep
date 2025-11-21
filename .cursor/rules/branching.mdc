@@ -61,7 +61,17 @@ cd ../electric-sheep-<task-name>
 - No conflicts with other agents
 - Easy cleanup after merge
 
-## Pre-Work Checklist (MANDATORY)
+## Session Lifecycle
+
+**Every work session has a clear start and end:**
+
+- **Session Start**: Pre-work validation (see below)
+- **Session Work**: Active development (commit frequently, monitor effectiveness)
+- **Session End**: Merge, cleanup, and closure (see session-lifecycle.mdc)
+
+**See:** `.cursor/rules/session-lifecycle.mdc` for complete session lifecycle
+
+## Pre-Work Checklist (MANDATORY) - Session Start
 
 **CRITICAL: Run automated pre-work check before starting ANY work:**
 
@@ -80,6 +90,8 @@ This script automatically verifies:
 8. ✅ **Handover detection** - Checks if handover needed for current work
 
 **If the script reports errors, fix them before proceeding.**
+
+**This is your session start checklist.**
 
 **Manual steps (if needed):**
 1. ✅ **Create feature branch** - Use proper naming convention
@@ -361,6 +373,7 @@ Please verify these are correct before cleanup proceeds.
 - Update status when working on handover
 
 **See:** 
+- `.cursor/rules/session-lifecycle.mdc` - Complete session lifecycle (start, work, end)
 - `.cursor/rules/agent-effectiveness.mdc` - Complete effectiveness monitoring rule
 - `docs/development/workflow/AGENT_EFFECTIVENESS_DEGRADATION.md` - Degradation analysis
 - `docs/development/workflow/HANDOVER_QUEUE_SYSTEM.md` - Queue system design
