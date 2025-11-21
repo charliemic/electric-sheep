@@ -39,13 +39,9 @@ data class ScreenObservation(
 data class ScreenEvaluation(
     val observations: List<ScreenObservation>,
     val overallState: EvaluationState,
-<<<<<<< HEAD
     val summary: String,
     val hasKeyboard: Boolean = false, // VISUALLY detected: keyboard is visible on screen
     val blockingElements: List<String> = emptyList() // VISUALLY detected: elements blocking interaction
-=======
-    val summary: String
->>>>>>> origin/main
 ) {
     enum class EvaluationState {
         PASS,           // Screen matches expectations, no blocking issues
