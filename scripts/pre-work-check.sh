@@ -90,6 +90,21 @@ echo "   ✅ Found $TOOL_COUNT scripts available"
 echo "   💡 Tip: Check scripts/ directory for automation before manual steps"
 echo ""
 
+# 5.5. Reminder: Check for existing artifacts before creating new ones
+echo "5️⃣.5️⃣  Artifact duplication prevention..."
+if [ -f "scripts/check-existing-artifacts.sh" ]; then
+    echo "   ✅ Helper script available: ./scripts/check-existing-artifacts.sh <keyword>"
+    echo "   💡 CRITICAL: Before creating new files/scripts/docs, search for existing ones"
+    echo "   → Run: ./scripts/check-existing-artifacts.sh <keyword>"
+    echo "   → Check .cursor/rules/artifact-duplication.mdc for full guidelines"
+else
+    echo "   💡 CRITICAL: Before creating new files/scripts/docs, search for existing ones:"
+    echo "   → find . -name \"*<keyword>*\" -not -path \"*/\.*\" -not -path \"*/build/*\""
+    echo "   → grep -r \"<keyword>\" scripts/ docs/ --include=\"*.sh\" --include=\"*.py\" --include=\"*.md\""
+    echo "   → Check .cursor/rules/artifact-duplication.mdc for full guidelines"
+fi
+echo ""
+
 # 6. Check for relevant cursor rules
 echo "6️⃣  Checking cursor rules..."
 RULE_COUNT=$(find .cursor/rules -name "*.mdc" 2>/dev/null | wc -l | tr -d ' ')
@@ -127,9 +142,10 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All checks passed! You're ready to start work."
     echo ""
     echo "💡 Next steps:"
-    echo "   1. Update coordination doc if needed: $COORDINATION_DOC"
-    echo "   2. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
-    echo "   3. Reference relevant rules: .cursor/rules/"
+    echo "   1. Search for existing artifacts before creating new ones"
+    echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
+    echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
+    echo "   4. Reference relevant rules: .cursor/rules/"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."

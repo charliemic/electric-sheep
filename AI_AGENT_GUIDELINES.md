@@ -40,10 +40,15 @@ This document provides guidance for AI agents working on this codebase. Follow t
 1. **Verify Branch**: **CRITICAL** - Check that you are NOT on the `main` branch (`git status` or `git branch`)
    - If on `main`, immediately create a feature branch before proceeding
    - Never make changes while on `main` branch
-2. **Understand Context**: Read existing code and understand the architecture before modifying
-3. **Check Dependencies**: Verify compatibility with existing dependencies and versions
-4. **Review Related Code**: Look for similar implementations to maintain consistency
-5. **Consider Impact**: Assess how changes affect other parts of the system
+2. **Check for Existing Artifacts**: **CRITICAL** - Before creating new files, scripts, or documents, search for existing ones
+   - Run `./scripts/check-existing-artifacts.sh <keyword>` to search for similar artifacts
+   - Use `find`, `grep`, and codebase search to find related implementations
+   - Extend existing artifacts when possible instead of creating duplicates
+   - See `.cursor/rules/artifact-duplication.mdc` for complete guidelines
+3. **Understand Context**: Read existing code and understand the architecture before modifying
+4. **Check Dependencies**: Verify compatibility with existing dependencies and versions
+5. **Review Related Code**: Look for similar implementations to maintain consistency
+6. **Consider Impact**: Assess how changes affect other parts of the system
 
 ### When Implementing Features
 - **Start Small**: Implement minimal viable functionality first, then iterate
