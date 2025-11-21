@@ -196,13 +196,10 @@ jobs:
           </html>
           EOF
 
-      - name: Upload built document
-        uses: actions/upload-artifact@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: published-document
           path: .github-pages/
-          retention-days: 7
-          include-hidden-files: true
 
   deploy:
     name: Deploy to GitHub Pages
@@ -212,12 +209,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download built document
-        uses: actions/download-artifact@v4
-        with:
-          name: published-document
-          path: .github-pages
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
