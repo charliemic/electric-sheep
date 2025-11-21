@@ -64,6 +64,16 @@ alwaysApply: true
 
 ### MANDATORY Cleanup Steps
 
+**CRITICAL: Run automated cleanup:**
+
+```bash
+./scripts/post-merge-cleanup.sh <pr-number>
+```
+
+This script automatically handles all cleanup steps.
+
+**Manual cleanup (if automation unavailable):**
+
 1. **Verify PR is merged:**
    ```bash
    gh pr view <pr-number> --json state,merged | jq -r '"State: \(.state), Merged: \(.merged)"'

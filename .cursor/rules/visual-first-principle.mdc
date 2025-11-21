@@ -1,0 +1,140 @@
+# Visual-First Principle: CRITICAL RULE
+
+## ⚠️ CRITICAL: Always Use Visual Cues, Never Appium Internals
+
+**This is a fundamental architectural principle that MUST be maintained.**
+
+### The Rule
+
+**ALL state detection, element identification, and UI analysis MUST be based on visual cues (screenshots) rather than Appium's internal element queries or DOM structures.**
+
+### Why This Matters
+
+1. **Human-Like Behavior**: Humans interact with UIs visually, not through internal structures
+2. **Realistic Testing**: Tests should reflect how users actually see and interact with the app
+3. **Robustness**: Visual analysis works regardless of internal implementation changes
+4. **Accessibility**: Visual analysis naturally includes accessibility considerations
+5. **Future-Proof**: Works with any UI framework, not just specific Appium element types
+
+### What This Means
+
+#### ✅ DO: Visual-Based Approaches
+
+- **Screenshot Analysis**: Use screenshots to detect state, errors, elements
+- **AI Vision**: Use Cursor's vision or AI vision APIs to analyze screenshots
+- **Image Processing**: Use image processing libraries to detect visual patterns
+- **Visual Patterns**: Look for visual cues (colors, shapes, text, layouts)
+- **Screen State**: Determine screen state from what's visible, not element queries
+
+#### ❌ DON'T: Appium Internal Queries
+
+- **Element Queries**: Don't use `driver.findElements()` for state detection
+- **DOM Navigation**: Don't traverse element hierarchies for analysis
+- **Element Attributes**: Don't rely on `element.getAttribute()` for state
+- **Element Visibility**: Don't use `element.isDisplayed` for state detection
+- **Internal Structures**: Don't query Appium's internal element structures
+
+### Implementation Guidelines
+
+#### Screen State Detection
+
+```kotlin
+// ❌ BAD: Using Appium element queries
+val elements = driver.findElements(By.xpath("//*"))
+val hasErrors = elements.any { it.text.contains("error") }
+
+// ✅ GOOD: Using visual analysis
+val screenshot = driver.getScreenshotAs(OutputType.FILE)
+val hasErrors = screenEvaluator.detectErrors(screenshot) // Visual analysis
+```
+
+#### Element Identification
+
+```kotlin
+// ❌ BAD: Finding elements by Appium queries
+val button = driver.findElement(By.id("save_button"))
+
+// ✅ GOOD: Identifying elements visually
+val screenshot = driver.getScreenshotAs(OutputType.FILE)
+val buttonLocation = visualAnalyzer.findButton("Save Mood", screenshot) // Visual search
+```
+
+#### State Analysis
+
+```kotlin
+// ❌ BAD: Checking element properties
+val isLoading = driver.findElement(By.id("loading")).isDisplayed
+
+// ✅ GOOD: Visual state detection
+val screenshot = driver.getScreenshotAs(OutputType.FILE)
+val isLoading = screenEvaluator.detectLoadingIndicator(screenshot) // Visual detection
+```
+
+### Where This Applies
+
+**ALL components that interact with UI state:**
+
+1. **ScreenMonitor**: Must use screenshots, not element queries
+2. **ScreenEvaluator**: Must analyze screenshots visually
+3. **StateManager**: Must base state on visual observations
+4. **AttentionManager**: Must focus on visual areas, not element structures
+5. **ActionExecutor**: Can use Appium for actions, but state detection must be visual
+
+### Exception: Action Execution
+
+**Action execution (tapping, typing) can use Appium**, but:
+- State detection before/after actions MUST be visual
+- Element location for actions can use Appium, but verification must be visual
+- Error detection after actions MUST be visual
+
+### Code Review Checklist
+
+When reviewing code, check:
+
+- [ ] Does this use `driver.findElements()` for state detection? → **MUST REFACTOR**
+- [ ] Does this use element attributes for state? → **MUST REFACTOR**
+- [ ] Does this analyze screenshots visually? → ✅ **GOOD**
+- [ ] Does this use AI vision or image processing? → ✅ **GOOD**
+- [ ] Does this rely on visual patterns? → ✅ **GOOD**
+
+### Migration Path
+
+If you find code using Appium internals for state detection:
+
+1. **Identify**: Find all `driver.findElements()` calls for state detection
+2. **Replace**: Replace with screenshot-based visual analysis
+3. **Test**: Verify visual analysis works correctly
+4. **Document**: Update code comments to emphasize visual-first approach
+
+### Examples in Codebase
+
+**Good Examples:**
+- `ScreenEvaluator.evaluateScreen()` - Uses screenshots for analysis
+- `ScreenMonitor.captureAndAnalyzeState()` - Uses screenshots, not element queries
+- Visual analysis in `ScreenObservation` - Based on screenshots
+
+**Bad Examples (to refactor):**
+- Any `driver.findElements()` used for state detection
+- Element attribute queries for state analysis
+- DOM traversal for UI understanding
+
+### Enforcement
+
+**This rule is CRITICAL and must be enforced:**
+
+1. **Code Reviews**: Reject PRs that violate this principle
+2. **Linting**: Add checks to detect Appium element queries for state
+3. **Documentation**: Always mention visual-first approach in code comments
+4. **Architecture**: Design components to use visual analysis by default
+
+### Related Documentation
+
+- `docs/testing/REAL_TIME_VISUAL_MONITORING_ARCHITECTURE.md` - Architecture using visual monitoring
+- `docs/testing/HUMAN_PERCEPTION_MODELS.md` - Human-like perception models
+- `docs/testing/SCREENSHOT_CAPTURE_AND_LINKING.md` - Screenshot-based workflow
+
+### Remember
+
+**"If a human can't see it, the test shouldn't rely on it."**
+
+All state detection must be based on what's visually apparent in screenshots, not internal Appium structures.

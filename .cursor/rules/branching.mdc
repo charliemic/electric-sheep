@@ -63,15 +63,26 @@ cd ../electric-sheep-<task-name>
 
 ## Pre-Work Checklist (MANDATORY)
 
-Before starting any work, you MUST:
+**CRITICAL: Run automated pre-work check before starting ANY work:**
 
-1. ✅ **Verify NOT on main branch** - Check `git status`
-2. ✅ **Pull latest main** - `git pull origin main` (check for remote updates first)
-3. ✅ **Check for remote updates** - Always check if remote version has been updated before making changes and incorporate those
-4. ✅ **Create feature branch** - Use proper naming convention
-5. ✅ **Consider file system isolation** - Use git worktree if working on shared files
-6. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
-7. ✅ **Document your work** - Update coordination doc with your planned changes
+```bash
+./scripts/pre-work-check.sh
+```
+
+This script automatically verifies:
+1. ✅ **Not on main branch** - Prevents working on main
+2. ✅ **Latest main pulled** - Checks for remote updates
+3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
+4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
+5. ✅ **Available tools identified** - Lists automation scripts
+6. ✅ **Working directory clean** - Checks for uncommitted changes
+
+**If the script reports errors, fix them before proceeding.**
+
+**Manual steps (if needed):**
+1. ✅ **Create feature branch** - Use proper naming convention
+2. ✅ **Use worktree if needed** - `./scripts/create-worktree.sh <task-name>`
+3. ✅ **Update coordination doc** - `docs/development/AGENT_COORDINATION.md`
 
 ## File Coordination
 
@@ -93,25 +104,40 @@ Before starting any work, you MUST:
 
 **When user asks you to make changes:**
 
-1. **First, check branch:**
+1. **MANDATORY: Run pre-work check first:**
    ```bash
-   git branch --show-current
+   ./scripts/pre-work-check.sh
    ```
+   This will:
+   - Verify you're not on main
+   - Check for remote updates
+   - Run coordination checks
+   - Discover relevant rules
+   - Identify available tools
 
 2. **If on main, STOP and create branch:**
    ```bash
    git checkout -b feature/<task-description>
    # Or for file system isolation:
-   # git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   ./scripts/create-worktree.sh <task-name>
    ```
 
-3. **Before modifying files, check coordination:**
-   - Read `docs/development/AGENT_COORDINATION.md`
-   - Verify no conflicts with other agents
-   - Document your planned changes
-   - Consider git worktree if modifying shared files
+3. **Discover relevant rules:**
+   ```bash
+   ./scripts/discover-rules.sh <task-keyword>
+   ```
+   Read the suggested rules and reference them explicitly in your implementation.
 
-4. **After work, update coordination doc:**
+4. **Before modifying files, check coordination:**
+   ```bash
+   ./scripts/check-agent-coordination.sh
+   ```
+   This will:
+   - Check for shared file conflicts
+   - Warn about high-risk files
+   - Suggest worktree usage if needed
+
+5. **After work, update coordination doc:**
    - Mark work as "In Progress" or "Complete"
    - List files you modified
 
@@ -119,10 +145,11 @@ Before starting any work, you MUST:
 
 **Before committing:**
 
-1. ✅ Verify you're on a feature branch (not `main`)
-2. ✅ Use descriptive commit messages
-3. ✅ Keep commits atomic (one logical change)
-4. ✅ Run tests if applicable
+1. ✅ **Pre-commit hook runs automatically** - Prevents commits to main
+2. ✅ Verify you're on a feature branch (not `main`)
+3. ✅ Use descriptive commit messages
+4. ✅ Keep commits atomic (one logical change)
+5. ✅ Run tests: `./gradlew test` (all tests must pass)
 
 **Commit message format:**
 ```
@@ -146,7 +173,22 @@ Before starting any work, you MUST:
 
 ## Post-Merge Cleanup (MANDATORY)
 
-**After a PR is merged, you MUST clean up:**
+**CRITICAL: Run automated cleanup after PR merge:**
+
+```bash
+./scripts/post-merge-cleanup.sh <pr-number>
+```
+
+This script automatically:
+- Checks other active work (worktrees and branches)
+- Verifies PR merge status
+- Switches to main and pulls latest
+- Deletes merged branches
+- Removes associated worktrees
+- Cleans up temp branches
+- Prunes stale worktree references
+
+**Manual cleanup (if automation unavailable):**
 
 ### Step 0: Check Other Agents and Worktrees (REQUIRED)
 
