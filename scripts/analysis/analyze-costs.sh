@@ -149,10 +149,6 @@ fi
 if [ "$USE_SUPABASE" = false ]; then
     # Process JSON files (existing logic)
     for COST_FILE in "$COSTS_DIR"/usage_*.json; do
-    if [ ! -f "$COST_FILE" ]; then
-        continue
-    fi
-    
         if [ ! -f "$COST_FILE" ]; then
             continue
         fi
@@ -166,7 +162,8 @@ if [ "$USE_SUPABASE" = false ]; then
         
         # Extract data using jq if available, otherwise use grep/sed
         if command -v jq &> /dev/null; then
-            COST=$(jq -r '.total_cost // .cost.totalCost // 0' "$COST_FILE" 2>/dev/null || echo "0")
+            # Try multiple JSON formats: Supabase format (flat) or local format (nested)
+            COST=$(jq -r '.total_cost // (.input_cost + .output_cost) // .cost.totalCost // 0' "$COST_FILE" 2>/dev/null || echo "0")
             MODEL=$(jq -r '.agent_model // .agent.model // "unknown"' "$COST_FILE" 2>/dev/null || echo "unknown")
             COMPANY=$(jq -r '.agent_company // .agent.company // "unknown"' "$COST_FILE" 2>/dev/null || echo "unknown")
             TASK_TYPE=$(jq -r '.task_type // .task.type // "unknown"' "$COST_FILE" 2>/dev/null || echo "unknown")
@@ -187,38 +184,51 @@ if [ "$USE_SUPABASE" = false ]; then
     TOTAL_COST=$(echo "$TOTAL_COST + $COST" | bc)
     TOTAL_INTERACTIONS=$((TOTAL_INTERACTIONS + 1))
     
-    # Aggregate by model
-    if [ -z "${COST_BY_MODEL[$MODEL]}" ]; then
-        COST_BY_MODEL[$MODEL]=0
-        INTERACTIONS_BY_MODEL[$MODEL]=0
+    # Aggregate by model (using temp files for bash 3.2 compatibility)
+    MODEL_FILE="$COSTS_DIR/.agg_model_${MODEL//\//_}"
+    if [ ! -f "$MODEL_FILE" ]; then
+        echo "0|0" > "$MODEL_FILE"
     fi
-    COST_BY_MODEL[$MODEL]=$(echo "${COST_BY_MODEL[$MODEL]} + $COST" | bc)
-    INTERACTIONS_BY_MODEL[$MODEL]=$((${INTERACTIONS_BY_MODEL[$MODEL]} + 1))
+    OLD_VAL=$(cut -d'|' -f1 "$MODEL_FILE")
+    OLD_COUNT=$(cut -d'|' -f2 "$MODEL_FILE")
+    NEW_VAL=$(echo "$OLD_VAL + $COST" | bc)
+    NEW_COUNT=$((OLD_COUNT + 1))
+    echo "$NEW_VAL|$NEW_COUNT" > "$MODEL_FILE"
     
     # Aggregate by company
-    if [ -z "${COST_BY_COMPANY[$COMPANY]}" ]; then
-        COST_BY_COMPANY[$COMPANY]=0
-        INTERACTIONS_BY_COMPANY[$COMPANY]=0
+    COMPANY_FILE="$COSTS_DIR/.agg_company_${COMPANY//\//_}"
+    if [ ! -f "$COMPANY_FILE" ]; then
+        echo "0|0" > "$COMPANY_FILE"
     fi
-    COST_BY_COMPANY[$COMPANY]=$(echo "${COST_BY_COMPANY[$COMPANY]} + $COST" | bc)
-    INTERACTIONS_BY_COMPANY[$COMPANY]=$((${INTERACTIONS_BY_COMPANY[$COMPANY]} + 1))
+    OLD_VAL=$(cut -d'|' -f1 "$COMPANY_FILE")
+    OLD_COUNT=$(cut -d'|' -f2 "$COMPANY_FILE")
+    NEW_VAL=$(echo "$OLD_VAL + $COST" | bc)
+    NEW_COUNT=$((OLD_COUNT + 1))
+    echo "$NEW_VAL|$NEW_COUNT" > "$COMPANY_FILE"
     
     # Aggregate by task type
-    if [ -z "${COST_BY_TASK[$TASK_TYPE]}" ]; then
-        COST_BY_TASK[$TASK_TYPE]=0
-        INTERACTIONS_BY_TASK[$TASK_TYPE]=0
+    TASK_FILE="$COSTS_DIR/.agg_task_${TASK_TYPE//\//_}"
+    if [ ! -f "$TASK_FILE" ]; then
+        echo "0|0" > "$TASK_FILE"
     fi
-    COST_BY_TASK[$TASK_TYPE]=$(echo "${COST_BY_TASK[$TASK_TYPE]} + $COST" | bc)
-    INTERACTIONS_BY_TASK[$TASK_TYPE]=$((${INTERACTIONS_BY_TASK[$TASK_TYPE]} + 1))
+    OLD_VAL=$(cut -d'|' -f1 "$TASK_FILE")
+    OLD_COUNT=$(cut -d'|' -f2 "$TASK_FILE")
+    NEW_VAL=$(echo "$OLD_VAL + $COST" | bc)
+    NEW_COUNT=$((OLD_COUNT + 1))
+    echo "$NEW_VAL|$NEW_COUNT" > "$TASK_FILE"
     
     # Aggregate by provider
-    if [ -z "${COST_BY_PROVIDER[$PROVIDER]}" ]; then
-        COST_BY_PROVIDER[$PROVIDER]=0
-        INTERACTIONS_BY_PROVIDER[$PROVIDER]=0
+    PROVIDER_FILE="$COSTS_DIR/.agg_provider_${PROVIDER//\//_}"
+    if [ ! -f "$PROVIDER_FILE" ]; then
+        echo "0|0" > "$PROVIDER_FILE"
     fi
-    COST_BY_PROVIDER[$PROVIDER]=$(echo "${COST_BY_PROVIDER[$PROVIDER]} + $COST" | bc)
-    INTERACTIONS_BY_PROVIDER[$PROVIDER]=$((${INTERACTIONS_BY_PROVIDER[$PROVIDER]} + 1))
-done
+    OLD_VAL=$(cut -d'|' -f1 "$PROVIDER_FILE")
+    OLD_COUNT=$(cut -d'|' -f2 "$PROVIDER_FILE")
+    NEW_VAL=$(echo "$OLD_VAL + $COST" | bc)
+    NEW_COUNT=$((OLD_COUNT + 1))
+    echo "$NEW_VAL|$NEW_COUNT" > "$PROVIDER_FILE"
+    done
+fi
 
 # Calculate average cost
 if [ $TOTAL_INTERACTIONS -gt 0 ]; then
@@ -242,9 +252,15 @@ elif [ "$OUTPUT_FORMAT" = "csv" ]; then
     echo "Total,,$TOTAL_COST,$TOTAL_INTERACTIONS,100.0"
     
     if [ "$GROUP_BY" = "model" ] || [ -z "$GROUP_BY" ]; then
-        for MODEL in "${!COST_BY_MODEL[@]}"; do
-            PERCENTAGE=$(echo "scale=2; ${COST_BY_MODEL[$MODEL]} * 100 / $TOTAL_COST" | bc)
-            echo "Model,$MODEL,${COST_BY_MODEL[$MODEL]},${INTERACTIONS_BY_MODEL[$MODEL]},$PERCENTAGE"
+        for MODEL_FILE in "$COSTS_DIR"/.agg_model_*; do
+            if [ ! -f "$MODEL_FILE" ]; then
+                continue
+            fi
+            MODEL=$(basename "$MODEL_FILE" | sed 's/^\.agg_model_//')
+            COST_VAL=$(cut -d'|' -f1 "$MODEL_FILE")
+            COUNT=$(cut -d'|' -f2 "$MODEL_FILE")
+            PERCENTAGE=$(echo "scale=2; $COST_VAL * 100 / $TOTAL_COST" | bc)
+            echo "Model,$MODEL,$COST_VAL,$COUNT,$PERCENTAGE"
         done
     fi
 else
@@ -259,37 +275,64 @@ else
     
     if [ "$GROUP_BY" = "model" ] || [ -z "$GROUP_BY" ]; then
         echo "By Model:"
-        for MODEL in "${!COST_BY_MODEL[@]}"; do
-            PERCENTAGE=$(echo "scale=1; ${COST_BY_MODEL[$MODEL]} * 100 / $TOTAL_COST" | bc)
-            echo "  - $MODEL: \$$(printf "%.2f" ${COST_BY_MODEL[$MODEL]}) ($PERCENTAGE%) - ${INTERACTIONS_BY_MODEL[$MODEL]} interactions"
+        for MODEL_FILE in "$COSTS_DIR"/.agg_model_*; do
+            if [ ! -f "$MODEL_FILE" ]; then
+                continue
+            fi
+            MODEL=$(basename "$MODEL_FILE" | sed 's/^\.agg_model_//')
+            COST_VAL=$(cut -d'|' -f1 "$MODEL_FILE")
+            COUNT=$(cut -d'|' -f2 "$MODEL_FILE")
+            PERCENTAGE=$(echo "scale=1; $COST_VAL * 100 / $TOTAL_COST" | bc)
+            echo "  - $MODEL: \$$(printf "%.2f" $COST_VAL) ($PERCENTAGE%) - $COUNT interactions"
         done
         echo ""
     fi
     
     if [ "$GROUP_BY" = "company" ] || [ -z "$GROUP_BY" ]; then
         echo "By Company:"
-        for COMPANY in "${!COST_BY_COMPANY[@]}"; do
-            PERCENTAGE=$(echo "scale=1; ${COST_BY_COMPANY[$COMPANY]} * 100 / $TOTAL_COST" | bc)
-            echo "  - $COMPANY: \$$(printf "%.2f" ${COST_BY_COMPANY[$COMPANY]}) ($PERCENTAGE%)"
+        for COMPANY_FILE in "$COSTS_DIR"/.agg_company_*; do
+            if [ ! -f "$COMPANY_FILE" ]; then
+                continue
+            fi
+            COMPANY=$(basename "$COMPANY_FILE" | sed 's/^\.agg_company_//')
+            COST_VAL=$(cut -d'|' -f1 "$COMPANY_FILE")
+            COUNT=$(cut -d'|' -f2 "$COMPANY_FILE")
+            PERCENTAGE=$(echo "scale=1; $COST_VAL * 100 / $TOTAL_COST" | bc)
+            echo "  - $COMPANY: \$$(printf "%.2f" $COST_VAL) ($PERCENTAGE%) - $COUNT interactions"
         done
         echo ""
     fi
     
     if [ "$GROUP_BY" = "task-type" ] || [ -z "$GROUP_BY" ]; then
         echo "By Task Type:"
-        for TASK_TYPE in "${!COST_BY_TASK[@]}"; do
-            PERCENTAGE=$(echo "scale=1; ${COST_BY_TASK[$TASK_TYPE]} * 100 / $TOTAL_COST" | bc)
-            echo "  - $TASK_TYPE: \$$(printf "%.2f" ${COST_BY_TASK[$TASK_TYPE]}) ($PERCENTAGE%)"
+        for TASK_FILE in "$COSTS_DIR"/.agg_task_*; do
+            if [ ! -f "$TASK_FILE" ]; then
+                continue
+            fi
+            TASK_TYPE=$(basename "$TASK_FILE" | sed 's/^\.agg_task_//')
+            COST_VAL=$(cut -d'|' -f1 "$TASK_FILE")
+            COUNT=$(cut -d'|' -f2 "$TASK_FILE")
+            PERCENTAGE=$(echo "scale=1; $COST_VAL * 100 / $TOTAL_COST" | bc)
+            echo "  - $TASK_TYPE: \$$(printf "%.2f" $COST_VAL) ($PERCENTAGE%) - $COUNT interactions"
         done
         echo ""
     fi
     
     if [ "$GROUP_BY" = "provider" ] || [ -z "$GROUP_BY" ]; then
         echo "By Provider:"
-        for PROVIDER in "${!COST_BY_PROVIDER[@]}"; do
-            PERCENTAGE=$(echo "scale=1; ${COST_BY_PROVIDER[$PROVIDER]} * 100 / $TOTAL_COST" | bc)
-            echo "  - $PROVIDER: \$$(printf "%.2f" ${COST_BY_PROVIDER[$PROVIDER]}) ($PERCENTAGE%)"
+        for PROVIDER_FILE in "$COSTS_DIR"/.agg_provider_*; do
+            if [ ! -f "$PROVIDER_FILE" ]; then
+                continue
+            fi
+            PROVIDER=$(basename "$PROVIDER_FILE" | sed 's/^\.agg_provider_//')
+            COST_VAL=$(cut -d'|' -f1 "$PROVIDER_FILE")
+            COUNT=$(cut -d'|' -f2 "$PROVIDER_FILE")
+            PERCENTAGE=$(echo "scale=1; $COST_VAL * 100 / $TOTAL_COST" | bc)
+            echo "  - $PROVIDER: \$$(printf "%.2f" $COST_VAL) ($PERCENTAGE%) - $COUNT interactions"
         done
     fi
+    
+    # Clean up temp aggregation files
+    rm -f "$COSTS_DIR"/.agg_*
 fi
 
