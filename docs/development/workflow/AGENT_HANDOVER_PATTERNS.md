@@ -4,35 +4,68 @@
 **Status**: Active Guidelines  
 **Purpose**: Define when and how to handover work between agents
 
-## When to Create a Handover
+## When to Create a Handover vs Close Session
 
-### ✅ Create Handover When:
+### Decision Tree
 
-1. **Major Milestone Completed**
+**First, determine: Is there more work to do that needs a new agent?**
+
+- **YES** → Create handover (Case B)
+- **NO** → Close session (Case A)
+
+### ✅ Create Handover When (Case B):
+
+**More work exists, but need new agent for efficiency:**
+
+1. **Effectiveness Threshold Exceeded**
+   - Conversation turns > 100
+   - Time elapsed > 4 hours
+   - Context tokens > 100,000
+   - Error rate > 3 failures
+   - Repetition count > 3
+   - **Action**: Create handover, add to queue
+
+2. **Major Milestone Completed + More Work Exists**
    - Feature fully implemented and deployed
    - Major refactoring complete
    - Significant infrastructure change done
-   - Example: Metrics schema deployed to production
+   - **AND** next phase work is planned
+   - **Action**: Create handover for next phase
 
-2. **Task Completion**
-   - All planned work for a task is done
-   - Ready for next phase of work
+3. **Task Completion + Next Phase Planned**
+   - All planned work for current task is done
+   - Next phase work is clearly defined
    - Context switch needed for different work
+   - **Action**: Create handover for next phase
 
-3. **Natural Breakpoint**
+4. **Natural Breakpoint + More Work**
    - Logical stopping point reached
    - Next work requires different expertise
    - Time to reassess priorities
+   - **AND** more work is planned
+   - **Action**: Create handover
 
-4. **Deployment Complete**
-   - Changes deployed to staging/production
-   - Validation complete
-   - Ready for next development cycle
+### ✅ Close Session When (Case A):
 
-5. **Complex Work Completed**
-   - Multi-step task finished
-   - Integration work done
-   - Testing/validation complete
+**Work is essentially finished, no immediate next steps:**
+
+1. **Phase Complete**
+   - All planned work for phase is done
+   - No immediate next steps defined
+   - Work is complete and deployed
+   - **Action**: Close session, update HANDOVER_PROMPT.md for future reference
+
+2. **Task Complete + No Next Phase**
+   - All planned work is done
+   - No immediate follow-up work
+   - Everything committed and deployed
+   - **Action**: Close session
+
+3. **Simple Work Complete**
+   - Single task finished
+   - No related work pending
+   - No effectiveness issues
+   - **Action**: Close session
 
 ### ❌ Don't Create Handover When:
 
@@ -40,16 +73,19 @@
    - Work is incomplete
    - Still debugging/fixing
    - Not at a logical stopping point
+   - **Action**: Continue work
 
 2. **Simple Changes**
    - Single file changes
    - Quick fixes
    - Documentation-only updates
+   - **Action**: Complete and close
 
 3. **Continuous Work**
    - Same task continuing
    - No context switch needed
    - Same agent can continue
+   - **Action**: Continue work
 
 ## Handover Document Structure
 

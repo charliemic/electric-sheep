@@ -27,11 +27,16 @@ During any work session, especially long-running tasks or complex work.
 - **Error rate** > 3 failures
 - **Repetition count** > 3
 
-**Also handover at natural breakpoints:**
-- Major milestone completed
-- Task completion reached
-- Deployment complete
-- Complex work finished
+**Also handover at natural breakpoints (if more work exists):**
+- Major milestone completed + next phase planned
+- Task completion + next phase defined
+- Deployment complete + follow-up work exists
+- Complex work finished + more work to do
+
+**Close session (no handover) when:**
+- Work essentially finished, no immediate next steps
+- Phase complete, no follow-up planned
+- Simple work complete, no related work
 
 ## Standard Workflow
 
