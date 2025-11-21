@@ -66,11 +66,12 @@ cd ../electric-sheep-<task-name>
 Before starting any work, you MUST:
 
 1. ✅ **Verify NOT on main branch** - Check `git status`
-2. ✅ **Create feature branch** - Use proper naming convention
-3. ✅ **Consider file system isolation** - Use git worktree if working on shared files
-4. ✅ **Pull latest main** - `git pull origin main`
-5. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
-6. ✅ **Document your work** - Update coordination doc with your planned changes
+2. ✅ **Pull latest main** - `git pull origin main` (check for remote updates first)
+3. ✅ **Check for remote updates** - Always check if remote version has been updated before making changes and incorporate those
+4. ✅ **Create feature branch** - Use proper naming convention
+5. ✅ **Consider file system isolation** - Use git worktree if working on shared files
+6. ✅ **Check coordination doc** - Read `docs/development/AGENT_COORDINATION.md`
+7. ✅ **Document your work** - Update coordination doc with your planned changes
 
 ## File Coordination
 
@@ -147,33 +148,79 @@ Before starting any work, you MUST:
 
 **After a PR is merged, you MUST clean up:**
 
-1. **Switch to main branch:**
+### Step 0: Check Other Agents and Worktrees (REQUIRED)
+
+**Before cleaning up, ALWAYS check and report on other active work:**
+
+1. **List all worktrees:**
+   ```bash
+   git worktree list
+   ```
+
+2. **List all branches (local and remote):**
+   ```bash
+   git branch -a
+   ```
+
+3. **Check for other active work:**
+   ```bash
+   # List all worktrees with their branches
+   git worktree list --porcelain | grep -E "^(worktree|HEAD|branch)" | paste - - -
+   
+   # List all feature branches
+   git branch | grep -E "^  (feature|fix|refactor|docs|test)/"
+   
+   # List remote branches
+   git branch -r | grep -E "(feature|fix|refactor|docs|test)/"
+   ```
+
+4. **Report status to user:**
+   - List all worktrees and their associated branches
+   - List all feature branches (local and remote)
+   - Describe the status of each (active, merged, stale)
+   - Ask user to verify before deleting anything
+
+**Example output format:**
+```
+Active Worktrees:
+  /path/to/electric-sheep-runtime-visual-evaluation [feature/runtime-visual-evaluation-architecture] - Active work
+  /path/to/electric-sheep-other-work [feature/other-task] - Active work
+
+Active Branches:
+  feature/runtime-visual-evaluation-architecture - Has unmerged commits
+  feature/other-task - Has unmerged commits
+  feature/aws-bedrock-security-goals - MERGED (ready to delete)
+
+Please verify these are correct before cleanup proceeds.
+```
+
+### Step 1: Switch to Main Branch
    ```bash
    git checkout main
    git pull origin main
    ```
 
-2. **Delete merged feature branch:**
+### Step 2: Delete Merged Feature Branch
    ```bash
    git branch -d feature/<branch-name>
    # Use -D if branch has unmerged commits (shouldn't happen if PR merged)
    ```
 
-3. **Remove worktree if one was used:**
+### Step 3: Remove Worktree (if used)
    ```bash
    git worktree remove ../electric-sheep-<task-name>
    # Or if worktree directory was deleted manually:
    git worktree prune
    ```
 
-4. **Delete duplicate/old branches:**
+### Step 4: Delete Duplicate/Old Branches
    ```bash
    # Check for duplicate branches (e.g., -rebased, -old, -backup)
    git branch | grep <branch-name>
    # Delete if duplicate: git branch -D <duplicate-branch>
    ```
 
-5. **Delete temp/test branches:**
+### Step 5: Delete Temp/Test Branches
    ```bash
    # Delete branches starting with temp/, tmp/, test-merge, etc.
    git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
