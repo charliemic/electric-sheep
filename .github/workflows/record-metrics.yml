@@ -1,0 +1,114 @@
+name: Record Development Metrics
+
+on:
+  pull_request:
+    types: [opened, closed, synchronize]
+  workflow_run:
+    workflows: ["Build and Test Android App (Kotlin/Gradle)"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  record-pr-event:
+    name: Record PR Event
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup environment
+        run: |
+          export SUPABASE_URL="${{ secrets.SUPABASE_URL || secrets.SUPABASE_STAGING_URL }}"
+          export SUPABASE_SECRET_KEY="${{ secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_STAGING_SECRET_KEY }}"
+          echo "SUPABASE_URL=$SUPABASE_URL" >> $GITHUB_ENV
+          echo "SUPABASE_SECRET_KEY=$SUPABASE_SECRET_KEY" >> $GITHUB_ENV
+      
+      - name: Record PR opened
+        if: github.event.action == 'opened'
+        run: |
+          ./scripts/record-pr-event.sh \
+            "created" \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.head.ref }}" \
+            "${{ github.event.pull_request.user.login }}"
+      
+      - name: Record PR merged
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: |
+          ./scripts/record-pr-event.sh \
+            "merged" \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.head.ref }}" \
+            "${{ github.event.pull_request.user.login }}"
+        continue-on-error: true
+
+  record-test-run:
+    name: Record Test Run
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'cancelled'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+      
+      - name: Download test results artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: app/build/test-results/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
+      
+      - name: Setup environment
+        run: |
+          export SUPABASE_URL="${{ secrets.SUPABASE_URL || secrets.SUPABASE_STAGING_URL }}"
+          export SUPABASE_SECRET_KEY="${{ secrets.SUPABASE_SECRET_KEY || secrets.SUPABASE_STAGING_SECRET_KEY }}"
+          echo "SUPABASE_URL=$SUPABASE_URL" >> $GITHUB_ENV
+          echo "SUPABASE_SECRET_KEY=$SUPABASE_SECRET_KEY" >> $GITHUB_ENV
+      
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Parse test results
+        id: test-results
+        run: |
+          if [ -d "app/build/test-results/test" ]; then
+            RESULTS=$(./scripts/parse-test-results.sh app/build/test-results/test)
+            echo "results<<EOF" >> $GITHUB_OUTPUT
+            echo "$RESULTS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo 'results={"total": 0, "passed": 0, "failed": 0, "skipped": 0}' >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      - name: Record test run
+        if: steps.test-results.outputs.results != ''
+        run: |
+          RESULTS='${{ steps.test-results.outputs.results }}'
+          TOTAL=$(echo "$RESULTS" | jq -r '.total // 0')
+          PASSED=$(echo "$RESULTS" | jq -r '.passed // 0')
+          FAILED=$(echo "$RESULTS" | jq -r '.failed // 0')
+          SKIPPED=$(echo "$RESULTS" | jq -r '.skipped // 0')
+          
+          # Calculate execution time in seconds (workflow_run.run_duration_ms is in milliseconds)
+          EXEC_TIME=$(( ${{ github.event.workflow_run.run_duration_ms || 0 }} / 1000 ))
+          
+          ./scripts/record-test-run.sh \
+            "run-${{ github.event.workflow_run.id }}" \
+            "$TOTAL" \
+            "$PASSED" \
+            "$FAILED" \
+            "$SKIPPED" \
+            "$EXEC_TIME" \
+            "all" \
+            "${{ github.event.workflow_run.head_branch }}" \
+            "${{ github.event.workflow_run.head_sha }}" \
+            "${{ github.event.workflow_run.pull_requests[0].number || '' }}"
+        continue-on-error: true
+
