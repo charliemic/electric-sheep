@@ -18,7 +18,7 @@ COSTS_DIR="$METRICS_DIR/agent-usage"
 LIB_DIR="$PROJECT_ROOT/scripts/lib"
 
 # Default options
-PERIOD="last-30-days"
+PERIOD="last-7-days"
 GROUP_BY=""
 OUTPUT_FORMAT="text"
 DATA_SOURCE="auto"
