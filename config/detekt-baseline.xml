@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Baseline file for detekt.
+  This file is auto-generated on first run.
+  Existing code issues are ignored, only new issues are reported.
+  
+  To regenerate: ./gradlew detektBaseline
+-->
+<baseline>
+  <!-- Baseline will be generated on first detekt run -->
+</baseline>
+

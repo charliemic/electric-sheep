@@ -172,6 +172,94 @@ jobs:
       run: ./gradlew lint --stacktrace -Pandroid.lint.checkAccessibility=true
       continue-on-error: false
 
+  format-check:
+    name: Check Code Formatting (ktlint)
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Check code formatting
+      run: ./gradlew ktlintCheck --stacktrace
+      continue-on-error: false
+
+    - name: Upload format check results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ktlint-results
+        path: app/build/reports/ktlint/
+        retention-days: 7
+
+  code-style-check:
+    name: Check Code Style (detekt)
+    needs: [changes, setup]
+    # Only run if app code changed
+    if: needs.changes.outputs.app-code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Restore Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Run detekt
+      run: ./gradlew detekt --stacktrace
+      continue-on-error: false
+
+    - name: Upload detekt results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: detekt-results
+        path: app/build/reports/detekt/
+        retention-days: 7
+
   test:
     name: Run Unit Tests
     needs: [changes, setup]
@@ -333,7 +421,7 @@ jobs:
   # This job creates the "ci-status" check that branch protection requires
   ci-status:
     name: CI Status Check
-    needs: [changes, lint, accessibility, test, build-debug, build-release]
+    needs: [changes, lint, accessibility, format-check, code-style-check, test, build-debug, build-release]
     # Always run if any of the dependent jobs ran (they only run if app-code changed)
     # Use a more permissive condition to ensure the job runs when needed
     if: always() && (needs.changes.outputs.app-code == 'true' || needs.lint.result != 'skipped' || needs.test.result != 'skipped')
@@ -350,6 +438,8 @@ jobs:
             const results = {
               lint: '${{ needs.lint.result }}',
               accessibility: '${{ needs.accessibility.result }}',
+              formatCheck: '${{ needs.format-check.result }}',
+              codeStyleCheck: '${{ needs.code-style-check.result }}',
               test: '${{ needs.test.result }}',
               buildDebug: '${{ needs.build-debug.result }}',
               buildRelease: '${{ needs.build-release.result }}'
@@ -374,7 +464,7 @@ jobs:
               output: {
                 title: message,
                 summary: allPassed 
-                  ? 'All required CI checks (lint, accessibility, test, build-debug, build-release) have completed successfully.'
+                  ? 'All required CI checks (lint, accessibility, format-check, code-style-check, test, build-debug, build-release) have completed successfully.'
                   : 'One or more required CI checks failed. Please review the workflow run for details.'
               }
             });

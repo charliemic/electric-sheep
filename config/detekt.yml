@@ -1,0 +1,29 @@
+# detekt configuration for code style checks
+# See: https://detekt.github.io/detekt/configurations.html
+
+build:
+  maxIssues: 10
+  weights:
+    complexity: 2
+    LongParameterList: 1
+    style: 1
+    performance: 1
+
+complexity:
+  LongMethod:
+    threshold: 50
+  LongParameterList:
+    threshold: 6
+  ComplexMethod:
+    threshold: 10
+
+style:
+  MagicNumber:
+    ignoreNumbers: ['-1', '0', '1', '2']
+  MaxLineLength:
+    maxLineLength: 120
+
+performance:
+  ForEachOnRange:
+    active: true
+
