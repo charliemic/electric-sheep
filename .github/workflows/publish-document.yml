@@ -62,23 +62,30 @@ jobs:
             DOC_NAME="${{ github.event.inputs.document }}"
             VERSION="${{ github.event.inputs.version }}"
             SOURCE_PATH="${{ github.event.inputs.source_path }}"
-          elif [[ "${{ github.ref_name }}" =~ ^publish/ ]]; then
-            # Extract from branch: publish/<doc-name> or publish/<doc-name>-v<version>
-            BRANCH="${{ github.ref_name }}"
-            # Remove 'publish/' prefix
-            REST="${BRANCH#publish/}"
-            # Check if ends with -v* (versioned) or treat as latest
-            if [[ "$REST" =~ -(v.+)$ ]]; then
-              # Extract version (e.g., v1.0.0)
-              VERSION="${BASH_REMATCH[1]}"
-              # Remove version suffix to get doc name
-              DOC_NAME="${REST%-${VERSION}}"
+          elif [ "${{ github.ref_name }}" == "publish-docs" ]; then
+            # Detect from commit message or changed files
+            # Check commit message for pattern: publish:<doc-name> or publish:<doc-name>:<version>
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            if [[ "$COMMIT_MSG" =~ publish:([^:]+)(:([^[:space:]]+))? ]]; then
+              DOC_NAME="${BASH_REMATCH[1]}"
+              VERSION="${BASH_REMATCH[3]:-latest}"
             else
-              DOC_NAME="$REST"
-              VERSION="latest"
+              # Fallback: find most recently changed markdown file
+              CHANGED_FILE=$(git diff --name-only HEAD~1 HEAD | grep '\.md$' | head -1)
+              if [ -n "$CHANGED_FILE" ]; then
+                # Extract doc name from file path (e.g., docs/learning/cognitive-journey.md -> cognitive-journey)
+                DOC_NAME=$(basename "$CHANGED_FILE" .md)
+                VERSION="latest"
+                SOURCE_PATH="$CHANGED_FILE"
+              else
+                echo "Error: Could not detect document from commit. Use format: publish:<doc-name> or publish:<doc-name>:<version>"
+                exit 1
+              fi
             fi
-            # Try to find document automatically
-            SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+            # Find document if SOURCE_PATH not set
+            if [ -z "$SOURCE_PATH" ]; then
+              SOURCE_PATH=$(find . -type f -name "*${DOC_NAME}*" -name "*.md" | head -1 | sed 's|^\./||')
+            fi
           elif [[ "${{ github.ref_name }}" =~ ^publish- ]]; then
             # Extract from tag: publish-<doc-name>-v<version> or publish-<doc-name>-latest
             TAG="${{ github.ref_name }}"
