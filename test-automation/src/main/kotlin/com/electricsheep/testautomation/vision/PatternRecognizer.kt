@@ -1,21 +1,10 @@
 package com.electricsheep.testautomation.vision
 
-<<<<<<< HEAD
-import org.slf4j.LoggerFactory
-import java.io.File
-
-// OpenCV imports
-=======
->>>>>>> origin/main
-import nu.pattern.OpenCV
 import org.opencv.core.*
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
-<<<<<<< HEAD
-=======
 import org.slf4j.LoggerFactory
 import java.io.File
->>>>>>> origin/main
 
 /**
  * Detects known UI patterns using template matching (like human pattern recognition).
@@ -37,31 +26,30 @@ import java.io.File
  * **When to Use**: Known, stable UI elements (error icons, loading spinners, etc.)
  */
 class PatternRecognizer(
-<<<<<<< HEAD
     private val templateDir: File? = null,
     private val templateManager: com.electricsheep.testautomation.templates.HybridTemplateManager? = null
-=======
-    private val templateDir: File? = null
->>>>>>> origin/main
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     
     // Check if OpenCV is available
     private val opencvAvailable: Boolean = run {
         try {
-<<<<<<< HEAD
-            OpenCV.loadLocally()
+            // Try to load OpenCV native library
+            // Note: org.openpnp:opencv handles native library loading automatically
+            // If loading fails, we'll catch it and disable pattern recognition
+            try {
+                System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+            } catch (e: UnsatisfiedLinkError) {
+                // Try alternative loading method
+                Core.getVersionString() // This will fail if OpenCV not loaded
+            }
             logger.info("OpenCV loaded successfully - pattern recognition enabled")
             true
-        } catch (e: Exception) {
-            logger.warn("OpenCV not available - pattern recognition disabled. Install OpenCV or use alternative. Error: ${e.message}")
-=======
-            // Try to load OpenCV native library
-            nu.pattern.OpenCV.loadLocally()
-            true
-        } catch (e: Exception) {
+        } catch (e: UnsatisfiedLinkError) {
             logger.warn("OpenCV not available - pattern recognition disabled. Install OpenCV or use alternative.")
->>>>>>> origin/main
+            false
+        } catch (e: Exception) {
+            logger.warn("OpenCV not available - pattern recognition disabled: ${e.message}")
             false
         }
     }
@@ -71,15 +59,9 @@ class PatternRecognizer(
      */
     data class DetectedPattern(
         val name: String,
-<<<<<<< HEAD
         val location: Pair<Double, Double>, // (x, y) coordinates
         val confidence: Double,
         val size: Pair<Double, Double> // (width, height)
-=======
-        val location: Point,
-        val confidence: Double,
-        val size: Size
->>>>>>> origin/main
     )
     
     /**

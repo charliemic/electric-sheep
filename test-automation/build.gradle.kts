@@ -29,7 +29,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
     // OpenCV for pattern recognition (template matching)
-<<<<<<< HEAD
     // Try multiple OpenCV options for compatibility
     implementation("org.openpnp:opencv:4.9.0-0")
     // Fallback option if above doesn't work:
@@ -37,9 +36,6 @@ dependencies {
     
     // OCR for text detection from screenshots (optional - using command-line Tesseract for now)
     // implementation("net.sourceforge.tess4j:tess4j:5.8.0")
-=======
-    implementation("nu.pattern:opencv:2.4.9-7")
->>>>>>> origin/main
     
     // Testing
     testImplementation("junit:junit:4.13.2")
@@ -50,15 +46,12 @@ application {
     mainClass.set("com.electricsheep.testautomation.MainKt")
 }
 
-<<<<<<< HEAD
 // Task to test email generation (quick test, no emulator needed)
 tasks.register<JavaExec>("testEmailGeneration") {
     mainClass.set("com.electricsheep.testautomation.planner.TestEmailGenerationKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
-=======
->>>>>>> origin/main
 // Task to run OCR integration test
 tasks.register<JavaExec>("testOcr") {
     group = "verification"
@@ -89,7 +82,6 @@ tasks.register<JavaExec>("testPatternRecognition") {
     dependsOn("classes")
 }
 
-<<<<<<< HEAD
 // Task to test template management architecture
 tasks.register<JavaExec>("testTemplateManagement") {
     group = "verification"
@@ -124,8 +116,6 @@ tasks.register<JavaExec>("generateTemplates") {
     dependsOn("classes")
 }
 
-=======
->>>>>>> origin/main
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
