@@ -17,7 +17,6 @@ paths = [
 ]
 
 [allowlist.regexes]
-description = "Allowlist regex patterns for example/placeholder values"
 regexes = [
   '''example.*key''',
   '''placeholder.*secret''',
@@ -49,7 +48,6 @@ regexes = [
 ]
 
 [allowlist.stopwords]
-description = "Stopwords that prevent false positives"
 stopwords = [
   "example",
   "placeholder",
