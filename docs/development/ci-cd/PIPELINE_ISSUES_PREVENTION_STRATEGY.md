@@ -261,11 +261,108 @@ tags = ["tag"]
    - Enhance validation if applicable
    - Document lessons learned
 
+## Agent 2: Security/Dependency Scan Workflow Deletion Prevention
+
+**Issue**: Workflows accidentally deleted during merge conflict resolution
+
+### Prevention Measures
+
+#### 1. Merge Conflict Resolution Checklist
+
+**Before resolving merge conflicts:**
+- [ ] **Verify workflow files preserved**: Check that `.github/workflows/*.yml` files are not deleted
+- [ ] **Review deleted files**: If workflows are marked for deletion, verify if intentional
+- [ ] **Test workflows after merge**: Run workflows locally or verify they exist
+- [ ] **Check workflow syntax**: Validate YAML syntax after merge
+
+**During merge conflict resolution:**
+- [ ] **Preserve workflow files**: Don't delete workflow files unless explicitly intended
+- [ ] **Document workflow changes**: If workflows are modified, document why
+- [ ] **Verify workflow triggers**: Ensure workflow triggers (on: push, PR, schedule) are preserved
+
+**After merge conflict resolution:**
+- [ ] **Verify workflows exist**: Check that all expected workflows are present
+- [ ] **Test workflow syntax**: Validate YAML syntax (use `yamllint` or GitHub Actions validator)
+- [ ] **Monitor first workflow run**: Watch first workflow run after merge to catch issues early
+
+#### 2. Pre-Merge Verification
+
+**Add to pre-merge checklist:**
+
+```bash
+# Verify workflows exist
+ls -la .github/workflows/*.yml
+
+# Validate YAML syntax (if yamllint available)
+yamllint .github/workflows/*.yml
+
+# Check for workflow file deletions
+git diff --name-status origin/main...HEAD | grep -E "\.github/workflows/.*\.yml"
+```
+
+#### 3. Workflow File Existence Check
+
+**Priority**: High  
+**Status**: ⏳ Recommended
+
+**Enhancement**: Add workflow existence check to CI/CD:
+
+```yaml
+- name: Verify Required Workflows Exist
+  run: |
+    expected_workflows=(
+      "security-scan.yml"
+      "dependency-scan.yml"
+      "build-and-test.yml"
+    )
+    
+    missing_workflows=()
+    for workflow in "${expected_workflows[@]}"; do
+      if [ ! -f ".github/workflows/$workflow" ]; then
+        missing_workflows+=("$workflow")
+      fi
+    done
+    
+    if [ ${#missing_workflows[@]} -gt 0 ]; then
+      echo "❌ ERROR: Missing required workflows:"
+      printf '  - %s\n' "${missing_workflows[@]}"
+      echo ""
+      echo "Workflows may have been accidentally deleted during merge."
+      echo "Please restore missing workflows before merging."
+      exit 1
+    fi
+    
+    echo "✅ All required workflows present"
+```
+
+#### 4. Workflow Documentation
+
+**Priority**: High  
+**Status**: ✅ Active
+
+**Best Practices:**
+- ✅ **Document workflow purpose**: Each workflow should have clear purpose in comments
+- ✅ **Document dependencies**: List required secrets, permissions, and dependencies
+- ✅ **Document triggers**: Clearly document when workflows run (push, PR, schedule)
+- ✅ **Document changes**: When workflows are modified, document why
+
+**Example workflow header:**
+```yaml
+# Security Scanning Workflow
+# Purpose: Comprehensive security scanning (secrets, dependencies, linting)
+# Triggers: Push, PR, Weekly schedule (Sunday 3 AM UTC)
+# Dependencies: Gitleaks, OWASP Dependency-Check, Android SDK
+# Secrets: NVD_API_KEY (optional, improves performance)
+# Last Modified: 2025-01-22 - Restored after merge conflict deletion
+```
+
 ## Related Documentation
 
 - `docs/development/ci-cd/PIPELINE_ISSUES_ROOT_CAUSE_ANALYSIS.md` - Root cause analysis
 - `.gitleaks.toml` - Gitleaks configuration file
 - `.github/workflows/secret-scan.yml` - Secret scanning workflow
+- `.github/workflows/security-scan.yml` - Security scanning workflow
+- `.github/workflows/dependency-scan.yml` - Dependency scanning workflow
 - `.cursor/rules/security.mdc` - Security rules and guidelines
 
 ## Success Metrics
