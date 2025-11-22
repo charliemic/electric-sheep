@@ -1,0 +1,15 @@
+{
+  "watch": [
+    "dashboard-server-fastify.js",
+    "../../development-metrics",
+    "../../docs/development/workflow/AGENT_COORDINATION.md"
+  ],
+  "ext": "js,json,md",
+  "ignore": [
+    "node_modules",
+    "*.test.js"
+  ],
+  "exec": "node dashboard-server-fastify.js",
+  "delay": "1000"
+}
+

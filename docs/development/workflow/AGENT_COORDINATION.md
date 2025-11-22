@@ -1,7 +1,7 @@
 # Agent Coordination Log
 
-**Last Updated**: 2025-11-19  
-**Purpose**: Track which agents are working on which files to prevent conflicts
+**Last Updated**: 2025-01-20  
+**Purpose**: Track which agents are working on which files to prevent conflicts and enable communication
 
 **How to Use:**
 1. Before starting work, check this document for conflicts
@@ -14,6 +14,108 @@
 ./scripts/check-agent-coordination.sh
 ```
 
+**Query Tool:**
+```bash
+# Check if a file is part of active work
+./scripts/query-agent-coordination.sh check-file <file-path>
+
+# List all active work
+./scripts/query-agent-coordination.sh list-active
+
+# Check for conflicts with multiple files
+./scripts/query-agent-coordination.sh check-conflicts <file> [file...]
+
+# Find which task owns a file
+./scripts/query-agent-coordination.sh who-owns <file-path>
+
+# Get status of a specific task
+./scripts/query-agent-coordination.sh status <task-name>
+```
+
+## Communication Protocol
+
+**Agents can communicate about their work through this document:**
+
+### 1. Document Your Work (MANDATORY)
+- ✅ **Before starting**: Add entry with task name, branch, files, and status
+- ✅ **During work**: Update status and files if scope changes
+- ✅ **After merge**: Mark as Complete and note PR number
+
+### 2. Query Other Agents' Work (AVAILABLE)
+- ✅ **Check file ownership**: `./scripts/query-agent-coordination.sh who-owns <file>`
+- ✅ **Check for conflicts**: `./scripts/query-agent-coordination.sh check-conflicts <file>...`
+- ✅ **List active work**: `./scripts/query-agent-coordination.sh list-active`
+- ✅ **Get task status**: `./scripts/query-agent-coordination.sh status <task-name>`
+
+### 3. Ask Questions (VIA COORDINATION DOC)
+- ✅ **Is this file part of your work?**: Use `who-owns` command
+- ✅ **Can I modify this file?**: Check conflicts, then document your work
+- ✅ **What's the status of task X?**: Use `status` command
+- ✅ **What files are you modifying?**: Check task entry in this doc
+
+### 4. Coordinate Conflicts (VIA COORDINATION DOC)
+- ✅ **If conflict detected**: Document in task entry under "Conflicts" section
+- ✅ **Resolution strategy**: Document how conflict will be resolved
+- ✅ **Sequential work**: Document which task goes first
+- ✅ **Split work**: Document which parts each task handles
+
+### 5. Communication Best Practices
+- ✅ **Check before modifying**: Always query before modifying shared files
+- ✅ **Update promptly**: Update coordination doc when scope changes
+- ✅ **Document decisions**: Record conflict resolutions in task entry
+- ✅ **Use worktree**: Always use git worktree for file system isolation
+
+**Query Tool:**
+```bash
+# Check if a file is part of active work
+./scripts/query-agent-coordination.sh check-file <file-path>
+
+# List all active work
+./scripts/query-agent-coordination.sh list-active
+
+# Check for conflicts with multiple files
+./scripts/query-agent-coordination.sh check-conflicts <file> [file...]
+
+# Find which task owns a file
+./scripts/query-agent-coordination.sh who-owns <file-path>
+
+# Get status of a specific task
+./scripts/query-agent-coordination.sh status <task-name>
+```
+
+## Communication Protocol
+
+**Agents can communicate about their work through this document:**
+
+### 1. Document Your Work (MANDATORY)
+- ✅ **Before starting**: Add entry with task name, branch, files, and status
+- ✅ **During work**: Update status and files if scope changes
+- ✅ **After merge**: Mark as Complete and note PR number
+
+### 2. Query Other Agents' Work (AVAILABLE)
+- ✅ **Check file ownership**: `./scripts/query-agent-coordination.sh who-owns <file>`
+- ✅ **Check for conflicts**: `./scripts/query-agent-coordination.sh check-conflicts <file>...`
+- ✅ **List active work**: `./scripts/query-agent-coordination.sh list-active`
+- ✅ **Get task status**: `./scripts/query-agent-coordination.sh status <task-name>`
+
+### 3. Ask Questions (VIA COORDINATION DOC)
+- ✅ **Is this file part of your work?**: Use `who-owns` command
+- ✅ **Can I modify this file?**: Check conflicts, then document your work
+- ✅ **What's the status of task X?**: Use `status` command
+- ✅ **What files are you modifying?**: Check task entry in this doc
+
+### 4. Coordinate Conflicts (VIA COORDINATION DOC)
+- ✅ **If conflict detected**: Document in task entry under "Conflicts" section
+- ✅ **Resolution strategy**: Document how conflict will be resolved
+- ✅ **Sequential work**: Document which task goes first
+- ✅ **Split work**: Document which parts each task handles
+
+### 5. Communication Best Practices
+- ✅ **Check before modifying**: Always query before modifying shared files
+- ✅ **Update promptly**: Update coordination doc when scope changes
+- ✅ **Document decisions**: Record conflict resolutions in task entry
+- ✅ **Use worktree**: Always use git worktree for file system isolation
+
 ## Current Work Status
 
 **Note:** Agents are ephemeral - entries track tasks, not specific agents.
@@ -21,6 +123,7 @@
 ### Example Entry Format:
 ```
 ### Task: <task-name>
+- **Role**: [PLANNING] / [EXECUTION] / [VERIFICATION] (optional, for phase-based work)
 - **Branch**: `feature/<task-name>`
 - **Worktree**: `../electric-sheep-<task-name>` (if using worktree)
 - **Status**: In Progress / Complete
@@ -30,7 +133,32 @@
 - **ETA**: Date or status
 ```
 
+**Role Tags (PRIORITY 1 ENHANCEMENT):**
+- `[PLANNING]` - Task is in planning/design phase
+- `[EXECUTION]` - Task is in implementation phase
+- `[VERIFICATION]` - Task is in testing/verification phase
+- **Purpose**: Prevents duplicate work in different phases (e.g., two agents planning the same feature)
+
 ## Active Work
+
+### Task: Dynamic Metrics Dashboard Implementation
+- **Role**: [EXECUTION]
+- **Branch**: `experimental/onboarding-validation-issue-52`
+- **Status**: Complete
+- **Files Modified**: 
+  - `scripts/metrics/dashboard-server-fastify.js` (Fastify-based dashboard server)
+  - `scripts/metrics/package.json` (Node.js dependencies)
+  - `scripts/metrics/nodemon.json` (hot reloading config)
+  - `scripts/metrics/start-dashboard-dev.sh` (development server script)
+  - `development-metrics/README.md` (updated documentation)
+  - Framework evaluation docs (FRAMEWORK_CHOICE.md, FRAMEWORK_COMPARISON.md, FRONTEND_EVALUATION.md)
+- **Key Features**:
+  - Multi-source agent detection (worktrees, coordination doc, metrics sessions, recent prompts)
+  - Fixed agent count discrepancy (was counting all branches, now only active)
+  - Hot reloading with Nodemon for development
+  - No-scroll UX with card-based layout
+  - Auto-refresh every 5 seconds
+- **Completed**: 2025-01-20
 
 ### Task: App Specificity Analysis
 - **Branch**: `feature/app-specificity-analysis`
@@ -158,13 +286,19 @@ These files are commonly modified and require coordination:
 3. Update this document if scope changes
 4. Test changes in isolation
 
-### Before Merging
-1. Rebase on latest `main`: `git rebase origin/main`
-2. Resolve any conflicts
-3. Run tests
-4. Update documentation
-5. Create PR with clear description
-6. Update this document to "Complete"
+### Before Creating PR
+1. **Run pre-PR check (MANDATORY):**
+   ```bash
+   ./scripts/pre-pr-check.sh
+   ```
+   This checks: branch sync, conflicts, tests, coordination doc
+
+2. Rebase on latest `main`: `git rebase origin/main`
+3. Resolve any conflicts
+4. Run tests: `./gradlew test`
+5. Update documentation
+6. Create PR with clear description
+7. Update this document to "Complete"
 
 ### After Merging
 1. Remove worktree (if used): `git worktree remove ../electric-sheep-<task-name>`
