@@ -1,0 +1,99 @@
+title = "Electric Sheep Secret Scanning Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for known false positives and documentation"
+paths = [
+  '''\.md$''',
+  '''docs/.*''',
+  '''\.gitignore''',
+  '''NOTICES\.md''',
+  '''LICENSE''',
+  '''scripts/.*\.sh$''',
+  '''\.gitleaks\.toml''',
+]
+regexes = [
+  '''example.*key''',
+  '''placeholder.*secret''',
+  '''your-.*-key''',
+  '''your-project\.supabase\.co''',
+  '''your-anon-key''',
+  '''test-.*-password''',
+  '''sb_secret_.*example''',
+  '''sbp_.*example''',
+  '''<YOUR.*PASSWORD>''',
+  '''<your-.*-password>''',
+  '''keystore\.password=.*<.*>''',
+  '''keystore\.key\.password=.*<.*>''',
+]
+stopwords = [
+  "example",
+  "placeholder",
+  "your-",
+  "test-",
+  "sample",
+  "dummy",
+]
+
+# Custom rules for project-specific patterns
+[[rules]]
+id = "electric-sheep-placeholder"
+description = "Allow Electric Sheep placeholder patterns"
+regex = '''(your-project|your-anon-key|example|placeholder).*'''
+tags = ["allowlist"]
+
+# AWS credentials (should be caught by default, but explicit)
+[[rules]]
+id = "aws-credentials"
+description = "AWS Access Keys and Secret Keys"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["aws", "credentials"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''aws_secret_access_key\s*=\s*['"]?[A-Za-z0-9/+=]{40}['"]?'''
+tags = ["aws", "credentials"]
+
+# Supabase keys (should be caught, but explicit)
+[[rules]]
+id = "supabase-secret-key"
+description = "Supabase Secret Key"
+regex = '''sb_secret_[A-Za-z0-9_-]{40,}'''
+tags = ["supabase", "api-key"]
+
+[[rules]]
+id = "supabase-anon-key"
+description = "Supabase Anon Key (JWT format)"
+regex = '''eyJ[a-zA-Z0-9_-]{100,}\.eyJ[a-zA-Z0-9_-]{100,}\.[a-zA-Z0-9_-]{40,}'''
+tags = ["supabase", "api-key"]
+
+# GitHub tokens
+[[rules]]
+id = "github-token"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[A-Za-z0-9]{36}'''
+tags = ["github", "token"]
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Token"
+regex = '''gho_[A-Za-z0-9]{36}'''
+tags = ["github", "token"]
+
+# Database passwords
+[[rules]]
+id = "database-password"
+description = "Database connection string with password"
+regex = '''postgresql://[^:]+:[^@]+@'''
+tags = ["database", "password"]
+
+# Android keystore passwords (in scripts, not code)
+[[rules]]
+id = "keystore-password"
+description = "Android Keystore Password"
+regex = '''keystore.*password.*=.*['"]?[^'"]{8,}['"]?'''
+tags = ["android", "keystore"]
+
