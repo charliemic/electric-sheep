@@ -76,7 +76,25 @@ Before releasing any component, complete this checklist:
    - Add release date
    - Document breaking changes (if any)
 
-### Step 2: Bump Version
+### Step 2: Generate Changelog (Optional but Recommended)
+
+**Before bumping version, generate changelog from commits**:
+```bash
+# Generate changelog for specific component
+./scripts/generate-changelog.sh app 1.0.1
+
+# Or generate for all components
+./scripts/generate-changelog.sh all 1.0.1
+```
+
+This will:
+- Extract commits since last release
+- Categorize them (Added, Fixed, Changed, etc.)
+- Update CHANGELOG.md automatically
+
+**Note**: The version bump script also updates CHANGELOG.md, but generating it first gives you a preview.
+
+### Step 3: Bump Version
 
 **For a single component**:
 ```bash
@@ -107,7 +125,7 @@ The script will:
 - Create git tag
 - **Note**: You still need to commit and push
 
-### Step 3: Review Changes
+### Step 4: Review Changes
 
 ```bash
 # Review version changes
@@ -121,7 +139,7 @@ git diff app/build.gradle.kts
 git diff test-automation/build.gradle.kts
 ```
 
-### Step 4: Commit and Push
+### Step 5: Commit and Push
 
 ```bash
 # Stage changes
@@ -137,22 +155,23 @@ git push origin main
 git push --tags
 ```
 
-### Step 5: Verify Release
+### Step 6: Verify Release
 
 1. **Check GitHub Actions**:
-   - Release workflow should trigger automatically
+   - Release workflow should trigger automatically on tag push
+   - Workflow: `.github/workflows/release-<component>.yml`
    - Verify build succeeds
    - Verify artifacts are uploaded
 
 2. **Verify GitHub Release**:
-   - Check that release was created
-   - Verify release notes are correct
-   - Verify artifacts are attached
+   - Check that release was created automatically
+   - Verify release notes are extracted from CHANGELOG.md
+   - Verify artifacts are attached (AAB for app, JAR for test-framework, etc.)
 
 3. **Test Release Artifacts**:
    - Download and verify artifacts
    - Test installation (for Android app)
-   - Verify version numbers
+   - Verify version numbers match tag
 
 ## Component-Specific Release Workflows
 
@@ -162,18 +181,22 @@ git push --tags
 
 **Workflow**: `.github/workflows/release-app.yml`
 
+**Trigger**: Git tag `app-v*` (e.g., `app-v1.0.0`)
+
 **Steps**:
 1. Checkout code
-2. Set up Android SDK
-3. Build release AAB
-4. Sign AAB (using GitHub Secrets)
-5. Create GitHub release
-6. Upload signed AAB
-7. Publish release notes from CHANGELOG.md
+2. Extract version from tag
+3. Set up JDK 17 and Android SDK
+4. Build release AAB (`./gradlew bundleRelease`)
+5. Sign AAB (using keystore from GitHub Secrets)
+6. Extract release notes from CHANGELOG.md
+7. Create GitHub release with notes
+8. Upload signed AAB as release asset
 
 **Artifacts**:
-- Signed AAB file
-- Release notes
+- Signed AAB file (`app-release.aab`)
+- Release notes (from CHANGELOG.md)
+- GitHub release with download link
 
 ### Test Framework Release
 
@@ -181,17 +204,21 @@ git push --tags
 
 **Workflow**: `.github/workflows/release-test-framework.yml`
 
+**Trigger**: Git tag `test-framework-v*` (e.g., `test-framework-v1.0.0`)
+
 **Steps**:
 1. Checkout code
-2. Set up JDK 17
-3. Build JAR artifact
-4. Create GitHub release
-5. Upload JAR
-6. Publish release notes
+2. Extract version from tag
+3. Set up JDK 17
+4. Build JAR artifact (`./gradlew build`)
+5. Extract release notes from CHANGELOG.md
+6. Create GitHub release with notes
+7. Upload JAR as release asset
 
 **Artifacts**:
-- JAR file
-- Release notes
+- JAR file (`test-automation/build/libs/*.jar`)
+- Release notes (from CHANGELOG.md)
+- GitHub release with download link
 
 ### Metrics Dashboard Release
 
@@ -199,17 +226,22 @@ git push --tags
 
 **Workflow**: `.github/workflows/release-metrics-dashboard.yml`
 
+**Trigger**: Git tag `metrics-dashboard-v*` (e.g., `metrics-dashboard-v1.0.0`)
+
 **Steps**:
 1. Checkout code
-2. Set up Node.js
-3. Install dependencies
-4. Create GitHub release
-5. Upload package
-6. Publish release notes
+2. Extract version from tag
+3. Set up Node.js 18
+4. Install dependencies (`npm ci`)
+5. Verify package.json version matches tag
+6. Extract release notes from CHANGELOG.md
+7. Create GitHub release with notes
+8. Upload package files as release assets
 
 **Artifacts**:
-- Package files
-- Release notes
+- Package files (`package.json`, `*.js`)
+- Release notes (from CHANGELOG.md)
+- GitHub release with download link
 
 ## Post-Release Tasks
 

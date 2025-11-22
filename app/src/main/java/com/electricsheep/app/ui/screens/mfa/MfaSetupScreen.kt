@@ -165,7 +165,8 @@ fun MfaSetupScreen(
                 )
                 
                 // Secret key (for manual entry)
-                response.secret?.let { secret ->
+                val secret = response.secret
+                if (secret != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(

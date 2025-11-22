@@ -79,6 +79,8 @@ class MfaSetupViewModel(
     fun verifyEnrollment() {
         val code = _verificationCode.value
         val enrollmentResponse = _enrollmentResponse.value
+        // Note: MfaResponse structure from Supabase SDK may differ
+        // Update based on actual SDK response structure
         val challengeId = enrollmentResponse?.challengeId
         
         if (code.length != 6) {
