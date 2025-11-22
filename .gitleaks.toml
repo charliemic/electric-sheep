@@ -48,6 +48,7 @@ regexes = [
   '''postgresql://.*aws-0-.*\.pool''',
   '''DB_URL=.*postgresql://''',
   '''postgresql://.*\$\{.*\}''',
+  '''postgresql://postgres\..*:\$\{DB_PASSWORD\}@aws-0-.*\.pooler\.supabase\.com:6543/postgres''',
 ]
 stopwords = [
   "example",
