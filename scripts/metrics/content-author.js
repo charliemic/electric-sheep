@@ -52,7 +52,7 @@ export function savePage(pageId, content, metadata = {}, userId) {
   };
   
   // If updating existing page, preserve createdAt and verify ownership
-  const existing = loadPage(pageId, userId);
+  const existing = loadPage(pageId, userId, true); // Load raw to check owner
   if (existing) {
     pageData.metadata.createdAt = existing.metadata.createdAt;
     // Verify ownership
@@ -72,9 +72,10 @@ export function savePage(pageId, content, metadata = {}, userId) {
  * 
  * @param {string} pageId - Page identifier
  * @param {string} userId - User ID (optional, for access control)
+ * @param {boolean} loadRaw - If true, bypasses access checks (for internal use like savePage)
  * @returns {object|null} Page data or null if not found/access denied
  */
-export function loadPage(pageId, userId = null) {
+export function loadPage(pageId, userId = null, loadRaw = false) {
   const filePath = join(PAGES_DIR, `${pageId}.json`);
   
   if (!existsSync(filePath)) {
@@ -84,9 +85,24 @@ export function loadPage(pageId, userId = null) {
   const content = readFileSync(filePath, 'utf8');
   const page = JSON.parse(content);
   
-  // Check access permissions
-  if (userId && page.userId !== userId && !page.metadata.isPublic) {
-    return null; // User doesn't have access
+  // Check access permissions (unless loadRaw is true)
+  if (!loadRaw) {
+    // If page is public, anyone can view it
+    if (page.metadata.isPublic) {
+      return page; // Public page, accessible to all
+    }
+    
+    // If userId is provided, check if user owns the page
+    if (userId !== null) {
+      if (page.userId === userId) {
+        return page; // User owns the page
+      } else {
+        return null; // User doesn't own the page and it's not public
+      }
+    } else {
+      // No userId provided and page is not public
+      return null; // Not public and no user ID provided
+    }
   }
   
   return page;
