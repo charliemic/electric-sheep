@@ -31,6 +31,8 @@ alwaysApply: true
 
 **Required format:** `<type>/<task-description>`
 
+**Recommended format (for auto-label updates):** `<type>/<issue-number>-<task-description>`
+
 **Types:**
 - `feature/` - New functionality
 - `fix/` - Bug fixes  
@@ -39,14 +41,19 @@ alwaysApply: true
 - `test/` - Test improvements
 
 **Examples:**
-- ✅ `feature/test-helpers`
-- ✅ `feature/env-switch`
-- ✅ `fix/login-bug`
-- ✅ `refactor/component-cleanup`
+- ✅ `feature/test-helpers` (standard format)
+- ✅ `feature/52-configure-release-signing` (with issue number - enables auto-label updates)
+- ✅ `fix/55-crash-reporting-integration` (with issue number)
+- ✅ `refactor/component-cleanup` (standard format)
 - ❌ `feature/my-feature` (too vague - be descriptive)
 - ❌ `test-helpers` (missing type prefix)
 
 **Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
+
+**Auto-Label Updates:**
+- If branch name includes issue number (e.g., `feature/52-<description>`), pre-work check will automatically update issue status to `in-progress`
+- Format: `<type>/<issue-number>-<description>`
+- Example: `feature/52-configure-release-signing` → Auto-updates issue #52 to `status:in-progress`
 
 ## File System Isolation (MANDATORY)
 
@@ -87,12 +94,22 @@ cd ../electric-sheep-<task-name>
 This script automatically verifies:
 1. ✅ **Not on main branch** - Prevents working on main
 2. ✅ **Latest main pulled** - Checks for remote updates
-3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
-4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
-5. ✅ **Available tools identified** - Lists automation scripts
-6. ✅ **Working directory clean** - Checks for uncommitted changes
+3. ✅ **Rule/workflow updates checked** - Checks for real-time rule/workflow updates (real-time collaboration)
+4. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
+5. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
+6. ✅ **Available tools identified** - Lists automation scripts
+7. ✅ **Working directory clean** - Checks for uncommitted changes
 
 **If the script reports errors, fix them before proceeding.**
+
+**Real-Time Collaboration:**
+- ✅ **Rules and workflow docs are shared** - Changes propagate immediately via git
+- ✅ **Check for updates before work** - `./scripts/check-rule-updates.sh` detects rule/workflow updates
+- ✅ **Pull latest main** - Includes rule/workflow updates from other agents
+- ✅ **No conflicts** - Rules/workflow docs are read-only during agent work
+- ✅ **Improvements benefit all** - Agent improvements to rules/workflow help all agents immediately
+
+**See:** `docs/development/workflow/REAL_TIME_COLLABORATION.md` for complete real-time collaboration model
 
 **Manual steps (if needed):**
 1. ✅ **Create isolated worktree** - `./scripts/create-worktree.sh <task-name>` (MANDATORY)
@@ -324,4 +341,13 @@ Please verify these are correct before cleanup proceeds.
 - Coordinate if files overlap with other agents
 - **Exception**: Only skip worktree if coordination explicitly requires shared workspace (must be documented)
 
-**See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines
+**Real-Time Collaboration:**
+- ✅ **Check for rule/workflow updates** - `./scripts/check-rule-updates.sh` before starting work
+- ✅ **Pull latest main** - Includes rule/workflow updates from other agents
+- ✅ **Rules/workflow are shared** - Changes propagate immediately via git
+- ✅ **Code changes remain isolated** - Use worktrees for all code modifications
+- ✅ **No interference** - Rules/workflow updates don't conflict with code work
+
+**See:** 
+- `docs/development/workflow/MULTI_AGENT_WORKFLOW.md` - Complete multi-agent workflow guidelines
+- `docs/development/workflow/REAL_TIME_COLLABORATION.md` - Real-time collaboration model
