@@ -27,7 +27,7 @@ jobs:
       all-files: ${{ steps.filter.outputs.all }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Detect changed files
         uses: dorny/paths-filter@v2
@@ -79,7 +79,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Full history for scheduled scans, shallow for PRs (faster)
           fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
@@ -121,7 +121,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -285,7 +285,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Set up JDK 17
         uses: actions/setup-java@v4
