@@ -182,9 +182,9 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:functions-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt") // Auth support
     // HTTP client engine for Supabase (required)
-    implementation("io.ktor:ktor-client-android:2.3.5")
+    implementation("io.ktor:ktor-client-android:2.3.13")
     // OkHttp engine for certificate pinning
-    implementation("io.ktor:ktor-client-okhttp:2.3.5")
+    implementation("io.ktor:ktor-client-okhttp:2.3.13")
     // OkHttp for certificate pinning (Ktor Android uses OkHttp engine)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
