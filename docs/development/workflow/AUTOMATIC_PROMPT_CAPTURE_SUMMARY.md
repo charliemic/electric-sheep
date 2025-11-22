@@ -87,9 +87,12 @@ supabase migration up
 
 ## Next Steps
 
-1. ✅ **Migration applied** - Run `supabase db push`
-2. ✅ **Agents updated** - Rules require automatic capture
-3. ✅ **Ready to use** - No additional setup needed
+1. ✅ **Migration file created** - `supabase/migrations/20251122000000_create_prompts_table.sql`
+2. ✅ **CI/CD will apply** - Push to `main` or `develop` triggers automatic deployment
+3. ✅ **Agents updated** - Rules require automatic capture
+4. ✅ **Ready to use** - After CI/CD applies migration
 
-**All prompts will now be automatically captured to Supabase!**
+**IMPORTANT**: Migrations are applied via CI/CD, NOT locally. Just commit and push - GitHub Actions will apply the migration automatically.
+
+**All prompts will now be automatically captured to Supabase after migration is applied!**
 

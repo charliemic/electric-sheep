@@ -29,9 +29,9 @@ Add keystore configuration to `local.properties`:
 ```properties
 # Keystore Configuration (for local release builds)
 keystore.file=keystore/release.jks
-keystore.password=your-keystore-password
+keystore.password=<YOUR_KEYSTORE_PASSWORD>
 keystore.key.alias=release_key
-keystore.key.password=your-key-password
+keystore.key.password=<YOUR_KEY_PASSWORD>
 ```
 
 **⚠️ IMPORTANT**: 

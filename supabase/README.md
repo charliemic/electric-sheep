@@ -68,13 +68,33 @@ supabase migration new create_moods_table
 3. Reset if needed: `supabase db reset`
 
 ### Deploy to Remote
-```bash
-# Push migrations to remote Supabase project
-supabase db push
 
-# Or deploy specific migration
-supabase migration up
+**CRITICAL: Migrations are applied via CI/CD, NOT locally.**
+
+**✅ CORRECT APPROACH:**
+```bash
+# 1. Create migration file
+# supabase/migrations/YYYYMMDDHHMMSS_description.sql
+
+# 2. Commit and push
+git add supabase/migrations/
+git commit -m "feat: Add migration"
+git push origin main  # or develop
+
+# 3. CI/CD automatically applies migration
+# See: .github/workflows/supabase-schema-deploy.yml
 ```
+
+**❌ DON'T TRY LOCALLY:**
+```bash
+# These will fail with migration history mismatches
+supabase db push  # ❌ Don't do this locally
+supabase migration up  # ❌ Requires local Docker
+```
+
+**Why?** Migration history mismatches between local and remote. CI/CD has proper authentication and handles this automatically.
+
+**See**: `docs/development/setup/SUPABASE_MIGRATIONS_GUIDE.md` for complete guide
 
 ## Version Control
 

@@ -22,30 +22,110 @@
     // "gradle.java.home": "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home",
     // Kotlin Configuration
     "kotlin.languageServer.enabled": true,
-    // File Exclusions
+    // File Exclusions (Hide from Explorer)
+    // Rationale: Hide generated files and caches, but keep source code visible
     "files.exclude": {
-        "**/.gradle": false,
+        // Build artifacts
         "**/build": true,
-        "**/.idea": false,
+        "**/bin": true,
+        "**/gen": true,
+        "**/out": true,
+        "**/release": true,
+        // Dependency directories
         "**/node_modules": true,
-        "**/.DS_Store": true
-    },
-    // Search Exclusions
-    "search.exclude": {
-        "**/build": true,
+        // Cache directories (hidden for clarity)
         "**/.gradle": true,
-        "**/node_modules": true,
+        // Test artifacts
         "**/test-results": true,
-        "**/test-automation/build": true
+        // System files
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        // IDE config (keep visible for reference)
+        "**/.idea": false
+    },
+    // Search Exclusions (Exclude from Search)
+    // Rationale: Improve search performance and reduce noise from generated files
+    "search.exclude": {
+        // Build artifacts
+        "**/build": true,
+        "**/bin": true,
+        "**/gen": true,
+        "**/out": true,
+        "**/release": true,
+        // Dependency directories
+        "**/node_modules": true,
+        "**/.gradle": true,
+        // Test artifacts
+        "**/test-results": true,
+        "**/test-automation/test-results": true,
+        // Git internals (performance)
+        "**/.git/objects": true,
+        "**/.git/logs": true,
+        // Generated files
+        "**/*.class": true,
+        "**/*.dex": true,
+        "**/*.apk": true,
+        "**/*.aab": true,
+        // Log files
+        "**/*.log": true,
+        // Temporary files
+        "**/.build-info.tmp": true,
+        "**/.test-info.tmp": true,
+        // Security: Sensitive files (should not be indexed)
+        "**/aws-credentials*.txt": true,
+        "**/aws-credentials*.json": true,
+        "**/cursor-bedrock-credentials*.txt": true,
+        "**/.aws/credentials": true,
+        "**/.aws/config.local": true,
+        "**/local.properties": true,
+        "**/keystore/**": true,
+        "**/*.jks": true,
+        "**/*.keystore": true,
+        "**/supabase/.env": true,
+        "**/supabase/.env.local": true
     },
     // File Watcher Exclusions (Performance)
+    // Rationale: Reduce CPU usage by not watching frequently-changing directories
     "files.watcherExclude": {
+        // Git internals (high frequency changes)
         "**/.git/objects/**": true,
+        "**/.git/logs/**": true,
         "**/.git/subtree-cache/**": true,
+        "**/.git/refs/**": true,
+        // Build artifacts (high frequency changes)
         "**/build/**": true,
-        "**/.gradle/**": true,
+        "**/bin/**": true,
+        "**/gen/**": true,
+        "**/out/**": true,
+        "**/release/**": true,
+        // Dependency directories (large, rarely change)
         "**/node_modules/**": true,
-        "**/test-results/**": true
+        "**/.gradle/**": true,
+        // Test artifacts (high frequency changes)
+        "**/test-results/**": true,
+        "**/test-automation/test-results/**": true,
+        "**/test-automation/build/**": true,
+        // Cache directories (high frequency changes)
+        "**/.gradle/caches/**": true,
+        "**/.gradle/daemon/**": true,
+        // Generated schemas (if large)
+        "**/app/schemas/**": true,
+        // Temporary files
+        "**/.build-info.tmp": true,
+        "**/.test-info.tmp": true,
+        "**/.build-watch.log": true,
+        // Security: Sensitive files (should not be watched)
+        "**/aws-credentials*.txt": true,
+        "**/aws-credentials*.json": true,
+        "**/cursor-bedrock-credentials*.txt": true,
+        "**/.aws/credentials": true,
+        "**/.aws/config.local": true,
+        "**/local.properties": true,
+        "**/keystore/**": true,
+        "**/*.jks": true,
+        "**/*.keystore": true,
+        "**/supabase/.env": true,
+        "**/supabase/.env.local": true
     },
     // Editor Settings
     "editor.formatOnSave": true,

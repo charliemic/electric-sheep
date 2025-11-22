@@ -1,0 +1,99 @@
+name: Release Metrics Dashboard
+
+on:
+  push:
+    tags:
+      - 'metrics-dashboard-v*'  # Trigger on metrics-dashboard-specific tags (e.g., metrics-dashboard-v1.0.0)
+
+permissions:
+  contents: write  # Required to create releases
+
+jobs:
+  release:
+    name: Release Metrics Dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+      
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#metrics-dashboard-v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION from tag: $TAG"
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: scripts/metrics/package.json
+      
+      - name: Install dependencies
+        working-directory: scripts/metrics
+        run: npm ci
+      
+      - name: Verify package.json version
+        working-directory: scripts/metrics
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          EXPECTED_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$PACKAGE_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) doesn't match tag version ($EXPECTED_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $PACKAGE_VERSION"
+      
+      - name: Extract release notes from CHANGELOG
+        id: release_notes
+        run: |
+          # Extract release notes for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Find the section for this version
+          if grep -q "## \[metrics-dashboard $VERSION\]" CHANGELOG.md; then
+            # Component-specific format
+            awk "/^## \[metrics-dashboard $VERSION\]/,/^## \[/" CHANGELOG.md | sed '$d' > release_notes.md
+          elif grep -q "## \[$VERSION\]" CHANGELOG.md; then
+            # Unified format
+            awk "/^## \[$VERSION\]/,/^## \[/" CHANGELOG.md | sed '$d' > release_notes.md
+          else
+            # Fallback: use tag message or default
+            echo "## Release $VERSION" > release_notes.md
+            echo "" >> release_notes.md
+            echo "See CHANGELOG.md for details." >> release_notes.md
+          fi
+          
+          # Set output (multiline)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Metrics Dashboard ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            scripts/metrics/package.json
+            scripts/metrics/*.js
+      
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-dashboard-${{ steps.version.outputs.version }}
+          path: |
+            scripts/metrics/package.json
+            scripts/metrics/*.js
+          retention-days: 90
+

@@ -88,7 +88,7 @@ if [ $? -eq 0 ]; then
     echo "📋 Next Steps:"
     echo "   1. Add keystore configuration to local.properties:"
     echo "      keystore.file=$KEYSTORE_FILE"
-    echo "      keystore.password=<your-keystore-password>"
+    echo "      keystore.password=<YOUR_KEYSTORE_PASSWORD>"
     echo "      keystore.key.alias=$KEY_ALIAS"
     echo "      keystore.key.password=<your-key-password>"
     echo ""

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -13,8 +15,19 @@ android {
         applicationId = "com.electricsheep.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        
+        // Read version from version.properties (managed by bump-version.sh)
+        val versionPropertiesFile = rootProject.file("version.properties")
+        val versionProperties = Properties().apply {
+            if (versionPropertiesFile.exists()) {
+                versionPropertiesFile.inputStream().use { load(it) }
+            }
+        }
+        val appVersionName = versionProperties.getProperty("app.versionName", "1.0.0")
+        val appVersionCode = versionProperties.getProperty("app.versionCode", "1").toInt()
+        
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -78,10 +91,16 @@ android {
             val keyPassword = readProperty("keystore.key.password", "")
             
             // Only apply signing config if all required values are present
-            // file() handles both absolute paths (CI/CD) and relative paths (local dev)
+            // Resolve keystore path relative to project root (not app module)
             if (keystoreFile.isNotEmpty() && keystorePassword.isNotEmpty() && 
                 keyAlias.isNotEmpty() && keyPassword.isNotEmpty()) {
-                storeFile = file(keystoreFile)
+                // If path is absolute, use as-is; otherwise resolve from project root
+                val keystorePath = if (keystoreFile.startsWith("/") || keystoreFile.matches(Regex("^[A-Za-z]:.*"))) {
+                    file(keystoreFile)
+                } else {
+                    rootProject.file(keystoreFile)
+                }
+                storeFile = keystorePath
                 storePassword = keystorePassword
                 this.keyAlias = keyAlias
                 this.keyPassword = keyPassword
@@ -206,6 +225,10 @@ dependencies {
     implementation("com.patrykandpatrick.vico:compose:1.13.1")
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
     implementation("com.patrykandpatrick.vico:core:1.13.1")
+    
+    // QR Code generation for MFA setup
+    implementation("com.google.zxing:core:3.5.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
