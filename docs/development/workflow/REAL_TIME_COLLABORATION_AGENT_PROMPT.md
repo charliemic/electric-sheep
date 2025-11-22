@@ -6,23 +6,15 @@
 ## Quick Prompt (Copy-Paste This)
 
 ```
-I need to incorporate the new real-time collaboration model for agent improvements and workflow updates. 
+Please review the real-time collaboration model implementation in the feature/real-time-collaboration-model branch and incorporate it into your workflow.
 
-Please:
-1. Read the onboarding guide: docs/development/workflow/REAL_TIME_COLLABORATION_ONBOARDING.md
-2. If I'm currently working, check for rule/workflow updates: ./scripts/check-rule-updates.sh
-3. If updates detected, pull latest main and rebase my branch
-4. Update my workflow to always check for updates before starting work (via pre-work-check.sh)
+After the PR is merged:
+1. Pull latest main: git checkout main && git pull origin main
+2. Read the onboarding guide: docs/development/workflow/REAL_TIME_COLLABORATION_ONBOARDING.md
+3. If currently working, check for updates: ./scripts/check-rule-updates.sh
+4. Update workflow to always check for updates before starting work (via pre-work-check.sh)
 
-Key changes:
-- Pre-work-check.sh now includes step 2.5: Check for rule/workflow updates
-- New script: ./scripts/check-rule-updates.sh (detects rule/workflow updates)
-- Always pull latest main before creating worktree (includes rule/workflow updates)
-- Rules/workflow docs are now shared in real-time (no conflicts possible)
-
-Code changes remain isolated (worktrees still required), but rules/workflow improvements now propagate immediately to all agents.
-
-See: docs/development/workflow/REAL_TIME_COLLABORATION_ONBOARDING.md for complete guide.
+The pre-work-check.sh now automatically checks for rule/workflow updates, so just pull latest main and you'll have it.
 ```
 
 ## Detailed Prompt (If More Context Needed)
