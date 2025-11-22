@@ -96,10 +96,11 @@ The HTML Viewer is a **communication and storytelling tool**:
    - Table of contents generation
    - Flow control (introduction, analysis, conclusions)
 
-4. **Publishing & Sharing**
-   - Save as standalone HTML
-   - Generate shareable links
-   - Export options
+4. **Publishing & Hosting**
+   - Pages hosted directly in dashboard
+   - Accessible via `/pages/:id` routes
+   - Rich JavaScript interactivity (Chart.js, interactive elements)
+   - Shareable links to hosted pages
    - Version history (optional)
 
 **Workflow:**
@@ -232,7 +233,7 @@ export function listPages() {
 }
 
 /**
- * Generate HTML from authored page
+ * Generate HTML from authored page (hosted in dashboard)
  */
 export function generatePageHTML(pageData, options = {}) {
   const { content, metadata } = pageData;
@@ -248,12 +249,13 @@ export function generatePageHTML(pageData, options = {}) {
   // Generate TOC if requested
   const toc = includeTOC ? generateTOC(htmlContent) : '';
   
-  // Build complete HTML document
+  // Build complete HTML document with rich JavaScript
   return buildPageHTML(htmlContent, {
     title: metadata.title,
     theme,
     toc,
-    metadata
+    metadata,
+    pageId: pageData.id
   });
 }
 
@@ -289,10 +291,10 @@ function processDataBlocks(content) {
 }
 
 /**
- * Build complete HTML page document
+ * Build complete HTML page document with rich JavaScript
  */
 function buildPageHTML(content, options) {
-  const { title, theme, toc, metadata } = options;
+  const { title, theme, toc, metadata, pageId } = options;
   
   return `<!DOCTYPE html>
 <html lang="en" class="${theme === 'dark' ? 'dark' : ''}">
@@ -301,6 +303,12 @@ function buildPageHTML(content, options) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+  <!-- Chart.js for interactive charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Prism.js for syntax highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.css" rel="stylesheet" />
   <style>
     body {
       max-width: 900px;
@@ -330,6 +338,14 @@ function buildPageHTML(content, options) {
       color: #1f2937;
       margin-bottom: 0.5rem;
     }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin: 1.5rem 0;
+    }
+    .interactive-element {
+      margin: 1.5rem 0;
+    }
     pre {
       background: #1f2937;
       padding: 1rem;
@@ -356,6 +372,58 @@ function buildPageHTML(content, options) {
   </div>
   ${toc}
   ${content}
+  
+  <script>
+    // Page-specific JavaScript for interactivity
+    const pageId = '${pageId}';
+    
+    // Initialize charts from data blocks
+    document.querySelectorAll('.chart-container').forEach((container, index) => {
+      const chartData = container.dataset.chartData;
+      if (chartData) {
+        try {
+          const config = JSON.parse(chartData);
+          new Chart(container, config);
+        } catch (e) {
+          console.error('Failed to initialize chart:', e);
+        }
+      }
+    });
+    
+    // Load live data for data blocks
+    async function loadLiveData() {
+      const dataBlocks = document.querySelectorAll('[data-source]');
+      for (const block of dataBlocks) {
+        const source = block.dataset.source;
+        try {
+          const response = await fetch(\`/api/author/data/\${source}\`);
+          const data = await response.json();
+          updateDataBlock(block, data);
+        } catch (e) {
+          console.error(\`Failed to load data from \${source}:\`, e);
+        }
+      }
+    }
+    
+    // Update data block with live data
+    function updateDataBlock(block, data) {
+      // Update block content based on data source type
+      if (block.dataset.source.startsWith('metrics:')) {
+        block.innerHTML = formatMetricsData(data);
+      } else if (block.dataset.source.startsWith('tests:')) {
+        block.innerHTML = formatTestData(data);
+      }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLiveData();
+      // Refresh live data every 30 seconds if page has live data blocks
+      if (document.querySelectorAll('[data-source]').length > 0) {
+        setInterval(loadLiveData, 30000);
+      }
+    });
+  </script>
 </body>
 </html>`;
 }
@@ -431,6 +499,31 @@ fastify.get('/pages/:id', async (request, reply) => {
   return html;
 });
 
+// API endpoint for live data in pages
+fastify.get('/api/author/data/:source', async (request, reply) => {
+  const { source } = request.params;
+  
+  try {
+    let data;
+    if (source === 'metrics:latest') {
+      data = getAllMetrics();
+    } else if (source === 'tests:latest') {
+      data = getLatestTestResults();
+    } else if (source.startsWith('logs:')) {
+      const logPath = source.substring(5);
+      data = getLogData(logPath);
+    } else {
+      reply.code(404);
+      return { error: 'Unknown data source' };
+    }
+    
+    return { success: true, data };
+  } catch (error) {
+    reply.code(500);
+    return { success: false, error: error.message };
+  }
+});
+
 fastify.get('/api/author/data-sources', async (request, reply) => {
   return {
     dataSources: [
@@ -474,28 +567,37 @@ function getDashboardHTML() {
    - One URL: `http://localhost:8080`
    - Easy navigation between metrics and authoring
    - Consistent styling and UX
+   - Pages hosted directly in dashboard
 
-2. **Data Integration**
+2. **Rich Interactivity**
+   - Chart.js for interactive visualizations
+   - Live data updates (optional)
+   - Interactive elements and widgets
+   - JavaScript-powered features
+
+3. **Data Integration**
    - Pull live data from metrics/logs/tests
    - Insert data blocks into pages
    - Keep data current or snapshot at creation time
+   - API endpoints for live data updates
 
-3. **Editorial Control**
+4. **Editorial Control**
    - Manual, ad-hoc creation
    - Full control over narrative structure
    - Add context, analysis, explanations
    - Craft information-rich pages
 
-4. **Narrative-Driven**
+5. **Narrative-Driven**
    - Structure content to tell a story
    - Combine data with context
    - Create compelling presentations
-   - Share with audience
+   - Share via hosted links
 
-5. **Simpler Architecture**
+6. **Simpler Architecture**
    - One server, one technology stack
    - Shared utilities and styling
    - Easier maintenance
+   - No export/import workflow needed
 
 ### Content Authoring Workflow
 
@@ -503,12 +605,13 @@ function getDashboardHTML() {
 
 1. Open `/author/new`
 2. Write introduction: "Here's what we found in our latest test run..."
-3. Insert data block: `{{tests:latest}}`
+3. Insert data block: `{{tests:latest}}` (pulls live test data)
 4. Add analysis: "The failures are concentrated in the authentication module..."
-5. Insert log snippet: `{{logs:auth-test.log}}`
-6. Add conclusion: "We need to refactor the auth flow..."
-7. Save page
-8. Share via `/pages/page-id` or download HTML
+5. Insert interactive chart: `{{chart:test-trends}}` (Chart.js visualization)
+6. Insert log snippet: `{{logs:auth-test.log}}`
+7. Add conclusion: "We need to refactor the auth flow..."
+8. Save page
+9. Share via `/pages/page-id` (hosted in dashboard with rich interactivity)
 
 **Example: Creating a Metrics Analysis Page**
 
@@ -523,15 +626,19 @@ function getDashboardHTML() {
 ### Data Block Syntax
 
 **Available Data Blocks:**
-- `{{metrics:latest}}` - Latest metrics snapshot
-- `{{tests:latest}}` - Latest test results
+- `{{metrics:latest}}` - Latest metrics snapshot (live or snapshot)
+- `{{tests:latest}}` - Latest test results (live or snapshot)
 - `{{logs:path/to/log.log}}` - Specific log file
 - `{{logs:recent}}` - Recent log entries
+- `{{chart:complexity-trend}}` - Interactive Chart.js visualization
+- `{{chart:test-results}}` - Test results as interactive chart
+- `{{table:metrics}}` - Format data as interactive table
+- `{{code:file.js}}` - Include code file snippet with syntax highlighting
 
-**Future Extensions:**
-- `{{chart:complexity-trend}}` - Generate chart from metrics
-- `{{table:test-results}}` - Format data as table
-- `{{code:file.js}}` - Include code file snippet
+**Live vs. Snapshot Data:**
+- Pages can use live data (refreshes automatically)
+- Or snapshot data (frozen at creation time)
+- Configure per data block: `{{metrics:latest:live}}` or `{{metrics:latest:snapshot}}`
 
 ### Migration Steps
 
