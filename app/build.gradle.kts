@@ -222,9 +222,9 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
     // Vico chart library for Compose
-    implementation("com.patrykandpatrick.vico:compose:1.13.1")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
-    implementation("com.patrykandpatrick.vico:core:1.13.1")
+    implementation("com.patrykandpatrick.vico:compose:1.16.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.16.1")
+    implementation("com.patrykandpatrick.vico:core:1.16.1")
     
     // QR Code generation for MFA setup
     implementation("com.google.zxing:core:3.5.2")
