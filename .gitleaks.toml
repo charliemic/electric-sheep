@@ -15,8 +15,6 @@ paths = [
   '''scripts/.*\.sh$''',
   '''\.gitleaks\.toml''',
 ]
-
-[allowlist.regexes]
 regexes = [
   '''example.*key''',
   '''placeholder.*secret''',
@@ -46,8 +44,6 @@ regexes = [
   '''password.*manager''',
   '''Store.*password''',
 ]
-
-[allowlist.stopwords]
 stopwords = [
   "example",
   "placeholder",
