@@ -53,7 +53,7 @@ Add to `local.properties` (already gitignored):
 ```properties
 # Keystore Configuration (for local release builds)
 keystore.file=keystore/release.jks
-keystore.password=<your-keystore-password>
+keystore.password=<YOUR_KEYSTORE_PASSWORD>
 keystore.key.alias=release_key
 keystore.key.password=<your-key-password>
 ```
