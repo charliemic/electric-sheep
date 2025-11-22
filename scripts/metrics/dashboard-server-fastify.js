@@ -15,6 +15,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { execSync } from 'child_process';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { savePage, loadPage, listPages, generatePageHTML } from './content-author.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -415,6 +416,21 @@ function getDashboardHTML() {
             font-weight: 600;
             color: #667eea;
         }
+        .header-nav {
+            display: flex;
+            gap: 16px;
+        }
+        .header-nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .header-nav a:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
         .header-status {
             display: flex;
             gap: 20px;
@@ -553,6 +569,11 @@ function getDashboardHTML() {
 <body>
     <div class="header">
         <h1>🐑 Electric Sheep</h1>
+        <nav class="header-nav">
+            <a href="/">Metrics</a>
+            <a href="/author">Author</a>
+            <a href="/agents">Agents</a>
+        </nav>
         <div class="header-status">
             <span class="refresh-indicator" id="refreshIndicator">
                 Updated: <span id="lastUpdate">Loading...</span>
@@ -1152,12 +1173,325 @@ fastify.get('/api/status', async (request, reply) => {
     };
 });
 
+// Content authoring routes
+fastify.get('/author', async (request, reply) => {
+    reply.type('text/html');
+    return getAuthoringInterfaceHTML();
+});
+
+fastify.get('/author/new', async (request, reply) => {
+    reply.type('text/html');
+    return getNewPageEditorHTML();
+});
+
+fastify.get('/author/edit/:id', async (request, reply) => {
+    const { id } = request.params;
+    const page = loadPage(id);
+    
+    if (!page) {
+        reply.code(404);
+        return { error: 'Page not found' };
+    }
+    
+    reply.type('text/html');
+    return getEditPageEditorHTML(page);
+});
+
+fastify.post('/api/author/save', async (request, reply) => {
+    const { id, content, metadata } = request.body;
+    
+    try {
+        const pageId = id || `page-${Date.now()}`;
+        const page = savePage(pageId, content, metadata);
+        return { success: true, page };
+    } catch (error) {
+        reply.code(400);
+        return { success: false, error: error.message };
+    }
+});
+
+fastify.get('/api/author/pages', async (request, reply) => {
+    return { pages: listPages() };
+});
+
+fastify.get('/pages/:id', async (request, reply) => {
+    const { id } = request.params;
+    const page = loadPage(id);
+    
+    if (!page) {
+        reply.code(404);
+        reply.type('text/html');
+        return '<h1>Page not found</h1><p>The requested page does not exist.</p>';
+    }
+    
+    const html = generatePageHTML(page, {
+        theme: page.metadata.theme || 'light',
+        includeTOC: page.metadata.includeTOC !== false
+    });
+    reply.type('text/html');
+    return html;
+});
+
+// API endpoint for live data in pages
+fastify.get('/api/author/data/:source', async (request, reply) => {
+    const { source } = request.params;
+    
+    try {
+        let data;
+        if (source === 'metrics:latest') {
+            data = getAllMetrics();
+        } else if (source === 'tests:latest') {
+            const testMetric = getLatestMetric('tests', 'test_.*\\.json');
+            data = testMetric;
+        } else if (source.startsWith('logs:')) {
+            // Log loading would be implemented here
+            reply.code(501);
+            return { success: false, error: 'Log loading not yet implemented' };
+        } else {
+            reply.code(404);
+            return { success: false, error: 'Unknown data source' };
+        }
+        
+        return { success: true, data };
+    } catch (error) {
+        reply.code(500);
+        return { success: false, error: error.message };
+    }
+});
+
+// API endpoint for chart data
+fastify.get('/api/author/chart/:type', async (request, reply) => {
+    const { type } = request.params;
+    
+    try {
+        // Generate chart config based on type
+        let config;
+        if (type === 'complexity-trend') {
+            // Would generate complexity trend chart config
+            config = {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Complexity',
+                        data: []
+                    }]
+                }
+            };
+        } else {
+            reply.code(404);
+            return { success: false, error: 'Unknown chart type' };
+        }
+        
+        return { success: true, config };
+    } catch (error) {
+        reply.code(500);
+        return { success: false, error: error.message };
+    }
+});
+
+// Authoring interface HTML functions
+function getAuthoringInterfaceHTML() {
+    const pages = listPages();
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Authoring - Electric Sheep Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .page-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .page-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; background: white; }
+        .page-card h3 { margin: 0 0 0.5rem 0; }
+        .page-card-meta { color: #6b7280; font-size: 0.85em; margin-top: 0.5rem; }
+        .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .btn { padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #6b7280; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Content Authoring</h1>
+    <p>Create information-rich narrative pages with data integration.</p>
+    
+    <div class="actions">
+        <a href="/author/new" class="btn btn-primary">Create New Page</a>
+    </div>
+    
+    <h2>Your Pages</h2>
+    ${pages.length === 0 ? '<p>No pages yet. Create your first page!</p>' : ''}
+    <div class="page-list">
+        ${pages.map(page => `
+            <div class="page-card">
+                <h3>${escapeHtml(page.title)}</h3>
+                <div class="page-card-meta">
+                    Updated: ${new Date(page.updatedAt).toLocaleString()}
+                </div>
+                <div class="actions">
+                    <a href="/pages/${page.id}" class="btn btn-primary">View</a>
+                    <a href="/author/edit/${page.id}" class="btn btn-secondary">Edit</a>
+                </div>
+            </div>
+        `).join('')}
+    </div>
+</body>
+</html>`;
+}
+
+function getNewPageEditorHTML() {
+    return getPageEditorHTML(null);
+}
+
+function getEditPageEditorHTML(page) {
+    return getPageEditorHTML(page);
+}
+
+function getPageEditorHTML(page) {
+    const isEdit = page !== null;
+    const content = page ? page.content : '';
+    const title = page ? page.metadata.title : '';
+    const theme = page ? page.metadata.theme : 'light';
+    const includeTOC = page ? page.metadata.includeTOC : true;
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${isEdit ? 'Edit' : 'New'} Page - Electric Sheep Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .editor-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0; }
+        .editor-panel { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+        .editor-panel h3 { margin-top: 0; }
+        textarea { width: 100%; min-height: 500px; font-family: monospace; font-size: 0.9em; }
+        .preview-panel { background: #f9fafb; }
+        .form-group { margin: 1rem 0; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 0.5rem; }
+        .actions { display: flex; gap: 1rem; margin-top: 2rem; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 1em; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #6b7280; color: white; }
+    </style>
+</head>
+<body>
+    <h1>${isEdit ? 'Edit' : 'Create New'} Page</h1>
+    
+    <form id="page-form">
+        <div class="form-group">
+            <label for="page-title">Page Title</label>
+            <input type="text" id="page-title" value="${escapeHtml(title)}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="page-theme">Theme</label>
+            <select id="page-theme">
+                <option value="light" ${theme === 'light' ? 'selected' : ''}>Light</option>
+                <option value="dark" ${theme === 'dark' ? 'selected' : ''}>Dark</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="include-toc" ${includeTOC ? 'checked' : ''}>
+                Include Table of Contents
+            </label>
+        </div>
+        
+        <div class="editor-container">
+            <div class="editor-panel">
+                <h3>Markdown Editor</h3>
+                <textarea id="page-content" placeholder="Write your content in Markdown...&#10;&#10;You can use data blocks:&#10;{{metrics:latest}} - Latest metrics&#10;{{tests:latest}} - Latest test results&#10;{{logs:path/to/log.log}} - Log file&#10;{{chart:complexity-trend}} - Interactive chart">${escapeHtml(content)}</textarea>
+            </div>
+            <div class="editor-panel preview-panel">
+                <h3>Preview</h3>
+                <div id="preview"></div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'} Page</button>
+            <a href="/author" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+    
+    <script>
+        const form = document.getElementById('page-form');
+        const contentTextarea = document.getElementById('page-content');
+        const preview = document.getElementById('preview');
+        const pageId = '${page ? page.id : ''}';
+        
+        // Simple markdown preview (basic implementation)
+        function updatePreview() {
+            const content = contentTextarea.value;
+            // Basic markdown rendering (would use marked library in production)
+            preview.innerHTML = '<p>Preview will be available after saving</p>';
+        }
+        
+        contentTextarea.addEventListener('input', updatePreview);
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pageData = {
+                ${isEdit ? `id: '${page.id}',` : ''}
+                content: contentTextarea.value,
+                metadata: {
+                    title: document.getElementById('page-title').value,
+                    theme: document.getElementById('page-theme').value,
+                    includeTOC: document.getElementById('include-toc').checked
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/author/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pageData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/pages/' + result.page.id;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving page: ' + error.message);
+            }
+        });
+        
+        updatePreview();
+    </script>
+</body>
+</html>`;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
 // Start server
 const start = async () => {
     try {
         await fastify.listen({ port: PORT, host: '0.0.0.0' });
         console.log(`🚀 Dashboard server running on http://localhost:${PORT}`);
         console.log(`📊 Dashboard: http://localhost:${PORT}/`);
+        console.log(`📝 Author: http://localhost:${PORT}/author`);
         console.log(`📡 API: http://localhost:${PORT}/api/status`);
         console.log('\nPress Ctrl+C to stop\n');
     } catch (err) {

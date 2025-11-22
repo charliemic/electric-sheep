@@ -7,7 +7,27 @@
 
 ## 📋 What's Been Prepared
 
-Three comprehensive onboarding documents have been created to help new team members (with bootcamp experience, new to large projects) get productive quickly:
+Four comprehensive onboarding documents have been created to help team members get productive quickly:
+
+### 0. **ONBOARDING_RETURNING_CONTRIBUTORS.md** (Quick Start for Returning Contributors)
+**5-minute quick start** - For contributors who have contributed before but haven't been active recently.
+
+**Contents**:
+- 5-minute quick start (sync, check, branch)
+- What's changed since last contribution
+- Simplified workflow for minor updates
+- What you DON'T need to worry about
+- Common tasks quick reference
+
+**Key Features**:
+- ✅ Fast track (5 minutes vs 30+ minutes)
+- ✅ Focused on minor updates
+- ✅ Clear what's changed
+- ✅ Automated quick-start script
+
+**For**: Returning contributors making minor updates
+
+### 1. **ONBOARDING_NEW_STARTERS.md** (Main Guide)
 
 ### 1. **ONBOARDING_NEW_STARTERS.md** (Main Guide)
 **Complete onboarding guide** - The primary document new starters should read.
@@ -151,13 +171,19 @@ Three comprehensive onboarding documents have been created to help new team memb
 ## 📍 Where to Find
 
 ### In Documentation
-- `docs/development/ONBOARDING_NEW_STARTERS.md` - Main guide
+- `docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md` - Quick start for returning contributors
+- `docs/development/ONBOARDING_NEW_STARTERS.md` - Main guide (for new starters)
 - `docs/development/ONBOARDING_RULES_PRIORITY.md` - Rules guide
 - `docs/development/ONBOARDING_QUICK_REFERENCE.md` - Quick reference
 
 ### In Documentation Index
 - Added to `docs/README.md` Quick Start section
+- Added to `README.md` Contributing section
 - Added to `docs/development/guides/README.md`
+
+### For Returning Contributors
+**Start here**: `docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md`  
+**Or use script**: `./scripts/quick-start-returning-contributor.sh`
 
 ### For New Starters
 **Start here**: `docs/development/ONBOARDING_NEW_STARTERS.md`
@@ -165,6 +191,12 @@ Three comprehensive onboarding documents have been created to help new team memb
 ---
 
 ## 🎓 How to Use
+
+### For Returning Contributors
+1. **Run quick-start script**: `./scripts/quick-start-returning-contributor.sh`
+2. **Or read guide**: `ONBOARDING_RETURNING_CONTRIBUTORS.md` (5-minute quick start)
+3. **Make your change**: Follow simplified workflow
+4. **That's it!** Pre-work check handles the rest
 
 ### For New Starters
 1. **Day 1**: Read `ONBOARDING_NEW_STARTERS.md` (First Day Checklist)

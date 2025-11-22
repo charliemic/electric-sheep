@@ -277,6 +277,11 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "   6. Track session scope: ./scripts/track-session-scope.sh start \"<task>\""
     echo "   7. Update issue status: ./scripts/update-issue-status.sh <issue-number> in-progress"
     echo "   8. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo ""
+    echo "📚 Helpful guides:"
+    echo "   → Returning contributor? See: docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md"
+    echo "   → New contributor? See: docs/development/ONBOARDING_NEW_STARTERS.md"
+    echo "   → Quick reference: docs/development/ONBOARDING_QUICK_REFERENCE.md"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."

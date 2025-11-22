@@ -44,7 +44,8 @@ git push origin feature/task-name
 | What | Where |
 |------|-------|
 | Project setup | `README.md` |
-| Onboarding guide | `docs/development/ONBOARDING_NEW_STARTERS.md` |
+| New contributor onboarding | `docs/development/ONBOARDING_NEW_STARTERS.md` |
+| **Returning contributor** | `docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md` |
 | Rules priority | `docs/development/ONBOARDING_RULES_PRIORITY.md` |
 | All rules | `.cursor/rules/*.mdc` |
 | Documentation index | `docs/README.md` |
