@@ -6,7 +6,7 @@
 
 set -e
 
-COORDINATION_DOC="docs/development/AGENT_COORDINATION.md"
+COORDINATION_DOC="docs/development/workflow/AGENT_COORDINATION.md"
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
 ERRORS=0
 WARNINGS=0
@@ -104,6 +104,38 @@ if [ -f "$COORDINATION_DOC" ]; then
         echo "   → Running coordination check..."
         if ! ./scripts/check-agent-coordination.sh; then
             ERRORS=$((ERRORS + 1))
+        fi
+    fi
+    
+    # CRITICAL: Check coordination doc itself for conflicts (INCIDENT PREVENTION)
+    # This prevents the coordination doc merge conflict that occurred on 2025-11-22
+    echo "   → Checking coordination doc for conflicts..."
+    
+    # Check if coordination doc has uncommitted changes
+    if [ -n "$(git diff --name-only HEAD 2>/dev/null | grep "$COORDINATION_DOC")" ] || \
+       [ -n "$(git diff --cached --name-only 2>/dev/null | grep "$COORDINATION_DOC")" ]; then
+        echo "   ⚠️  WARNING: Coordination doc has uncommitted changes"
+        echo "   → Pull latest before modifying: git pull origin main"
+        echo "   → Check for conflicts: git status"
+        echo "   → See: docs/development/workflow/COORDINATION_DOC_BEST_PRACTICES.md"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+    
+    # Check if coordination doc has remote updates
+    git fetch origin main --quiet 2>/dev/null || true
+    if git rev-parse HEAD:"$COORDINATION_DOC" > /dev/null 2>&1 && \
+       git rev-parse origin/main:"$COORDINATION_DOC" > /dev/null 2>&1; then
+        LOCAL_COORD=$(git rev-parse HEAD:"$COORDINATION_DOC" 2>/dev/null || echo "")
+        REMOTE_COORD=$(git rev-parse origin/main:"$COORDINATION_DOC" 2>/dev/null || echo "")
+        
+        if [ -n "$LOCAL_COORD" ] && [ -n "$REMOTE_COORD" ] && [ "$LOCAL_COORD" != "$REMOTE_COORD" ]; then
+            echo "   ⚠️  WARNING: Coordination doc has remote updates"
+            echo "   → Pull latest before modifying: git pull origin main"
+            echo "   → This prevents merge conflicts in coordination doc"
+            echo "   → See: docs/development/reports/AGENT_COORDINATION_CONFLICT_INCIDENT_REVIEW.md"
+            WARNINGS=$((WARNINGS + 1))
+        else
+            echo "   ✅ Coordination doc is up to date"
         fi
     fi
 else
@@ -282,6 +314,10 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "   → Returning contributor? See: docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md"
     echo "   → New contributor? See: docs/development/ONBOARDING_NEW_STARTERS.md"
     echo "   → Quick reference: docs/development/ONBOARDING_QUICK_REFERENCE.md"
+    echo ""
+    echo "🔍 Entry point detection:"
+    echo "   → Detect how you're starting: ./scripts/detect-entry-point.sh [task]"
+    echo "   → See: docs/development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."

@@ -9,6 +9,7 @@ This directory contains all project documentation organized by purpose. Document
 - **[README.md](../README.md)** - Project overview and quick start
 - **[New Contributors](development/ONBOARDING_NEW_STARTERS.md)** - Complete onboarding guide for new team members
 - **[Returning Contributors](development/ONBOARDING_RETURNING_CONTRIBUTORS.md)** - 5-minute quick start for returning contributors
+- **[Entry Point Context](development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md)** - How context is automatically added based on entry point
 - **[llms.txt](../llms.txt)** - AI agent navigation guide (lightweight, code-first approach)
 - **[Multi-Agent Workflow](development/workflow/MULTI_AGENT_WORKFLOW.md)** - How to work with multiple agents
 

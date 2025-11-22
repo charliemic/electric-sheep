@@ -11,6 +11,8 @@ This guide gets you back up to speed quickly so you can make minor updates witho
 
 ## ⚡ 5-Minute Quick Start
 
+**💡 Entry Point Detection**: The system automatically detects how you're starting (prompt, manual, script, etc.) and gathers appropriate context. No need to worry about it - context is added automatically!
+
 ### Step 1: Sync Your Environment (2 minutes)
 
 ```bash
@@ -384,10 +386,29 @@ Before making your change:
 
 ---
 
+## 🔍 Entry Point Detection
+
+**The system automatically detects how you're starting and gathers context:**
+
+- **Prompt-based** (AI agent) → Automatically gathers: pre-work check, similar patterns, coordination
+- **Manual** (file edits) → Automatically gathers: pre-work check, branch status, warnings
+- **Evaluation** (analyze/review) → Automatically gathers: current state, recent changes, related systems
+- **Script** (automation) → Automatically gathers: script-specific context, state, next steps
+
+**You don't need to do anything** - context is added automatically based on how you enter!
+
+**Manual detection:**
+```bash
+./scripts/detect-entry-point.sh "your task description"
+```
+
+**See:** `docs/development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md` for details
+
 ## 📞 Need Help?
 
 **Quick Help:**
 - Run `./scripts/pre-work-check.sh` - Shows available tools
+- Run `./scripts/detect-entry-point.sh` - Detects entry point and gathers context
 - Check `docs/development/ONBOARDING_QUICK_REFERENCE.md` - One-page cheat sheet
 - See `docs/README.md` - Documentation index
 
