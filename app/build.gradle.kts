@@ -78,10 +78,16 @@ android {
             val keyPassword = readProperty("keystore.key.password", "")
             
             // Only apply signing config if all required values are present
-            // file() handles both absolute paths (CI/CD) and relative paths (local dev)
+            // Resolve keystore path relative to project root (not app module)
             if (keystoreFile.isNotEmpty() && keystorePassword.isNotEmpty() && 
                 keyAlias.isNotEmpty() && keyPassword.isNotEmpty()) {
-                storeFile = file(keystoreFile)
+                // If path is absolute, use as-is; otherwise resolve from project root
+                val keystorePath = if (keystoreFile.startsWith("/") || keystoreFile.matches(Regex("^[A-Za-z]:.*"))) {
+                    file(keystoreFile)
+                } else {
+                    rootProject.file(keystoreFile)
+                }
+                storeFile = keystorePath
                 storePassword = keystorePassword
                 this.keyAlias = keyAlias
                 this.keyPassword = keyPassword
