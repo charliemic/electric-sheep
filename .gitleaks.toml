@@ -26,6 +26,8 @@ regexes = [
   '''sbp_.*example''',
   '''<YOUR.*PASSWORD>''',
   '''<your-.*-password>''',
+  '''your-keystore-password''',
+  '''your-key-password''',
   '''keystore\.password=.*<.*>''',
   '''keystore\.key\.password=.*<.*>''',
 ]
