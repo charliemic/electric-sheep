@@ -1,9 +1,7 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.25-1.0.20"
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
@@ -15,19 +13,8 @@ android {
         applicationId = "com.electricsheep.app"
         minSdk = 24
         targetSdk = 34
-        
-        // Read version from version.properties (managed by bump-version.sh)
-        val versionPropertiesFile = rootProject.file("version.properties")
-        val versionProperties = Properties().apply {
-            if (versionPropertiesFile.exists()) {
-                versionPropertiesFile.inputStream().use { load(it) }
-            }
-        }
-        val appVersionName = versionProperties.getProperty("app.versionName", "1.0.0")
-        val appVersionCode = versionProperties.getProperty("app.versionCode", "1").toInt()
-        
-        versionCode = appVersionCode
-        versionName = appVersionName
+        versionCode = 1
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -65,49 +52,6 @@ android {
         buildConfigField("String", "SUPABASE_STAGING_ANON_KEY", if (supabaseStagingAnonKey.isNotEmpty()) "\"$supabaseStagingAnonKey\"" else "\"\"")
     }
 
-    signingConfigs {
-        create("release") {
-            // Read keystore configuration from environment variables or local.properties
-            val localPropertiesFile = rootProject.file("local.properties")
-            fun readProperty(key: String, defaultValue: String): String {
-                // First check environment variables (for CI/CD)
-                // Support both KEYSTORE_FILE (CI/CD convention) and keystore.file (local) formats
-                val envKey = key.uppercase().replace(".", "_")
-                val envValue = System.getenv(envKey) ?: System.getenv(key)
-                if (envValue != null) return envValue
-                
-                // Fall back to local.properties (for local development)
-                if (!localPropertiesFile.exists()) return defaultValue
-                return localPropertiesFile.readLines()
-                    .find { it.startsWith("$key=") }
-                    ?.substringAfter("=")
-                    ?.trim()
-                    ?: defaultValue
-            }
-            
-            val keystoreFile = readProperty("keystore.file", "")
-            val keystorePassword = readProperty("keystore.password", "")
-            val keyAlias = readProperty("keystore.key.alias", "")
-            val keyPassword = readProperty("keystore.key.password", "")
-            
-            // Only apply signing config if all required values are present
-            // Resolve keystore path relative to project root (not app module)
-            if (keystoreFile.isNotEmpty() && keystorePassword.isNotEmpty() && 
-                keyAlias.isNotEmpty() && keyPassword.isNotEmpty()) {
-                // If path is absolute, use as-is; otherwise resolve from project root
-                val keystorePath = if (keystoreFile.startsWith("/") || keystoreFile.matches(Regex("^[A-Za-z]:.*"))) {
-                    file(keystoreFile)
-                } else {
-                    rootProject.file(keystoreFile)
-                }
-                storeFile = keystorePath
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
-            }
-        }
-    }
-
     buildTypes {
         debug {
             // Enable offline-only mode for debug builds (can be toggled)
@@ -118,8 +62,6 @@ android {
             buildConfigField("boolean", "ENABLE_TRIVIA_APP_MODE", "true")
         }
         release {
-            // Use release signing config if available
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -172,15 +114,15 @@ ksp {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
-    implementation("androidx.activity:activity-compose:1.12.0")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("androidx.activity:activity-compose:1.8.1")
     
     // Chrome Custom Tabs for OAuth (recommended Android pattern)
-    implementation("androidx.browser:browser:1.9.0")
+    implementation("androidx.browser:browser:1.7.0")
     
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2023.10.01"))
@@ -191,7 +133,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    implementation("androidx.navigation:navigation-compose:2.7.6")
     
     // Supabase
     implementation(platform("io.github.jan-tennert.supabase:bom:2.3.1"))
@@ -201,41 +143,33 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:functions-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt") // Auth support
     // HTTP client engine for Supabase (required)
-    implementation("io.ktor:ktor-client-android:2.3.13")
-    // OkHttp engine for certificate pinning
-    implementation("io.ktor:ktor-client-okhttp:2.3.13")
-    // OkHttp for certificate pinning (Ktor Android uses OkHttp engine)
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("io.ktor:ktor-client-android:2.3.5")
     
     // Kotlinx Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     
     // Coroutines for async operations
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     
     // Room for local caching (optional, can use Supabase local cache)
-    implementation("androidx.room:room-runtime:2.8.4")
-    implementation("androidx.room:room-ktx:2.8.4")
-    ksp("androidx.room:room-compiler:2.8.4")
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     
     // WorkManager for background sync
-    implementation("androidx.work:work-runtime-ktx:2.11.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     
     // Vico chart library for Compose
-    implementation("com.patrykandpatrick.vico:compose:1.16.1")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.16.1")
-    implementation("com.patrykandpatrick.vico:core:1.16.1")
-    
-    // QR Code generation for MFA setup
-    implementation("com.google.zxing:core:3.5.2")
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.patrykandpatrick.vico:compose:1.13.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
+    implementation("com.patrykandpatrick.vico:core:1.13.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     

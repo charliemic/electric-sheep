@@ -15,23 +15,18 @@ alwaysApply: true
    git branch
    ```
 
-2. **If on `main` branch, IMMEDIATELY create isolated worktree:**
+2. **If on `main` branch, IMMEDIATELY create a feature branch:**
    ```bash
-   # MANDATORY: Use git worktree for isolation
-   git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
-   cd ../electric-sheep-<task-name>
-   # Now working in isolated directory
+   git checkout -b feature/<task-description>
+   # Or use git worktree for file system isolation:
+   # git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
    ```
-   
-   **Note:** This is a **rule-required action** (marked "IMMEDIATELY") - always PROCEED automatically without prompting. See `.cursor/rules/smart-prompts.mdc` for evaluation logic.
 
 3. **Never commit directly to `main`** - All changes must go through feature branches.
 
 ## Branch Naming Convention
 
 **Required format:** `<type>/<task-description>`
-
-**Recommended format (for auto-label updates):** `<type>/<issue-number>-<task-description>`
 
 **Types:**
 - `feature/` - New functionality
@@ -41,47 +36,30 @@ alwaysApply: true
 - `test/` - Test improvements
 
 **Examples:**
-- ✅ `feature/test-helpers` (standard format)
-- ✅ `feature/52-configure-release-signing` (with issue number - enables auto-label updates)
-- ✅ `fix/55-crash-reporting-integration` (with issue number)
-- ✅ `refactor/component-cleanup` (standard format)
+- ✅ `feature/test-helpers`
+- ✅ `feature/env-switch`
+- ✅ `fix/login-bug`
+- ✅ `refactor/component-cleanup`
 - ❌ `feature/my-feature` (too vague - be descriptive)
 - ❌ `test-helpers` (missing type prefix)
 
 **Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
 
-**Auto-Label Updates:**
-- If branch name includes issue number (e.g., `feature/52-<description>`), pre-work check will automatically update issue status to `in-progress`
-- Format: `<type>/<issue-number>-<description>`
-- Example: `feature/52-configure-release-signing` → Auto-updates issue #52 to `status:in-progress`
+## File System Isolation (RECOMMENDED)
 
-## File System Isolation (MANDATORY)
-
-**CRITICAL: Every agent MUST use git worktree for complete file system isolation.**
-
-**MANDATORY: Create isolated worktree before ANY work:**
+**For complete file system isolation, use git worktrees:**
 
 ```bash
-# Create isolated worktree (MANDATORY for all agents)
+# Create isolated worktree
 git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
 cd ../electric-sheep-<task-name>
 # Work in complete isolation
 ```
 
-**Why Mandatory:**
-- ✅ Complete file system isolation - prevents untracked file conflicts
-- ✅ No conflicts with other agents - each agent has own directory
-- ✅ Easy cleanup after merge - just remove worktree
-- ✅ Prevents workspace pollution - untracked files don't interfere
-- ✅ Eliminates branch switching errors - each worktree is on its own branch
-
-**Exception: Shared Files Requiring Coordination**
-- ⚠️ **ONLY exception**: When agent coordination explicitly requires working on shared files
-- ⚠️ **Must be documented**: Exception must be documented in `AGENT_COORDINATION.md`
-- ⚠️ **Coordination required**: Must coordinate with other agents before proceeding
-- ⚠️ **Still use worktree**: Even for shared files, use worktree unless coordination explicitly requires shared workspace
-
-**Default Rule: ALWAYS use worktree. Exception only when coordination requires shared files.**
+**Benefits:**
+- Complete file system isolation
+- No conflicts with other agents
+- Easy cleanup after merge
 
 ## Pre-Work Checklist (MANDATORY)
 
@@ -94,26 +72,16 @@ cd ../electric-sheep-<task-name>
 This script automatically verifies:
 1. ✅ **Not on main branch** - Prevents working on main
 2. ✅ **Latest main pulled** - Checks for remote updates
-3. ✅ **Rule/workflow updates checked** - Checks for real-time rule/workflow updates (real-time collaboration)
-4. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
-5. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
-6. ✅ **Available tools identified** - Lists automation scripts
-7. ✅ **Working directory clean** - Checks for uncommitted changes
+3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
+4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
+5. ✅ **Available tools identified** - Lists automation scripts
+6. ✅ **Working directory clean** - Checks for uncommitted changes
 
 **If the script reports errors, fix them before proceeding.**
 
-**Real-Time Collaboration:**
-- ✅ **Rules and workflow docs are shared** - Changes propagate immediately via git
-- ✅ **Check for updates before work** - `./scripts/check-rule-updates.sh` detects rule/workflow updates
-- ✅ **Pull latest main** - Includes rule/workflow updates from other agents
-- ✅ **No conflicts** - Rules/workflow docs are read-only during agent work
-- ✅ **Improvements benefit all** - Agent improvements to rules/workflow help all agents immediately
-
-**See:** `docs/development/workflow/REAL_TIME_COLLABORATION.md` for complete real-time collaboration model
-
 **Manual steps (if needed):**
-1. ✅ **Create isolated worktree** - `./scripts/create-worktree.sh <task-name>` (MANDATORY)
-2. ✅ **Work in worktree directory** - `cd ../electric-sheep-<task-name>`
+1. ✅ **Create feature branch** - Use proper naming convention
+2. ✅ **Use worktree if needed** - `./scripts/create-worktree.sh <task-name>`
 3. ✅ **Update coordination doc** - `docs/development/AGENT_COORDINATION.md`
 
 ## File Coordination
@@ -129,9 +97,8 @@ This script automatically verifies:
 **If modifying shared files:**
 1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
 2. Document your changes in coordination doc
-3. **STILL use git worktree** - Isolation is mandatory even for shared files
-4. **Exception**: Only if coordination explicitly requires shared workspace (must be documented)
-5. Coordinate with other agents if needed
+3. Consider using git worktree for isolation
+4. Coordinate with other agents if needed
 
 ## Workflow Enforcement
 
@@ -148,12 +115,11 @@ This script automatically verifies:
    - Discover relevant rules
    - Identify available tools
 
-2. **If on main, STOP and create isolated worktree:**
+2. **If on main, STOP and create branch:**
    ```bash
-   # MANDATORY: Use worktree for isolation
+   git checkout -b feature/<task-description>
+   # Or for file system isolation:
    ./scripts/create-worktree.sh <task-name>
-   cd ../electric-sheep-<task-name>
-   # Now working in isolated directory
    ```
 
 3. **Discover relevant rules:**
@@ -169,7 +135,7 @@ This script automatically verifies:
    This will:
    - Check for shared file conflicts
    - Warn about high-risk files
-   - **Verify worktree is being used** (mandatory)
+   - Suggest worktree usage if needed
 
 5. **After work, update coordination doc:**
    - Mark work as "In Progress" or "Complete"
@@ -190,17 +156,9 @@ This script automatically verifies:
 <type>: <description>
 
 [optional body]
-[optional: AI-generated code indicator]
 ```
 
 **Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-
-**AI Code Provenance (Optional but Recommended):**
-- If code was AI-generated: Add `[AI]` prefix or note in body
-- If code was AI-generated with human edits: Note significant edits
-- Example: `feat: [AI] Add user authentication flow` or `feat: Add feature (AI-generated, human-reviewed)`
-
-**Research shows**: Tracking AI code provenance improves learning and prompt effectiveness
 
 **CRITICAL: Commit Frequently (Safety Net)**
 - ✅ **Commit frequently** - Every 15-30 minutes, even if work is incomplete
@@ -215,13 +173,12 @@ This script automatically verifies:
 
 **If you detect these conditions, STOP and fix:**
 
-- ❌ User is on `main` branch → Create isolated worktree immediately
-- ❌ Not using worktree → Create worktree before any work (MANDATORY)
+- ❌ User is on `main` branch → Create feature branch immediately
 - ❌ Branch name doesn't follow convention → Rename branch
 - ❌ Modifying shared file without coordination → Check coordination doc first
 - ❌ Tests failing → Fix tests before proceeding
-- ❌ Uncommitted work on `main` → Move to worktree
-- ❌ File system conflicts → Use git worktree for isolation (should already be using it)
+- ❌ Uncommitted work on `main` → Move to feature branch
+- ❌ File system conflicts → Use git worktree for isolation
 
 ## Post-Merge Cleanup (MANDATORY)
 
@@ -335,19 +292,9 @@ Please verify these are correct before cleanup proceeds.
 
 **Always:**
 - Check `docs/development/AGENT_COORDINATION.md` before starting
-- **Use git worktree for isolation** - MANDATORY for all agents
 - Document your work in coordination doc
 - Update coordination doc when work status changes
 - Coordinate if files overlap with other agents
-- **Exception**: Only skip worktree if coordination explicitly requires shared workspace (must be documented)
+- Use git worktree for file system isolation when needed
 
-**Real-Time Collaboration:**
-- ✅ **Check for rule/workflow updates** - `./scripts/check-rule-updates.sh` before starting work
-- ✅ **Pull latest main** - Includes rule/workflow updates from other agents
-- ✅ **Rules/workflow are shared** - Changes propagate immediately via git
-- ✅ **Code changes remain isolated** - Use worktrees for all code modifications
-- ✅ **No interference** - Rules/workflow updates don't conflict with code work
-
-**See:** 
-- `docs/development/workflow/MULTI_AGENT_WORKFLOW.md` - Complete multi-agent workflow guidelines
-- `docs/development/workflow/REAL_TIME_COLLABORATION.md` - Real-time collaboration model
+**See:** `docs/development/MULTI_AGENT_WORKFLOW.md` for complete guidelines

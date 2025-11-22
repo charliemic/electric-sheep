@@ -5,14 +5,6 @@
 # Usage:
 #   source scripts/lib/supabase-postgrest.sh
 #   postgrest_upsert "moods" "$JSON_PAYLOAD" "user_id=eq.xxx&timestamp=eq.yyy"
-#
-# Environment Variables:
-#   SUPABASE_URL              Supabase project URL (e.g., https://xxx.supabase.co)
-#   SUPABASE_SECRET_KEY        Supabase secret key (sb_secret_...)
-#
-#   In GitHub Actions, these are automatically available from workflow secrets:
-#   - SUPABASE_URL: Set by workflow steps (from supabase status or project ref)
-#   - SUPABASE_SECRET_KEY: From secrets.SUPABASE_SECRET_KEY_STAGING or secrets.SUPABASE_SECRET_KEY
 
 # Colors for output
 RED='\033[0;31m'

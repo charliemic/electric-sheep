@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
-
 # Working Patterns First - Evaluate and Abstract
 
 ## CRITICAL: Use Working Approaches First
@@ -164,16 +160,8 @@ migration_admin_execute_sql_file "$sql_file" "$migration_name"
 - **Consistency**: Use same patterns across similar features
 - **Error Handling**: Standard error handling in abstractions
 
-## Integration with Documentation-First
-
-**This rule complements `.cursor/rules/documentation-first.mdc`:**
-- **Documentation-First**: Check external official documentation (GitHub, Python, Kotlin docs)
-- **Working-Patterns-First**: Check internal codebase for existing working patterns
-- **Together**: First check docs for official patterns, then check codebase for existing implementations
-
 ## Related Documentation
 
-- `.cursor/rules/documentation-first.mdc` - Check official documentation first
 - `.cursor/rules/api-patterns.mdc` - API and remote data patterns
 - `scripts/lib/` - Shared libraries and abstractions
 - `USER_VS_MOOD_SETUP_COMPARISON.md` - Example of pattern mismatch

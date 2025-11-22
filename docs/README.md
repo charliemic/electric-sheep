@@ -7,10 +7,7 @@ This directory contains all project documentation organized by purpose. Document
 ## 🚀 Quick Start
 
 - **[README.md](../README.md)** - Project overview and quick start
-- **[New Contributors](development/ONBOARDING_NEW_STARTERS.md)** - Complete onboarding guide for new team members
-- **[Returning Contributors](development/ONBOARDING_RETURNING_CONTRIBUTORS.md)** - 5-minute quick start for returning contributors
-- **[Entry Point Context](development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md)** - How context is automatically added based on entry point
-- **[llms.txt](../llms.txt)** - AI agent navigation guide (lightweight, code-first approach)
+- **[AI_AGENT_GUIDELINES.md](../AI_AGENT_GUIDELINES.md)** - Complete guidelines for AI agents and developers
 - **[Multi-Agent Workflow](development/workflow/MULTI_AGENT_WORKFLOW.md)** - How to work with multiple agents
 
 ## 📚 Active Documentation
@@ -135,7 +132,7 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **Testing:**
 - `docs/testing/guides/` - See [Testing Guides README](testing/guides/README.md)
 - `docs/testing/architecture/` - See [Testing Architecture README](testing/architecture/README.md)
-- `.cursor/rules/testing.mdc` - Testing requirements
+- `AI_AGENT_GUIDELINES.md` (Testing section)
 
 **Setup & Configuration:**
 - `docs/development/setup/` - See [Setup README](development/setup/README.md)
@@ -143,7 +140,7 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **CI/CD:**
 - `docs/development/ci-cd/` - See [CI/CD README](development/ci-cd/README.md)
 - `docs/CI_CD_OPTIMIZATION.md` (root level)
-- `.cursor/rules/cicd.mdc` - CI/CD requirements
+- `AI_AGENT_GUIDELINES.md` (CI/CD section)
 
 **Architecture:**
 - `docs/architecture/` - Core architecture documentation
@@ -154,10 +151,9 @@ Historical evaluations, completed analyses, and resolved issues (kept for refere
 **Accessibility:**
 - `docs/architecture/UX_PRINCIPLES.md`
 - `docs/architecture/TYPOGRAPHY_SYSTEM.md`
-- `.cursor/rules/accessibility.mdc` - Accessibility requirements
+- `AI_AGENT_GUIDELINES.md` (Accessibility section)
 
 ## Related Files
 
-- **[llms.txt](../llms.txt)** - AI agent navigation guide
+- **[AI_AGENT_GUIDELINES.md](../AI_AGENT_GUIDELINES.md)** - Complete agent guidelines
 - **[.cursor/rules/](../.cursor/rules/)** - Cursor rules for automated enforcement
-- **[docs/archive/development/AI_AGENT_GUIDELINES.md](archive/development/AI_AGENT_GUIDELINES.md)** - Archived complete guidelines (replaced by llms.txt)

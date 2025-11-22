@@ -257,10 +257,4 @@ development-metrics/    # Development metrics tracking
 
 ## Contributing
 
-**New to the project?** See [Onboarding Guide](docs/development/ONBOARDING_NEW_STARTERS.md)
-
-**Returning contributor?** See [Quick Start for Returning Contributors](docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md) (5-minute setup)
-
-**AI agents?** See [llms.txt](llms.txt) for AI agent navigation and development workflow.
-
-For detailed guidelines, see `.cursor/rules/` directory.
+See [AI Agent Guidelines](AI_AGENT_GUIDELINES.md) for development best practices and coding standards.

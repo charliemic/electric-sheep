@@ -1,21 +1,4 @@
----
-alwaysApply: false
----
-
 # Python Environment Management
-
-## When This Rule Applies
-
-**This rule applies ONLY when working with Python code:**
-- Python scripts (`.py` files)
-- Python dependencies (`requirements.txt`)
-- Python environment setup
-- Python-related tooling
-
-**This rule does NOT apply to:**
-- Kotlin/Android development
-- JavaScript/TypeScript code
-- Other languages
 
 ## CRITICAL: Use pyenv for Python Version Management
 

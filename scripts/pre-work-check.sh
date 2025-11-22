@@ -6,7 +6,7 @@
 
 set -e
 
-COORDINATION_DOC="docs/development/workflow/AGENT_COORDINATION.md"
+COORDINATION_DOC="docs/development/AGENT_COORDINATION.md"
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
 ERRORS=0
 WARNINGS=0
@@ -35,62 +35,22 @@ else
 fi
 echo ""
 
-# 2. Check for remote updates (CRITICAL for multi-agent workflow)
+# 2. Check for remote updates
 echo "2️⃣  Checking for remote updates..."
 if git fetch origin main --quiet 2>/dev/null; then
     LOCAL=$(git rev-parse main 2>/dev/null || echo "")
     REMOTE=$(git rev-parse origin/main 2>/dev/null || echo "")
     
     if [ -n "$LOCAL" ] && [ -n "$REMOTE" ] && [ "$LOCAL" != "$REMOTE" ]; then
-        echo "   ❌ ERROR: Remote main has updates (CRITICAL for multi-agent workflow)"
-        echo "   → Sync your branch: git fetch origin && git rebase origin/main"
-        echo "   → Or update main first: git checkout main && git pull origin main"
-        echo "   → See .cursor/rules/branch-synchronization.mdc for details"
-        ERRORS=$((ERRORS + 1))
+        echo "   ⚠️  WARNING: Remote main has updates"
+        echo "   → Run: git pull origin main"
+        echo "   → Or merge: git merge origin/main"
+        WARNINGS=$((WARNINGS + 1))
     else
         echo "   ✅ Local main is up to date"
     fi
-    
-    # Also check if current branch is behind main
-    if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
-        BRANCH_BEHIND=$(git rev-list --count origin/main.."$CURRENT_BRANCH" 2>/dev/null || echo "0")
-        MAIN_AHEAD=$(git rev-list --count "$CURRENT_BRANCH"..origin/main 2>/dev/null || echo "0")
-        
-        if [ "$MAIN_AHEAD" -gt 0 ]; then
-            echo "   ⚠️  WARNING: Your branch is $MAIN_AHEAD commit(s) behind main"
-            echo "   → Sync: git fetch origin && git rebase origin/main"
-            echo "   → See .cursor/rules/branch-synchronization.mdc"
-            WARNINGS=$((WARNINGS + 1))
-        fi
-    fi
 else
     echo "   ⚠️  Could not fetch from origin (may be offline)"
-fi
-echo ""
-
-# 2.5. Check for rule/workflow updates (REAL-TIME COLLABORATION)
-echo "2️⃣.5️⃣  Checking for rule/workflow updates (real-time collaboration)..."
-if [ -f "scripts/check-rule-updates.sh" ]; then
-    # Run update check and capture output
-    UPDATE_CHECK_OUTPUT=$(./scripts/check-rule-updates.sh 2>&1)
-    UPDATE_CHECK_EXIT=$?
-    
-    # Check output for key indicators
-    if echo "$UPDATE_CHECK_OUTPUT" | grep -q "ACTION REQUIRED"; then
-        echo "   ⚠️  WARNING: Rule/workflow updates detected"
-        echo "   → Pull latest main: git checkout main && git pull origin main"
-        echo "   → Review updated rules/workflow files"
-        echo "   → See docs/development/workflow/REAL_TIME_COLLABORATION.md"
-        WARNINGS=$((WARNINGS + 1))
-    elif echo "$UPDATE_CHECK_OUTPUT" | grep -q "up to date"; then
-        echo "   ✅ Rule/workflow are up to date"
-    else
-        echo "   ✅ Rule/workflow update check completed"
-    fi
-else
-    echo "   ⚠️  Rule update check script not found"
-    echo "   💡 Tip: Check for rule/workflow updates manually"
-    echo "   → See docs/development/workflow/REAL_TIME_COLLABORATION.md"
 fi
 echo ""
 
@@ -104,38 +64,6 @@ if [ -f "$COORDINATION_DOC" ]; then
         echo "   → Running coordination check..."
         if ! ./scripts/check-agent-coordination.sh; then
             ERRORS=$((ERRORS + 1))
-        fi
-    fi
-    
-    # CRITICAL: Check coordination doc itself for conflicts (INCIDENT PREVENTION)
-    # This prevents the coordination doc merge conflict that occurred on 2025-11-22
-    echo "   → Checking coordination doc for conflicts..."
-    
-    # Check if coordination doc has uncommitted changes
-    if [ -n "$(git diff --name-only HEAD 2>/dev/null | grep "$COORDINATION_DOC")" ] || \
-       [ -n "$(git diff --cached --name-only 2>/dev/null | grep "$COORDINATION_DOC")" ]; then
-        echo "   ⚠️  WARNING: Coordination doc has uncommitted changes"
-        echo "   → Pull latest before modifying: git pull origin main"
-        echo "   → Check for conflicts: git status"
-        echo "   → See: docs/development/workflow/COORDINATION_DOC_BEST_PRACTICES.md"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-    
-    # Check if coordination doc has remote updates
-    git fetch origin main --quiet 2>/dev/null || true
-    if git rev-parse HEAD:"$COORDINATION_DOC" > /dev/null 2>&1 && \
-       git rev-parse origin/main:"$COORDINATION_DOC" > /dev/null 2>&1; then
-        LOCAL_COORD=$(git rev-parse HEAD:"$COORDINATION_DOC" 2>/dev/null || echo "")
-        REMOTE_COORD=$(git rev-parse origin/main:"$COORDINATION_DOC" 2>/dev/null || echo "")
-        
-        if [ -n "$LOCAL_COORD" ] && [ -n "$REMOTE_COORD" ] && [ "$LOCAL_COORD" != "$REMOTE_COORD" ]; then
-            echo "   ⚠️  WARNING: Coordination doc has remote updates"
-            echo "   → Pull latest before modifying: git pull origin main"
-            echo "   → This prevents merge conflicts in coordination doc"
-            echo "   → See: docs/development/reports/AGENT_COORDINATION_CONFLICT_INCIDENT_REVIEW.md"
-            WARNINGS=$((WARNINGS + 1))
-        else
-            echo "   ✅ Coordination doc is up to date"
         fi
     fi
 else
@@ -229,68 +157,6 @@ else
 fi
 echo ""
 
-# 8. Check for scope creep (existing session)
-echo "8️⃣  Checking for scope creep..."
-if [ -f "scripts/track-session-scope.sh" ]; then
-    SESSIONS_DIR="development-metrics/sessions"
-    CURRENT_SESSION_FILE="$SESSIONS_DIR/.current-session-id"
-    
-    if [ -f "$CURRENT_SESSION_FILE" ]; then
-        SESSION_ID=$(cat "$CURRENT_SESSION_FILE")
-        SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
-        
-        if [ -f "$SESSION_FILE" ]; then
-            echo "   → Active session detected: $SESSION_ID"
-            echo "   → Checking for scope creep..."
-            echo ""
-            
-            # Run scope creep check (suppress errors if script has issues)
-            if ./scripts/track-session-scope.sh check 2>/dev/null; then
-                echo ""
-                echo "   💡 To start a new chat session:"
-                echo "   → Commit current work: git commit -m \"WIP: [description]\""
-                echo "   → Click 'New Chat' in Cursor or press Cmd+L (Mac) / Ctrl+L (Windows/Linux)"
-                echo "   → Reference: \"Continuing from [previous task]\""
-            else
-                echo "   ⚠️  Could not check scope creep (script may need updates)"
-            fi
-        else
-            echo "   ✅ No active session detected"
-            echo "   💡 To track session scope: ./scripts/track-session-scope.sh start \"<task>\""
-        fi
-    else
-        echo "   ✅ No active session detected"
-        echo "   💡 To track session scope: ./scripts/track-session-scope.sh start \"<task>\""
-    fi
-else
-    echo "   💡 Scope creep detection available: ./scripts/track-session-scope.sh"
-    echo "   → Check .cursor/rules/scope-creep-detection.mdc for guidelines"
-fi
-echo ""
-
-# 8.5. Update issue status (if working on issue)
-echo "8️⃣.5️⃣  Updating issue status (if applicable)..."
-if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
-    # Try to detect issue number from branch name (format: feature/52-description or fix/55-description)
-    ISSUE_NUMBER=$(echo "$CURRENT_BRANCH" | grep -oE '^[^/]+/([0-9]+)-' | grep -oE '[0-9]+' | head -1)
-    
-    if [ -n "$ISSUE_NUMBER" ] && [ -f "scripts/update-issue-status.sh" ]; then
-        echo "   → Detected issue #$ISSUE_NUMBER from branch name"
-        echo "   → Updating status to 'in-progress'..."
-        if ./scripts/update-issue-status.sh "$ISSUE_NUMBER" in-progress 2>/dev/null; then
-            echo "   ✅ Issue #$ISSUE_NUMBER status updated"
-        else
-            echo "   ⚠️  Could not update issue status (issue may not exist or not accessible)"
-        fi
-    else
-        echo "   💡 Tip: Use branch format 'feature/52-<description>' to auto-update issue status"
-        echo "   → Or manually update: ./scripts/update-issue-status.sh <issue-number> in-progress"
-    fi
-else
-    echo "   💡 Tip: When working on an issue, update status: ./scripts/update-issue-status.sh <issue-number> in-progress"
-fi
-echo ""
-
 # Summary
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║                    SUMMARY                                  ║"
@@ -301,23 +167,11 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All checks passed! You're ready to start work."
     echo ""
     echo "💡 Next steps:"
-    echo "   1. Check for rule/workflow updates: ./scripts/check-rule-updates.sh"
-    echo "   2. Search for existing artifacts before creating new ones"
-    echo "   3. Update coordination doc if needed: $COORDINATION_DOC"
-    echo "   4. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
-    echo "   5. Reference relevant rules: .cursor/rules/"
-    echo "   6. Track session scope: ./scripts/track-session-scope.sh start \"<task>\""
-    echo "   7. Update issue status: ./scripts/update-issue-status.sh <issue-number> in-progress"
-    echo "   8. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
-    echo ""
-    echo "📚 Helpful guides:"
-    echo "   → Returning contributor? See: docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md"
-    echo "   → New contributor? See: docs/development/ONBOARDING_NEW_STARTERS.md"
-    echo "   → Quick reference: docs/development/ONBOARDING_QUICK_REFERENCE.md"
-    echo ""
-    echo "🔍 Entry point detection:"
-    echo "   → Detect how you're starting: ./scripts/detect-entry-point.sh [task]"
-    echo "   → See: docs/development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md"
+    echo "   1. Search for existing artifacts before creating new ones"
+    echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
+    echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
+    echo "   4. Reference relevant rules: .cursor/rules/"
+    echo "   5. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."

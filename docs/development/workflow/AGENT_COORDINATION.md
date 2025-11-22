@@ -1,7 +1,7 @@
 # Agent Coordination Log
 
-**Last Updated**: 2025-01-20  
-**Purpose**: Track which agents are working on which files to prevent conflicts and enable communication
+**Last Updated**: 2025-11-19  
+**Purpose**: Track which agents are working on which files to prevent conflicts
 
 **How to Use:**
 1. Before starting work, check this document for conflicts
@@ -14,108 +14,6 @@
 ./scripts/check-agent-coordination.sh
 ```
 
-**Query Tool:**
-```bash
-# Check if a file is part of active work
-./scripts/query-agent-coordination.sh check-file <file-path>
-
-# List all active work
-./scripts/query-agent-coordination.sh list-active
-
-# Check for conflicts with multiple files
-./scripts/query-agent-coordination.sh check-conflicts <file> [file...]
-
-# Find which task owns a file
-./scripts/query-agent-coordination.sh who-owns <file-path>
-
-# Get status of a specific task
-./scripts/query-agent-coordination.sh status <task-name>
-```
-
-## Communication Protocol
-
-**Agents can communicate about their work through this document:**
-
-### 1. Document Your Work (MANDATORY)
-- ✅ **Before starting**: Add entry with task name, branch, files, and status
-- ✅ **During work**: Update status and files if scope changes
-- ✅ **After merge**: Mark as Complete and note PR number
-
-### 2. Query Other Agents' Work (AVAILABLE)
-- ✅ **Check file ownership**: `./scripts/query-agent-coordination.sh who-owns <file>`
-- ✅ **Check for conflicts**: `./scripts/query-agent-coordination.sh check-conflicts <file>...`
-- ✅ **List active work**: `./scripts/query-agent-coordination.sh list-active`
-- ✅ **Get task status**: `./scripts/query-agent-coordination.sh status <task-name>`
-
-### 3. Ask Questions (VIA COORDINATION DOC)
-- ✅ **Is this file part of your work?**: Use `who-owns` command
-- ✅ **Can I modify this file?**: Check conflicts, then document your work
-- ✅ **What's the status of task X?**: Use `status` command
-- ✅ **What files are you modifying?**: Check task entry in this doc
-
-### 4. Coordinate Conflicts (VIA COORDINATION DOC)
-- ✅ **If conflict detected**: Document in task entry under "Conflicts" section
-- ✅ **Resolution strategy**: Document how conflict will be resolved
-- ✅ **Sequential work**: Document which task goes first
-- ✅ **Split work**: Document which parts each task handles
-
-### 5. Communication Best Practices
-- ✅ **Check before modifying**: Always query before modifying shared files
-- ✅ **Update promptly**: Update coordination doc when scope changes
-- ✅ **Document decisions**: Record conflict resolutions in task entry
-- ✅ **Use worktree**: Always use git worktree for file system isolation
-
-**Query Tool:**
-```bash
-# Check if a file is part of active work
-./scripts/query-agent-coordination.sh check-file <file-path>
-
-# List all active work
-./scripts/query-agent-coordination.sh list-active
-
-# Check for conflicts with multiple files
-./scripts/query-agent-coordination.sh check-conflicts <file> [file...]
-
-# Find which task owns a file
-./scripts/query-agent-coordination.sh who-owns <file-path>
-
-# Get status of a specific task
-./scripts/query-agent-coordination.sh status <task-name>
-```
-
-## Communication Protocol
-
-**Agents can communicate about their work through this document:**
-
-### 1. Document Your Work (MANDATORY)
-- ✅ **Before starting**: Add entry with task name, branch, files, and status
-- ✅ **During work**: Update status and files if scope changes
-- ✅ **After merge**: Mark as Complete and note PR number
-
-### 2. Query Other Agents' Work (AVAILABLE)
-- ✅ **Check file ownership**: `./scripts/query-agent-coordination.sh who-owns <file>`
-- ✅ **Check for conflicts**: `./scripts/query-agent-coordination.sh check-conflicts <file>...`
-- ✅ **List active work**: `./scripts/query-agent-coordination.sh list-active`
-- ✅ **Get task status**: `./scripts/query-agent-coordination.sh status <task-name>`
-
-### 3. Ask Questions (VIA COORDINATION DOC)
-- ✅ **Is this file part of your work?**: Use `who-owns` command
-- ✅ **Can I modify this file?**: Check conflicts, then document your work
-- ✅ **What's the status of task X?**: Use `status` command
-- ✅ **What files are you modifying?**: Check task entry in this doc
-
-### 4. Coordinate Conflicts (VIA COORDINATION DOC)
-- ✅ **If conflict detected**: Document in task entry under "Conflicts" section
-- ✅ **Resolution strategy**: Document how conflict will be resolved
-- ✅ **Sequential work**: Document which task goes first
-- ✅ **Split work**: Document which parts each task handles
-
-### 5. Communication Best Practices
-- ✅ **Check before modifying**: Always query before modifying shared files
-- ✅ **Update promptly**: Update coordination doc when scope changes
-- ✅ **Document decisions**: Record conflict resolutions in task entry
-- ✅ **Use worktree**: Always use git worktree for file system isolation
-
 ## Current Work Status
 
 **Note:** Agents are ephemeral - entries track tasks, not specific agents.
@@ -123,7 +21,6 @@
 ### Example Entry Format:
 ```
 ### Task: <task-name>
-- **Role**: [PLANNING] / [EXECUTION] / [VERIFICATION] (optional, for phase-based work)
 - **Branch**: `feature/<task-name>`
 - **Worktree**: `../electric-sheep-<task-name>` (if using worktree)
 - **Status**: In Progress / Complete
@@ -133,70 +30,7 @@
 - **ETA**: Date or status
 ```
 
-**Role Tags (PRIORITY 1 ENHANCEMENT):**
-- `[PLANNING]` - Task is in planning/design phase
-- `[EXECUTION]` - Task is in implementation phase
-- `[VERIFICATION]` - Task is in testing/verification phase
-- **Purpose**: Prevents duplicate work in different phases (e.g., two agents planning the same feature)
-
 ## Active Work
-
-### Task: Dashboard Authentication & Role-Based Access Control
-- **Branch**: `feature/dashboard-auth-rbac` (merged)
-- **Status**: Complete ✅
-- **PR**: #90
-- **Files Modified**:
-  - `scripts/metrics/auth-middleware.js` (new - authentication middleware)
-  - `scripts/metrics/dashboard-server-fastify.js` (updated - auth routes and protection)
-  - `scripts/metrics/content-author.js` (updated - user scoping and access control)
-  - `scripts/metrics/package.json` (updated - added node-fetch, uuid)
-- **Key Features**:
-  - Server-side token verification with Supabase
-  - Role-based access control (admin/user)
-  - User scoping for authored pages
-  - Public/private page support
-  - Rate limiting on auth endpoints
-  - Token refresh handling
-- **Isolation Strategy**: Branch isolation (not using worktree - dashboard files are isolated)
-- **Conflicts**: None - dashboard files are separate from Android app
-- **Merged**: 2025-01-20 (PR #90)
-- **Purpose**: Secure dashboard authoring features with role-based access control
-
-### Task: Dynamic Metrics Dashboard Implementation
-- **Role**: [EXECUTION]
-- **Branch**: `experimental/onboarding-validation-issue-52`
-- **Status**: Complete
-- **Files Modified**: 
-  - `scripts/metrics/dashboard-server-fastify.js` (Fastify-based dashboard server)
-  - `scripts/metrics/package.json` (Node.js dependencies)
-  - `scripts/metrics/nodemon.json` (hot reloading config)
-  - `scripts/metrics/start-dashboard-dev.sh` (development server script)
-  - `development-metrics/README.md` (updated documentation)
-  - Framework evaluation docs (FRAMEWORK_CHOICE.md, FRAMEWORK_COMPARISON.md, FRONTEND_EVALUATION.md)
-- **Key Features**:
-  - Multi-source agent detection (worktrees, coordination doc, metrics sessions, recent prompts)
-  - Fixed agent count discrepancy (was counting all branches, now only active)
-  - Hot reloading with Nodemon for development
-  - No-scroll UX with card-based layout
-  - Auto-refresh every 5 seconds
-- **Completed**: 2025-01-20
-
-### Task: App Specificity Analysis
-- **Branch**: `feature/app-specificity-analysis`
-- **Worktree**: `../electric-sheep-app-specificity-analysis` ✅ **Using worktree for isolation**
-- **Status**: Complete ✅
-- **Files Created**: 
-  - `docs/development/analysis/APP_SPECIFICITY_ANALYSIS.md` (comprehensive analysis)
-  - `docs/development/analysis/TEMPLATE_EXTRACTION_AND_TICKETING.md` (extraction strategy)
-  - `docs/development/analysis/GITHUB_SUB_ISSUES_AND_TEMPLATES.md` (GitHub features & templates)
-  - `docs/development/analysis/RELATIONSHIPS_QUICK_REFERENCE.md` (quick reference)
-  - `.github/ISSUE_TEMPLATE/epic.md` (epic template)
-  - `.github/ISSUE_TEMPLATE/extraction.md` (extraction template - Markdown)
-  - `.github/ISSUE_TEMPLATE/extraction-form.yml` (extraction template - YAML form)
-- **Isolation Strategy**: ✅ **Git worktree** - Complete file system isolation
-- **Conflicts**: None - working in isolated worktree, analysis only (no code changes)
-- **Purpose**: Identify which parts of the app are specific vs generalizable, and team vs individual-oriented
-- **Completed**: 2025-01-20
 
 ### Task: Emulator Management Architecture
 - **Branch**: `feature/emulator-management-architecture`
@@ -277,61 +111,19 @@ These files are commonly modified and require coordination:
 3. Update this document if scope changes
 4. Test changes in isolation
 
-### Before Creating PR
-1. **Run pre-PR check (MANDATORY):**
-   ```bash
-   ./scripts/pre-pr-check.sh
-   ```
-   This checks: branch sync, conflicts, tests, coordination doc
-
-2. Rebase on latest `main`: `git rebase origin/main`
-3. Resolve any conflicts
-4. Run tests: `./gradlew test`
-5. Update documentation
-6. Create PR with clear description
-7. Update this document to "Complete"
+### Before Merging
+1. Rebase on latest `main`: `git rebase origin/main`
+2. Resolve any conflicts
+3. Run tests
+4. Update documentation
+5. Create PR with clear description
+6. Update this document to "Complete"
 
 ### After Merging
 1. Remove worktree (if used): `git worktree remove ../electric-sheep-<task-name>`
 2. Delete feature branch: `git branch -d feature/<task-name>`
 3. Update this document
 4. Pull latest `main` before next work
-
-## Completed Work
-
-### Task: Release Build Signing (Issue #52)
-- **Branch**: `feature/release-signing-issue-52` (merged via PR #75)
-- **PR**: #75 - https://github.com/charliemic/electric-sheep/pull/75
-- **Status**: ✅ **COMPLETE** - Merged to main (2025-11-22)
-- **Implementation**:
-  - Signing configuration in `app/build.gradle.kts`
-  - Automated setup script (`scripts/setup-release-signing.sh`)
-  - Comprehensive documentation (`docs/development/setup/RELEASE_SIGNING_*.md`)
-  - GitHub Secrets configured
-  - Local signing verified
-- **Result**: Release signing fully implemented and ready for CI/CD
-- **Merged**: PR #75
-
-### Task: Entry Point Context Management System
-- **Branch**: `feature/entry-point-context-management` (merged)
-- **Status**: ✅ **COMPLETE** - Merged
-- **Files Created**:
-  - `scripts/detect-entry-point.sh` - Entry point detection script
-  - `docs/development/workflow/ENTRY_POINT_CONTEXT_MANAGEMENT.md` - Complete guide
-  - `docs/development/workflow/ENTRY_POINT_QUICK_REFERENCE.md` - Quick reference
-  - `docs/development/workflow/ENTRY_POINT_IMPLEMENTATION_SUMMARY.md` - Implementation summary
-- **Files Modified**:
-  - `docs/development/ONBOARDING_RETURNING_CONTRIBUTORS.md` - Added entry point detection section
-  - `scripts/pre-work-check.sh` - Added entry point detection reference
-  - `docs/README.md` - Added entry point context guide
-- **Purpose**: Make collaboration super easy for returning contributors by automatically detecting entry points (prompt, manual, script, docs) and gathering appropriate context
-- **Key Features**:
-  - Automatic entry point detection
-  - Context gathering based on entry point type
-  - Seamless context injection
-  - Comprehensive documentation
-- **Completed**: 2025-01-20
-- **Merged**: PR #75
 
 ## Notes
 
@@ -370,57 +162,8 @@ These files are commonly modified and require coordination:
   - `feature/video-annotation-system` - Needs review
   - `feature/emulator-setup` - PR merged, may have merge artifacts only
 
-### Task: MFA Support Implementation (Issue #52 / PR #75)
-- **Role**: [EXECUTION]
-- **Branch**: `feature/release-signing-issue-52` (includes MFA support)
-- **Worktree**: Main workspace (not using worktree - single agent)
-- **Status**: ✅ **COMPLETE** - PR #75 merged
-- **Files Modified**: 
-  - `app/src/main/java/com/electricsheep/app/auth/MfaManager.kt` (MFA operations)
-  - `app/src/main/java/com/electricsheep/app/auth/SupabaseAuthProvider.kt` (MFA sign-in flow)
-  - `app/src/main/java/com/electricsheep/app/auth/UserManager.kt` (MFA integration)
-  - `app/src/main/java/com/electricsheep/app/ui/screens/mfa/MfaSetupScreen.kt` (MFA setup UI)
-  - `app/src/main/java/com/electricsheep/app/ui/screens/mfa/MfaVerifyScreen.kt` (MFA verification UI)
-  - `app/src/main/java/com/electricsheep/app/ui/navigation/NavGraph.kt` (MFA navigation)
-  - `app/src/main/java/com/electricsheep/app/ElectricSheepApplication.kt` (MFA manager integration)
-  - `supabase/config.toml` (TOTP MFA enabled)
-  - Multiple test files and documentation
-- **Completed**: 2025-01-22
-- **PR**: #75 merged
-- **Next Steps**:
-  1. ✅ PR #75 merged
-  2. Ready to pick up distribution issues (#54, #57, #58, #63)
-- **Isolation Strategy**: Main workspace (single agent, no conflicts)
-- **Conflicts**: None
-
-### Task: Agent Coordinator - Issue Assignments
-- **Role**: [COORDINATION]
-- **Branch**: `feature/release-signing-issue-52` (coordinator work)
-- **Status**: ✅ **COMPLETE** - PR #75 merged, distribution issues ready
-- **Files Modified**: 
-  - `docs/development/workflow/AGENT_COORDINATOR_ASSIGNMENTS.md` (issue assignments)
-  - `docs/development/workflow/AGENT_COORDINATION.md` (this file - updated with coordinator entry)
-- **Purpose**: Assign related issues to active agents based on their current work
-- **Assignments Made**:
-  - ✅ Issue #55 (Crashlytics) → Assigned to testing agents (test-data-seeding OR runtime-visual-evaluation)
-  - ✅ Issue #62 (Performance Monitoring) → Assigned to testing agents (test-data-seeding OR runtime-visual-evaluation)
-  - ✅ Issue #54, #57, #58, #63 (Distribution) → **READY TO CLAIM** - PR #75 merged
-- **Completed Actions**: 
-  1. ✅ Fixed PR #75 MFA test compilation errors (COMPLETED)
-  2. ✅ PR #75 merged successfully (COMPLETED)
-  3. ✅ Distribution issues (#54, #57, #58, #63) ready to claim (COMPLETED)
-  4. ✅ Updated coordination doc with assignments (COMPLETED)
-- **Next Steps**: 
-  - Agent can now claim distribution issues (#54, #57, #58, #63)
-  - Testing agents can claim monitoring issues (#55, #62)
-  - Monitor agent work and update assignments as needed
-
 ### Next Coordination Check
-- **Date**: 2025-01-22
-- **Action**: 
-  1. ✅ Fix PR #75 blockers (MFA test compilation errors) - COMPLETED
-  2. ✅ PR #75 merged - COMPLETED
-  3. ✅ Distribution issues (#54, #57, #58, #63) ready to claim - COMPLETED
-  4. Monitor active agents and update assignments as they claim issues
-- **Priority**: Medium - Distribution issues ready, monitoring ongoing
+- **Date**: 2025-01-20
+- **Action**: Review unmerged branches and determine if work should be merged or abandoned
+- **Priority**: Medium - Clean up remaining unmerged branches
 

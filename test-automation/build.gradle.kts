@@ -4,14 +4,7 @@ plugins {
 }
 
 group = "com.electricsheep"
-
-// Read version from version.properties (managed by bump-version.sh)
-val versionPropertiesFile = rootProject.file("version.properties")
-val versionProperties = java.util.Properties()
-if (versionPropertiesFile.exists()) {
-    versionProperties.load(versionPropertiesFile.inputStream())
-}
-version = versionProperties.getProperty("test-framework.version", "1.0.0")
+version = "1.0.0"
 
 repositories {
     mavenCentral()

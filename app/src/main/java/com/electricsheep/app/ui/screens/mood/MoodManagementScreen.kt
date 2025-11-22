@@ -35,8 +35,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MoodManagementScreen(
     viewModel: MoodManagementViewModel,
-    onNavigateBack: () -> Unit,
-    onNavigateToMfaVerify: (challengeId: String, userId: String) -> Unit = { _, _ -> }
+    onNavigateBack: () -> Unit
 ) {
     Logger.info("MoodManagementScreen", "Mood Management screen displayed")
     
@@ -52,17 +51,8 @@ fun MoodManagementScreen(
     val moodErrorMessage by viewModel.moodErrorMessage.collectAsState()
     val moods by viewModel.moods.collectAsState()
     val googleOAuthUrl by viewModel.googleOAuthUrl.collectAsState()
-    val mfaChallenge by viewModel.mfaChallenge.collectAsState()
     
     val keyboardController = LocalSoftwareKeyboardController.current
-    
-    // Navigate to MFA verify screen when challenge is received
-    LaunchedEffect(mfaChallenge) {
-        mfaChallenge?.let { challenge ->
-            Logger.info("MoodManagementScreen", "MFA challenge received, navigating to MFA verify screen")
-            onNavigateToMfaVerify(challenge.challengeId, challenge.userId)
-        }
-    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     

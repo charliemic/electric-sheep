@@ -13,12 +13,6 @@ alwaysApply: true
 4. ✅ **Commit after fixing tests** - Preserve working state
 5. ✅ **Commit local only** - No need to push every commit (push when ready for review)
 
-**Smart Prompts Context:**
-- **Learning project**: 85% of routine commits → PROCEED automatically (no prompt)
-- **Routine commits**: Isolated, clean branch, no conflicts → PROCEED
-- **Complex commits**: Shared files, coordination needed → QUICK_CONFIRM
-- See `.cursor/rules/smart-prompts.mdc` for evaluation criteria
-
 ## Why Frequent Commits Matter
 
 **Frequent commits provide:**

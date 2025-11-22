@@ -2,7 +2,6 @@ package com.electricsheep.app.ui.screens.mood
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.electricsheep.app.auth.SignInResult
 import com.electricsheep.app.auth.User
 import com.electricsheep.app.auth.UserManager
 import com.electricsheep.app.config.MoodConfig
@@ -48,10 +47,6 @@ class MoodManagementViewModel(
     
     private val _googleOAuthUrl = MutableStateFlow<String?>(null)
     val googleOAuthUrl: StateFlow<String?> = _googleOAuthUrl.asStateFlow()
-    
-    // MFA challenge state
-    private val _mfaChallenge = MutableStateFlow<SignInResult.MfaChallenge?>(null)
-    val mfaChallenge: StateFlow<SignInResult.MfaChallenge?> = _mfaChallenge.asStateFlow()
     
     // Mood input state
     private val _moodScoreText = MutableStateFlow("")
@@ -124,27 +119,15 @@ class MoodManagementViewModel(
         Logger.info("MoodManagementViewModel", "Sign in attempt for: $email")
         
         viewModelScope.launch {
-            // Use MFA-aware sign-in
-            val signInResult = userManager.signInWithMfa(email, password)
-            
-            when (signInResult) {
-                is SignInResult.Success -> {
-                    Logger.info("MoodManagementViewModel", "Sign in successful: ${signInResult.user.id}")
+            userManager.signIn(email, password)
+                .onSuccess {
+                    Logger.info("MoodManagementViewModel", "Sign in successful: ${it.id}")
                     _isLoading.value = false
                     _emailText.value = ""
                     _passwordText.value = ""
                     _errorMessage.value = null
-                    _mfaChallenge.value = null
                 }
-                is SignInResult.MfaChallenge -> {
-                    Logger.info("MoodManagementViewModel", "MFA challenge required: challengeId=${signInResult.challengeId}")
-                    _isLoading.value = false
-                    _mfaChallenge.value = signInResult
-                    // Don't clear email/password - user will need them for context
-                    // Navigation to MFA verify screen will be handled by the screen
-                }
-                is SignInResult.Error -> {
-                    val error = signInResult.error
+                .onFailure { error ->
                     // Handle different error types with appropriate user messages
                     val userMessage = when (error) {
                         is com.electricsheep.app.auth.AuthError -> {
@@ -163,7 +146,6 @@ class MoodManagementViewModel(
                     }
                     _errorMessage.value = userMessage
                     _isLoading.value = false
-                    _mfaChallenge.value = null
                     
                     // Log error with context
                     when (error) {
@@ -175,7 +157,6 @@ class MoodManagementViewModel(
                         }
                     }
                 }
-            }
         }
     }
     

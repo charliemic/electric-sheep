@@ -59,18 +59,6 @@ sealed class AuthError(message: String, cause: Throwable? = null) : Exception(me
         : AuthError("No account found with this email. Please sign up first.", cause)
     
     /**
-     * MFA verification required
-     * 
-     * @param challengeId Challenge ID for MFA verification
-     * @param userId User ID (available after password verification)
-     */
-    data class MfaRequired(
-        val challengeId: String,
-        val userId: String,
-        override val cause: Throwable? = null
-    ) : AuthError("Multi-factor authentication required. Please enter your verification code.", cause)
-    
-    /**
      * Generic authentication error
      */
     data class Generic(override val message: String, override val cause: Throwable? = null) 
