@@ -142,8 +142,9 @@
 ## Active Work
 
 ### Task: Dashboard Authentication & Role-Based Access Control
-- **Branch**: `feature/dashboard-auth-rbac`
-- **Status**: In Progress
+- **Branch**: `feature/dashboard-auth-rbac` (merged)
+- **Status**: Complete ✅
+- **PR**: #90
 - **Files Modified**:
   - `scripts/metrics/auth-middleware.js` (new - authentication middleware)
   - `scripts/metrics/dashboard-server-fastify.js` (updated - auth routes and protection)
@@ -158,6 +159,7 @@
   - Token refresh handling
 - **Isolation Strategy**: Branch isolation (not using worktree - dashboard files are isolated)
 - **Conflicts**: None - dashboard files are separate from Android app
+- **Merged**: 2025-01-20 (PR #90)
 - **Purpose**: Secure dashboard authoring features with role-based access control
 
 ### Task: Dynamic Metrics Dashboard Implementation
