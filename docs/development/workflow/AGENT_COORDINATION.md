@@ -160,6 +160,18 @@
   - Auto-refresh every 5 seconds
 - **Completed**: 2025-01-20
 
+### Task: Release Build Signing (Issue #52) ✅ COMPLETE
+- **Branch**: `feature/release-signing-issue-52` (merged)
+- **PR**: #75 - https://github.com/charliemic/electric-sheep/pull/75
+- **Status**: ✅ **COMPLETE** - Merged to main (2025-11-22)
+- **Implementation**:
+  - Signing configuration in `app/build.gradle.kts`
+  - Automated setup script (`scripts/setup-release-signing.sh`)
+  - Comprehensive documentation
+  - GitHub Secrets configured
+  - Local signing verified
+- **Result**: Release signing fully implemented and ready for CI/CD
+
 ### Task: App Specificity Analysis
 - **Branch**: `feature/app-specificity-analysis`
 - **Worktree**: `../electric-sheep-app-specificity-analysis` ✅ **Using worktree for isolation**
