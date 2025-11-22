@@ -9,15 +9,18 @@
  * - Rate limiting support
  */
 
+import fetch from 'node-fetch';
+import { URLSearchParams } from 'url';
+
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 /**
  * Verify Supabase JWT token with expiration check
  * 
- * Best Practice: Always verify token signature and expiration on server
+ * Best Practice: Verify token signature AND expiration
  * 
- * @param {string} token - JWT access token
+ * @param {string} token - JWT token to verify
  * @returns {Promise<{valid: boolean, user?: object, error?: string, expired?: boolean}>}
  */
 async function verifyToken(token) {
@@ -25,18 +28,12 @@ async function verifyToken(token) {
     return { valid: false, error: 'Authentication service unavailable' };
   }
   
-  if (!token || typeof token !== 'string') {
-    return { valid: false, error: 'Invalid token format' };
-  }
-  
   try {
     // Verify token with Supabase (includes signature and expiration check)
     const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'apikey': SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
+        'apikey': SUPABASE_ANON_KEY
       }
     });
     
@@ -48,20 +45,18 @@ async function verifyToken(token) {
         id: userData.id,
         email: userData.email,
         displayName: userData.user_metadata?.display_name,
-        role: userData.user_metadata?.role || 'user'  // Default to 'user'
+        role: userData.user_metadata?.role || 'user' // Default to 'user'
       };
       
       return { valid: true, user };
     } else if (response.status === 401) {
       // Token expired or invalid
-      return { valid: false, error: 'Token expired or invalid', expired: true };
+      return { valid: false, error: 'Token expired', expired: true };
     } else {
-      // Other error - don't expose details
-      return { valid: false, error: 'Authentication failed' };
+      return { valid: false, error: 'Invalid token' };
     }
   } catch (error) {
     // Don't expose internal errors
-    console.error('Token verification error:', error);
     return { valid: false, error: 'Authentication service error' };
   }
 }
@@ -71,36 +66,40 @@ async function verifyToken(token) {
  * 
  * Best Practice: Handle token expiration gracefully
  * 
- * @param {string} refreshToken - JWT refresh token
+ * @param {string} refreshToken - Refresh token
  * @returns {Promise<{success: boolean, access_token?: string, refresh_token?: string, error?: string}>}
  */
-async function refreshToken(refreshToken) {
+export async function refreshToken(refreshToken) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return { success: false, error: 'Authentication service unavailable' };
+    return { success: false, error: 'Supabase not configured' };
   }
   
   try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    const params = new URLSearchParams();
+    params.append('grant_type', 'refresh_token');
+    params.append('refresh_token', refreshToken);
+    
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: JSON.stringify({ refresh_token: refreshToken })
+      body: params.toString()
     });
     
     if (response.ok) {
       const data = await response.json();
-      return { 
-        success: true, 
+      return {
+        success: true,
         access_token: data.access_token,
         refresh_token: data.refresh_token
       };
     } else {
-      return { success: false, error: 'Token refresh failed' };
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.error_description || 'Token refresh failed' };
     }
   } catch (error) {
-    console.error('Token refresh error:', error);
     return { success: false, error: 'Token refresh service error' };
   }
 }
@@ -215,14 +214,13 @@ export function isValidEmail(email) {
   if (!email || typeof email !== 'string') {
     return false;
   }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 /**
- * Validate password strength
+ * Validate password
  * 
- * Best Practice: Enforce minimum password requirements
+ * Best Practice: Validate all inputs
  * 
  * @param {string} password - Password to validate
  * @returns {{valid: boolean, error?: string}}
@@ -233,16 +231,16 @@ export function validatePassword(password) {
   }
   
   if (password.length < 6) {
-    return { valid: false, error: 'Password must be at least 6 characters' };
+    return { valid: false, error: 'Password must be at least 6 characters long' };
   }
   
   return { valid: true };
 }
 
 /**
- * Sanitize email input
+ * Sanitize email
  * 
- * Best Practice: Sanitize user inputs
+ * Best Practice: Sanitize all inputs
  * 
  * @param {string} email - Email to sanitize
  * @returns {string}
@@ -253,4 +251,3 @@ export function sanitizeEmail(email) {
   }
   return email.toLowerCase().trim();
 }
-

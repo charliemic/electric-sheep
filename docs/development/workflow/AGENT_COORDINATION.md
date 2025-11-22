@@ -141,6 +141,25 @@
 
 ## Active Work
 
+### Task: Dashboard Authentication & Role-Based Access Control
+- **Branch**: `feature/dashboard-auth-rbac`
+- **Status**: In Progress
+- **Files Modified**:
+  - `scripts/metrics/auth-middleware.js` (new - authentication middleware)
+  - `scripts/metrics/dashboard-server-fastify.js` (updated - auth routes and protection)
+  - `scripts/metrics/content-author.js` (updated - user scoping and access control)
+  - `scripts/metrics/package.json` (updated - added node-fetch, uuid)
+- **Key Features**:
+  - Server-side token verification with Supabase
+  - Role-based access control (admin/user)
+  - User scoping for authored pages
+  - Public/private page support
+  - Rate limiting on auth endpoints
+  - Token refresh handling
+- **Isolation Strategy**: Branch isolation (not using worktree - dashboard files are isolated)
+- **Conflicts**: None - dashboard files are separate from Android app
+- **Purpose**: Secure dashboard authoring features with role-based access control
+
 ### Task: Dynamic Metrics Dashboard Implementation
 - **Role**: [EXECUTION]
 - **Branch**: `experimental/onboarding-validation-issue-52`
