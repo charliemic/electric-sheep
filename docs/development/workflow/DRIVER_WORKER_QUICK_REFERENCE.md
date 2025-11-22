@@ -96,4 +96,3 @@ Available → Claimed → In Progress → Complete
 
 - `docs/architecture/DRIVER_WORKER_WORKFLOW.md` - Complete workflow
 - `docs/architecture/OPTIMAL_WORKER_COUNT_ANALYSIS.md` - Worker count analysis
-
