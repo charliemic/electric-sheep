@@ -20,6 +20,7 @@ jobs:
   security-lint:
     name: Security-Focused Lint Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Fast timeout for linting
     
     steps:
       - name: Checkout code
@@ -37,15 +38,17 @@ jobs:
         with:
           accept-android-sdk-licenses: true
       
-      - name: Cache Gradle dependencies
+      - name: Cache Android build artifacts
         uses: actions/cache@v3
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            ~/.android/build-cache
+            ${{ github.workspace }}/.gradle
+            app/build
+          key: ${{ runner.os }}-android-lint-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-android-lint-
+            ${{ runner.os }}-android-
       
       - name: Run security-focused lint
         run: |
@@ -55,7 +58,9 @@ jobs:
             -Pandroid.lint.checkHardcodedValues=true \
             -Pandroid.lint.checkInsecureRandom=true \
             -Pandroid.lint.checkSSLVulnerability=true \
-            -Pandroid.lint.checkWeakCryptography=true
+            -Pandroid.lint.checkWeakCryptography=true \
+            --no-daemon \
+            --parallel
         continue-on-error: true
       
       - name: Upload lint results
@@ -65,6 +70,7 @@ jobs:
           name: security-lint-results
           path: app/build/reports/lint-results*.html
           retention-days: 7
+          if-no-files-found: ignore
       
       - name: Parse lint results and comment PR
         if: github.event_name == 'pull_request' && always() && failure()
