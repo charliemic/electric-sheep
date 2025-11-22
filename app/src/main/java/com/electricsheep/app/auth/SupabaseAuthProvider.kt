@@ -8,6 +8,7 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.user.UserSession
+import io.github.jan.supabase.gotrue.mfa
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -81,29 +82,111 @@ class SupabaseAuthProvider(
     }
 
     override suspend fun signIn(email: String, password: String): Result<User> {
+        // Use new signInWithMfa method that handles MFA challenges
+        return when (val result = signInWithMfa(email, password)) {
+            is SignInResult.Success -> Result.success(result.user)
+            is SignInResult.MfaChallenge -> {
+                // MFA required - return error indicating MFA is needed
+                // Caller should use signInWithMfa() directly to get MfaChallenge
+                Result.failure(AuthError.MfaRequired(result.challengeId, result.userId))
+            }
+            is SignInResult.Error -> Result.failure(result.error)
+        }
+    }
+    
+    /**
+     * Sign in with MFA support.
+     * 
+     * Returns SignInResult which can be:
+     * - Success: User authenticated (no MFA or MFA already verified)
+     * - MfaChallenge: MFA verification required (caller should prompt for TOTP code)
+     * - Error: Sign-in failed
+     * 
+     * @param email User's email
+     * @param password User's password
+     * @return SignInResult indicating success, MFA challenge, or error
+     */
+    suspend fun signInWithMfa(email: String, password: String): SignInResult {
         return try {
             Logger.info("SupabaseAuthProvider", "Sign in attempt for: $email")
             
-            supabaseClient.auth.signInWith(Email) {
+            // Attempt sign-in
+            // Note: Supabase SDK may throw an exception or return a challenge if MFA is enabled
+            // Check SDK documentation for exact behavior
+            val response = supabaseClient.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
             }
             
+            // Check if response indicates MFA challenge
+            // Note: Need to verify Supabase SDK API - may need to check response type
+            // For now, try to get user - if null, may indicate MFA challenge
             val user = getCurrentUser()
+            
             if (user != null) {
                 Logger.info("SupabaseAuthProvider", "User signed in: ${user.id}")
-                Result.success(user)
+                SignInResult.Success(user)
             } else {
-                Logger.error("SupabaseAuthProvider", "Sign in succeeded but user is null")
-                Result.failure(AuthError.Generic("Sign in succeeded but user is not available. Please try again."))
+                // Check if this is an MFA challenge
+                // TODO: Verify Supabase SDK API for MFA challenge detection
+                // May need to check response object or catch specific exception
+                Logger.warn("SupabaseAuthProvider", "Sign in succeeded but user is null - may indicate MFA challenge")
+                // For now, return error - will update once SDK API is verified
+                SignInResult.Error(AuthError.Generic("Sign in succeeded but user is not available. MFA may be required."))
             }
         } catch (e: com.electricsheep.app.error.NetworkError) {
-            // Network errors are recoverable - convert to AuthError for consistency
             e.log("SupabaseAuthProvider", "Sign in failed - network error")
-            val authError = AuthError.NetworkError(e)
-            Result.failure(authError)
+            SignInResult.Error(AuthError.NetworkError(e))
         } catch (e: Exception) {
-            Logger.error("SupabaseAuthProvider", "Sign in failed", e)
+            // Check if exception indicates MFA challenge
+            // Supabase may throw specific exception for MFA requirement
+            val errorMessage = e.message ?: ""
+            if (errorMessage.contains("mfa", ignoreCase = true) || 
+                errorMessage.contains("challenge", ignoreCase = true)) {
+                Logger.info("SupabaseAuthProvider", "MFA challenge detected from exception")
+                // TODO: Extract challenge ID and user ID from exception/response
+                // For now, return generic MFA error
+                SignInResult.Error(AuthError.Generic("MFA verification required. Please use MFA verification flow."))
+            } else {
+                Logger.error("SupabaseAuthProvider", "Sign in failed", e)
+                SignInResult.Error(AuthError.fromException(e))
+            }
+        }
+    }
+    
+    /**
+     * Complete MFA verification during sign-in.
+     * 
+     * After receiving MfaChallenge from signInWithMfa(), call this method
+     * with the TOTP code from the user's authenticator app.
+     * 
+     * @param challengeId Challenge ID from MfaChallenge
+     * @param code TOTP code from authenticator app (6 digits)
+     * @return Result containing authenticated user or error
+     */
+    suspend fun verifyMfaSignIn(challengeId: String, code: String): Result<User> {
+        return try {
+            Logger.info("SupabaseAuthProvider", "Verifying MFA code for sign-in: challenge=$challengeId")
+            
+            // Verify MFA code
+            // Note: Need to verify Supabase SDK API for MFA verification during sign-in
+            // May be different from enrollment verification
+            supabaseClient.auth.mfa.verify(
+                challengeId = challengeId,
+                code = code
+            )
+            
+            // After verification, get the authenticated user
+            val user = getCurrentUser()
+            if (user != null) {
+                Logger.info("SupabaseAuthProvider", "MFA verification successful, user signed in: ${user.id}")
+                Result.success(user)
+            } else {
+                Logger.error("SupabaseAuthProvider", "MFA verification succeeded but user is null")
+                Result.failure(AuthError.Generic("MFA verification succeeded but user is not available."))
+            }
+        } catch (e: Exception) {
+            Logger.error("SupabaseAuthProvider", "MFA verification failed", e)
             Result.failure(AuthError.fromException(e))
         }
     }

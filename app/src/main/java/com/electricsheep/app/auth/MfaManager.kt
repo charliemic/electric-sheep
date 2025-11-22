@@ -5,6 +5,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.mfa.MfaFactor
 import io.github.jan.supabase.gotrue.mfa.MfaResponse
 import io.github.jan.supabase.gotrue.mfa.TotpFactor
+import io.github.jan.supabase.gotrue.mfa
 
 /**
  * Manager for Multi-Factor Authentication (MFA) operations.

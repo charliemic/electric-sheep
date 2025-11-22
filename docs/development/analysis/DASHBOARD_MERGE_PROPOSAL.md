@@ -1,20 +1,25 @@
-# Dashboard Merge Proposal - Revised
+# Dashboard Merge Proposal - Final
 
 **Date**: 2025-01-20  
 **Issue**: Two separate dashboards with different toolsets  
-**Goal**: Merge into single unified dashboard with integrated report generation
+**Goal**: Merge into single unified dashboard with integrated content authoring tool
 
 ## Understanding the Real Purpose
 
 ### HTML Viewer's Actual Purpose
-The HTML Viewer isn't just a converter - it's a **communication tool**:
-- **Purpose**: Take outputs from development or testing and communicate these effectively to an audience
+The HTML Viewer is a **communication and storytelling tool**:
+- **Purpose**: Create information-rich pages that convey a narrative about development/testing outputs
 - **Use Cases**:
-  - Convert test results to shareable HTML reports
-  - Format log files for presentation
-  - Convert markdown documentation for sharing
-  - Generate reports from metrics data
-  - Create presentation-ready HTML from technical content
+  - Craft stories from test results (what happened, why it matters)
+  - Present log analysis with context and explanations
+  - Create documentation pages that tell a story
+  - Build information-rich pages from metrics data
+  - Share technical findings with narrative structure
+- **Key Characteristics**:
+  - **Ad-hoc**: Created manually when needed, not automated
+  - **Narrative-driven**: Tailored to convey a specific story
+  - **Information-rich**: Combines data, context, analysis, explanations
+  - **Editorial control**: Full control over content structure and flow
 
 ### Current State
 
@@ -32,7 +37,7 @@ The HTML Viewer isn't just a converter - it's a **communication tool**:
 
 #### 2. HTML Viewer (`html-viewer/`)
 - **Technology**: Astro + TypeScript + Tailwind CSS
-- **Purpose**: Convert dev/test outputs to shareable HTML for communication
+- **Purpose**: Create information-rich pages for communicating dev/test outputs
 - **Features**:
   - Markdown to HTML conversion
   - Log file formatting with syntax highlighting
@@ -42,77 +47,77 @@ The HTML Viewer isn't just a converter - it's a **communication tool**:
   - Download standalone HTML files
 - **Status**: ✅ **Implemented** (separate project)
 
-## Revised Recommendation: **Integrated Report Generator**
+## Revised Recommendation: **Integrated Content Authoring Tool**
 
-### Concept: Dashboard + Report Generator
+### Concept: Dashboard + Content Authoring
 
 **Unified Dashboard** with two main functions:
 1. **Metrics Visualization** (existing) - Real-time development metrics
-2. **Report Generator** (new) - Convert dev/test outputs to shareable HTML
+2. **Content Authoring** (new) - Create information-rich narrative pages
 
 ### Why This Approach?
 
 1. **Unified Experience**: One dashboard for both monitoring and communication
-2. **Context-Aware**: Reports can pull from live metrics data
-3. **Workflow Integration**: Generate reports directly from test results, logs, metrics
-4. **Custom & Tailored**: Built specifically for communicating dev/test outputs
+2. **Data Integration**: Authoring tool can pull from live metrics/logs/tests
+3. **Editorial Control**: Manual, ad-hoc creation with full narrative control
+4. **Rich Content**: Combine data, context, analysis, explanations
 5. **Simpler Architecture**: One server, one technology stack
 
 ### Implementation Plan
 
-#### Phase 1: Add Report Generator to Fastify Dashboard
+#### Phase 1: Add Content Authoring to Fastify Dashboard
 
 **New Routes:**
-- `GET /reports` - Report generator interface
-- `GET /reports/new` - Create new report form
-- `POST /api/reports/generate` - Generate HTML report
-- `GET /api/reports/templates` - Available report templates
-- `GET /reports/:id` - View generated report
+- `GET /author` - Content authoring interface
+- `GET /author/new` - Create new page
+- `GET /author/edit/:id` - Edit existing page
+- `POST /api/author/save` - Save page content
+- `GET /api/author/pages` - List all pages
+- `GET /pages/:id` - View published page
+- `GET /api/author/data-sources` - Available data sources (metrics, logs, tests)
 
-**Report Types:**
-1. **Test Results Report**
-   - Pull from latest test metrics
-   - Format test output as HTML
-   - Include charts/graphs from test data
-   - Shareable link for stakeholders
+**Content Authoring Features:**
+1. **Rich Editor**
+   - Markdown editor with live preview
+   - Insert data blocks (metrics, logs, test results)
+   - Add code blocks with syntax highlighting
+   - Insert images and diagrams
+   - Custom styling options
 
-2. **Log Analysis Report**
-   - Upload or paste log files
-   - Format with syntax highlighting
-   - Add context/analysis
-   - Generate shareable HTML
+2. **Data Integration**
+   - Pull metrics data into pages
+   - Insert log snippets with context
+   - Include test results with analysis
+   - Link to live dashboard data
 
-3. **Metrics Summary Report**
-   - Pull from current metrics dashboard data
-   - Create snapshot report
-   - Include charts and visualizations
-   - Export as standalone HTML
+3. **Narrative Structure**
+   - Section-based organization
+   - Custom headings and structure
+   - Table of contents generation
+   - Flow control (introduction, analysis, conclusions)
 
-4. **Documentation Report**
-   - Convert markdown docs to HTML
-   - Add branding/styling
-   - Generate shareable version
+4. **Publishing & Sharing**
+   - Save as standalone HTML
+   - Generate shareable links
+   - Export options
+   - Version history (optional)
 
-**Integration Points:**
-- Reports can pull live data from metrics API
-- Test results automatically available for report generation
-- Logs can be uploaded or linked from recent runs
-- Metrics snapshots can be included in reports
+**Workflow:**
+1. User opens `/author/new`
+2. Creates page with markdown editor
+3. Inserts data blocks from metrics/logs/tests
+4. Adds context, analysis, narrative
+5. Saves page
+6. Shares via link or downloads HTML
 
-#### Phase 2: Enhanced Report Features
+#### Phase 2: Enhanced Authoring Features
 
-**Customization:**
-- Report templates (test results, log analysis, metrics summary, etc.)
-- Custom branding/styling
-- Add context/analysis sections
-- Include charts/graphs from metrics
-- Export options (HTML, PDF via print)
-
-**Workflow Integration:**
-- "Generate Report" button on metrics pages
-- "Share as Report" from test results
-- "Create Report" from log viewer
-- Recent reports list in dashboard
+**Advanced Features:**
+- Templates for common page types
+- Data visualization blocks (charts from metrics)
+- Custom styling/themes
+- Collaboration features (optional)
+- Export to various formats
 
 ### Architecture
 
@@ -126,15 +131,18 @@ The HTML Viewer isn't just a converter - it's a **communication tool**:
 │   - GET /api/metrics                │
 │   - GET /api/agents                  │
 ├─────────────────────────────────────┤
-│   Report Generator Routes (new)     │
-│   - GET /reports                     │
-│   - POST /api/reports/generate       │
-│   - GET /reports/:id                 │
+│   Content Authoring Routes (new)    │
+│   - GET /author                      │
+│   - GET /author/new                  │
+│   - POST /api/author/save            │
+│   - GET /pages/:id                   │
+│   - GET /api/author/data-sources     │
 ├─────────────────────────────────────┤
 │   Shared Utilities                  │
 │   - markdownToHTML()                 │
 │   - formatLogContent()               │
-│   - generateReportHTML()             │
+│   - insertDataBlock()                │
+│   - generatePageHTML()               │
 └─────────────────────────────────────┘
 ```
 
@@ -147,97 +155,144 @@ cd scripts/metrics
 npm install marked prismjs
 ```
 
-#### Step 2: Create Report Generator Module
+#### Step 2: Create Content Authoring Module
 
-Create `scripts/metrics/report-generator.js`:
+Create `scripts/metrics/content-author.js`:
 
 ```javascript
 import { marked } from 'marked';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
+const PAGES_DIR = join(__dirname, '../../development-metrics/pages');
+
+// Ensure pages directory exists
+if (!existsSync(PAGES_DIR)) {
+  mkdirSync(PAGES_DIR, { recursive: true });
+}
 
 /**
- * Generate HTML report from various sources
+ * Save authored page
  */
-export function generateReport(type, data, options = {}) {
-  switch (type) {
-    case 'test-results':
-      return generateTestResultsReport(data, options);
-    case 'log-analysis':
-      return generateLogAnalysisReport(data, options);
-    case 'metrics-summary':
-      return generateMetricsSummaryReport(data, options);
-    case 'documentation':
-      return generateDocumentationReport(data, options);
-    default:
-      throw new Error(`Unknown report type: ${type}`);
+export function savePage(pageId, content, metadata = {}) {
+  const pageData = {
+    id: pageId,
+    content,
+    metadata: {
+      title: metadata.title || 'Untitled Page',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...metadata
+    }
+  };
+  
+  const filePath = join(PAGES_DIR, `${pageId}.json`);
+  writeFileSync(filePath, JSON.stringify(pageData, null, 2), 'utf8');
+  
+  return pageData;
+}
+
+/**
+ * Load authored page
+ */
+export function loadPage(pageId) {
+  const filePath = join(PAGES_DIR, `${pageId}.json`);
+  
+  if (!existsSync(filePath)) {
+    return null;
   }
+  
+  const content = readFileSync(filePath, 'utf8');
+  return JSON.parse(content);
 }
 
 /**
- * Generate test results report
+ * List all pages
  */
-function generateTestResultsReport(testData, options) {
-  const { title = 'Test Results Report', theme = 'light' } = options;
+export function listPages() {
+  if (!existsSync(PAGES_DIR)) {
+    return [];
+  }
   
-  // Format test data as HTML
-  const testSummary = `
-    <div class="test-summary">
-      <h2>Test Summary</h2>
-      <p>Total Tests: ${testData.total}</p>
-      <p>Passed: ${testData.passed}</p>
-      <p>Failed: ${testData.failed}</p>
-      <p>Execution Time: ${testData.executionTime}s</p>
-    </div>
-  `;
+  const files = readdirSync(PAGES_DIR)
+    .filter(f => f.endsWith('.json'))
+    .map(f => {
+      const content = readFileSync(join(PAGES_DIR, f), 'utf8');
+      const page = JSON.parse(content);
+      return {
+        id: page.id,
+        title: page.metadata.title,
+        createdAt: page.metadata.createdAt,
+        updatedAt: page.metadata.updatedAt
+      };
+    })
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   
-  // Generate full HTML document
-  return buildReportHTML(testSummary, { title, theme });
+  return files;
 }
 
 /**
- * Generate log analysis report
+ * Generate HTML from authored page
  */
-function generateLogAnalysisReport(logContent, options) {
-  const { title = 'Log Analysis Report', theme = 'light' } = options;
+export function generatePageHTML(pageData, options = {}) {
+  const { content, metadata } = pageData;
+  const { theme = 'light', includeTOC = true } = options;
   
-  // Format log with syntax highlighting
-  const formattedLog = formatLogContent(logContent);
-  
-  return buildReportHTML(formattedLog, { title, theme });
-}
-
-/**
- * Generate metrics summary report
- */
-function generateMetricsSummaryReport(metricsData, options) {
-  const { title = 'Metrics Summary Report', theme = 'light' } = options;
-  
-  // Format metrics as HTML
-  const metricsHTML = formatMetricsAsHTML(metricsData);
-  
-  return buildReportHTML(metricsHTML, { title, theme });
-}
-
-/**
- * Generate documentation report
- */
-function generateDocumentationReport(markdown, options) {
-  const { title = 'Documentation', theme = 'light', includeTOC = true } = options;
+  // Process content - replace data blocks with actual data
+  const processedContent = processDataBlocks(content);
   
   // Convert markdown to HTML
   marked.setOptions({ gfm: true, breaks: true, headerIds: true });
-  const htmlContent = marked.parse(markdown);
+  const htmlContent = marked.parse(processedContent);
   
   // Generate TOC if requested
   const toc = includeTOC ? generateTOC(htmlContent) : '';
   
-  return buildReportHTML(toc + htmlContent, { title, theme });
+  // Build complete HTML document
+  return buildPageHTML(htmlContent, {
+    title: metadata.title,
+    theme,
+    toc,
+    metadata
+  });
 }
 
 /**
- * Build complete HTML report document
+ * Process data blocks in content (e.g., {{metrics:latest}})
  */
-function buildReportHTML(content, options) {
-  const { title, theme } = options;
+function processDataBlocks(content) {
+  // Replace data block placeholders with actual data
+  // Example: {{metrics:latest}} → formatted metrics HTML
+  // Example: {{logs:recent}} → formatted log HTML
+  
+  let processed = content;
+  
+  // Metrics data block
+  processed = processed.replace(
+    /\{\{metrics:latest\}\}/g,
+    () => formatMetricsBlock(getLatestMetrics())
+  );
+  
+  // Test results data block
+  processed = processed.replace(
+    /\{\{tests:latest\}\}/g,
+    () => formatTestResultsBlock(getLatestTestResults())
+  );
+  
+  // Log data block (with optional file path)
+  processed = processed.replace(
+    /\{\{logs:(.+?)\}\}/g,
+    (match, logPath) => formatLogBlock(logPath)
+  );
+  
+  return processed;
+}
+
+/**
+ * Build complete HTML page document
+ */
+function buildPageHTML(content, options) {
+  const { title, theme, toc, metadata } = options;
   
   return `<!DOCTYPE html>
 <html lang="en" class="${theme === 'dark' ? 'dark' : ''}">
@@ -253,15 +308,27 @@ function buildReportHTML(content, options) {
       padding: 2rem;
       line-height: 1.7;
     }
-    .report-header {
+    .page-header {
       border-bottom: 2px solid #e5e7eb;
       padding-bottom: 1rem;
       margin-bottom: 2rem;
     }
-    .report-meta {
+    .page-meta {
       color: #6b7280;
       font-size: 0.9em;
       margin-top: 0.5rem;
+    }
+    .data-block {
+      background: #f9fafb;
+      border-left: 4px solid #3b82f6;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      border-radius: 0.25rem;
+    }
+    .data-block-title {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
     }
     pre {
       background: #1f2937;
@@ -280,22 +347,27 @@ function buildReportHTML(content, options) {
   </style>
 </head>
 <body>
-  <div class="report-header">
+  <div class="page-header">
     <h1>${escapeHtml(title)}</h1>
-    <div class="report-meta">
-      Generated: ${new Date().toLocaleString()}
+    <div class="page-meta">
+      Created: ${new Date(metadata.createdAt).toLocaleString()}
+      ${metadata.updatedAt !== metadata.createdAt ? ` | Updated: ${new Date(metadata.updatedAt).toLocaleString()}` : ''}
     </div>
   </div>
+  ${toc}
   ${content}
 </body>
 </html>`;
 }
 
-// Helper functions (from html-viewer)
-function formatLogContent(log) { /* ... */ }
-function generateTOC(html) { /* ... */ }
-function formatMetricsAsHTML(metrics) { /* ... */ }
-function escapeHtml(text) { /* ... */ }
+// Helper functions
+function formatMetricsBlock(metrics) { /* Format metrics as HTML block */ }
+function formatTestResultsBlock(tests) { /* Format test results as HTML block */ }
+function formatLogBlock(logPath) { /* Format log as HTML block */ }
+function generateTOC(html) { /* Generate table of contents */ }
+function getLatestMetrics() { /* Get latest metrics data */ }
+function getLatestTestResults() { /* Get latest test results */ }
+function escapeHtml(text) { /* Escape HTML */ }
 ```
 
 #### Step 3: Add Routes to Fastify
@@ -303,87 +375,94 @@ function escapeHtml(text) { /* ... */ }
 Add to `dashboard-server-fastify.js`:
 
 ```javascript
-import { generateReport } from './report-generator.js';
+import { savePage, loadPage, listPages, generatePageHTML } from './content-author.js';
 
-// Report generator routes
-fastify.get('/reports', async (request, reply) => {
+// Content authoring routes
+fastify.get('/author', async (request, reply) => {
   reply.type('text/html');
-  return getReportsPageHTML();
+  return getAuthoringInterfaceHTML();
 });
 
-fastify.get('/reports/new', async (request, reply) => {
+fastify.get('/author/new', async (request, reply) => {
   reply.type('text/html');
-  return getNewReportPageHTML();
+  return getNewPageEditorHTML();
 });
 
-fastify.post('/api/reports/generate', async (request, reply) => {
-  const { type, data, options } = request.body;
+fastify.get('/author/edit/:id', async (request, reply) => {
+  const { id } = request.params;
+  const page = loadPage(id);
+  
+  if (!page) {
+    reply.code(404);
+    return { error: 'Page not found' };
+  }
+  
+  reply.type('text/html');
+  return getEditPageEditorHTML(page);
+});
+
+fastify.post('/api/author/save', async (request, reply) => {
+  const { id, content, metadata } = request.body;
   
   try {
-    const html = generateReport(type, data, options);
-    return { 
-      success: true, 
-      html,
-      downloadUrl: `/api/reports/download/${Date.now()}.html`
-    };
+    const page = savePage(id || `page-${Date.now()}`, content, metadata);
+    return { success: true, page };
   } catch (error) {
     reply.code(400);
     return { success: false, error: error.message };
   }
 });
 
-fastify.get('/api/reports/templates', async (request, reply) => {
+fastify.get('/api/author/pages', async (request, reply) => {
+  return { pages: listPages() };
+});
+
+fastify.get('/pages/:id', async (request, reply) => {
+  const { id } = request.params;
+  const page = loadPage(id);
+  
+  if (!page) {
+    reply.code(404);
+    return { error: 'Page not found' };
+  }
+  
+  const html = generatePageHTML(page);
+  reply.type('text/html');
+  return html;
+});
+
+fastify.get('/api/author/data-sources', async (request, reply) => {
   return {
-    templates: [
-      { id: 'test-results', name: 'Test Results Report', description: 'Format test results for sharing' },
-      { id: 'log-analysis', name: 'Log Analysis Report', description: 'Format log files with syntax highlighting' },
-      { id: 'metrics-summary', name: 'Metrics Summary', description: 'Create snapshot of current metrics' },
-      { id: 'documentation', name: 'Documentation Report', description: 'Convert markdown docs to HTML' }
+    dataSources: [
+      { id: 'metrics:latest', name: 'Latest Metrics', description: 'Current development metrics' },
+      { id: 'tests:latest', name: 'Latest Test Results', description: 'Most recent test run results' },
+      { id: 'logs:recent', name: 'Recent Logs', description: 'Recent log entries' }
     ]
   };
 });
 ```
 
-#### Step 4: Update Navigation
+#### Step 4: Create Authoring Interface
 
-Add reports link to main dashboard:
+The authoring interface should include:
+- Markdown editor with live preview
+- Data source insertion buttons
+- Save/load functionality
+- Page list/sidebar
+- Export options
+
+#### Step 5: Update Navigation
+
+Add authoring link to main dashboard:
 
 ```javascript
 function getDashboardHTML() {
   return `
     <nav>
       <a href="/">Metrics</a>
-      <a href="/reports">Reports</a>
+      <a href="/author">Author</a>
       <a href="/agents">Agents</a>
     </nav>
-    ...
-  `;
-}
-```
-
-#### Step 5: Add "Generate Report" Actions
-
-Add report generation buttons to relevant pages:
-
-```javascript
-// On test results page
-function getTestsPageHTML() {
-  return `
-    ...
-    <button onclick="generateReport('test-results')">
-      Generate Report
-    </button>
-    ...
-  `;
-}
-
-// On metrics page
-function getDashboardHTML() {
-  return `
-    ...
-    <button onclick="generateReport('metrics-summary')">
-      Create Metrics Report
-    </button>
     ...
   `;
 }
@@ -393,99 +472,113 @@ function getDashboardHTML() {
 
 1. **Unified Dashboard**
    - One URL: `http://localhost:8080`
-   - Easy navigation between metrics and reports
+   - Easy navigation between metrics and authoring
    - Consistent styling and UX
 
-2. **Context-Aware Reports**
-   - Reports can pull live data from metrics
-   - Test results automatically available
-   - Metrics snapshots included in reports
+2. **Data Integration**
+   - Pull live data from metrics/logs/tests
+   - Insert data blocks into pages
+   - Keep data current or snapshot at creation time
 
-3. **Workflow Integration**
-   - Generate reports directly from dashboard
-   - "Share as Report" buttons on relevant pages
-   - Recent reports list
+3. **Editorial Control**
+   - Manual, ad-hoc creation
+   - Full control over narrative structure
+   - Add context, analysis, explanations
+   - Craft information-rich pages
 
-4. **Custom & Tailored**
-   - Built specifically for communicating dev/test outputs
-   - Report templates for common use cases
-   - Easy to extend with new report types
+4. **Narrative-Driven**
+   - Structure content to tell a story
+   - Combine data with context
+   - Create compelling presentations
+   - Share with audience
 
 5. **Simpler Architecture**
    - One server, one technology stack
    - Shared utilities and styling
    - Easier maintenance
 
-### Report Templates
+### Content Authoring Workflow
 
-**Test Results Report:**
-- Pull from latest test metrics
-- Format test output as HTML
-- Include pass/fail statistics
-- Add execution time and trends
-- Shareable link for stakeholders
+**Example: Creating a Test Results Narrative Page**
 
-**Log Analysis Report:**
-- Upload or paste log files
-- Format with syntax highlighting
-- Add context/analysis sections
-- Highlight errors/warnings
-- Generate shareable HTML
+1. Open `/author/new`
+2. Write introduction: "Here's what we found in our latest test run..."
+3. Insert data block: `{{tests:latest}}`
+4. Add analysis: "The failures are concentrated in the authentication module..."
+5. Insert log snippet: `{{logs:auth-test.log}}`
+6. Add conclusion: "We need to refactor the auth flow..."
+7. Save page
+8. Share via `/pages/page-id` or download HTML
 
-**Metrics Summary Report:**
-- Pull from current metrics dashboard
-- Create snapshot of complexity, tests, prompts
-- Include charts/graphs
-- Add timestamp and context
-- Export as standalone HTML
+**Example: Creating a Metrics Analysis Page**
 
-**Documentation Report:**
-- Convert markdown docs to HTML
-- Add branding/styling
-- Include table of contents
-- Generate shareable version
+1. Open `/author/new`
+2. Write narrative: "Our codebase complexity has increased..."
+3. Insert metrics: `{{metrics:latest}}`
+4. Add context: "This is expected given the new features..."
+5. Insert specific metrics with analysis
+6. Add recommendations
+7. Save and share
+
+### Data Block Syntax
+
+**Available Data Blocks:**
+- `{{metrics:latest}}` - Latest metrics snapshot
+- `{{tests:latest}}` - Latest test results
+- `{{logs:path/to/log.log}}` - Specific log file
+- `{{logs:recent}}` - Recent log entries
+
+**Future Extensions:**
+- `{{chart:complexity-trend}}` - Generate chart from metrics
+- `{{table:test-results}}` - Format data as table
+- `{{code:file.js}}` - Include code file snippet
 
 ### Migration Steps
 
 1. **Add dependencies** (`marked`, `prismjs`)
-2. **Create report generator module** (`report-generator.js`)
-3. **Add Fastify routes** for report generation
-4. **Update navigation** to include reports
-5. **Add report generation buttons** to relevant pages
-6. **Test thoroughly**
-7. **Archive or remove** `html-viewer/` directory
-8. **Update documentation**
+2. **Create content authoring module** (`content-author.js`)
+3. **Add Fastify routes** for authoring interface
+4. **Create authoring UI** (markdown editor, data blocks)
+5. **Test thoroughly**
+6. **Archive or remove** `html-viewer/` directory
+7. **Update documentation**
 
 ### Timeline
 
-- **Phase 1 (Core Integration)**: 3-4 hours
+- **Phase 1 (Core Authoring)**: 4-5 hours
   - Add dependencies
-  - Create report generator module
+  - Create content authoring module
   - Add routes
-  - Basic report generation
+  - Basic markdown editor interface
 
-- **Phase 2 (Enhancement)**: 2-3 hours (optional)
-  - Report templates
-  - Integration with metrics pages
-  - Recent reports list
+- **Phase 2 (Data Integration)**: 2-3 hours
+  - Data block processing
+  - Integration with metrics/logs/tests
+  - Data source selection UI
+
+- **Phase 3 (Enhancement)**: 2-3 hours (optional)
+  - Advanced editor features
+  - Templates
   - Export options
+  - Version history
 
 ## Decision
 
-**Recommended**: ✅ **Keep Fastify, add integrated Report Generator**
+**Recommended**: ✅ **Keep Fastify, add integrated Content Authoring Tool**
 
 **Rationale**:
 - Metrics Dashboard is working and needs real-time server capabilities
-- Report Generator serves specific purpose: communicating dev/test outputs
+- Content Authoring serves specific purpose: creating narrative-driven pages
 - Unified experience for monitoring and communication
-- Context-aware reports can pull from live metrics
+- Data integration allows pulling from live metrics
+- Editorial control for ad-hoc, information-rich pages
 - Simpler architecture (one stack)
 
 ## Next Steps
 
-1. Review this revised proposal
+1. Review this final proposal
 2. Approve approach
-3. Implement Phase 1 (core integration)
-4. Test report generation from various sources
+3. Implement Phase 1 (core authoring)
+4. Test content creation workflow
 5. Archive or remove `html-viewer/` directory
 6. Update documentation
