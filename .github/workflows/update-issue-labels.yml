@@ -41,6 +41,8 @@ jobs:
 
       - name: Update issue status to review
         if: steps.extract-issues.outputs.issues != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for issue in ${{ steps.extract-issues.outputs.issues }}; do
             echo "Updating issue #$issue to status:review..."
@@ -96,6 +98,8 @@ jobs:
 
       - name: Update issue status to completed
         if: steps.extract-issues.outputs.issues != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for issue in ${{ steps.extract-issues.outputs.issues }}; do
             echo "Updating issue #$issue to status:completed..."
