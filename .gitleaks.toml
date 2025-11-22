@@ -11,6 +11,9 @@ paths = [
   '''\.gitignore''',
   '''NOTICES\.md''',
   '''LICENSE''',
+  '''scripts/generate-keystore\.sh''',
+  '''scripts/.*\.sh$''',
+  '''\.gitleaks\.toml''',
 ]
 
 [allowlist.regexes]
@@ -26,10 +29,23 @@ regexes = [
   '''sbp_.*example''',
   '''<YOUR.*PASSWORD>''',
   '''<your-.*-password>''',
+  '''<YOUR_KEYSTORE_PASSWORD>''',
+  '''<YOUR_KEY_PASSWORD>''',
+  '''<your-key-password>''',
+  '''<your-keystore-password>''',
   '''your-keystore-password''',
   '''your-key-password''',
   '''keystore\.password=.*<.*>''',
   '''keystore\.key\.password=.*<.*>''',
+  '''keystore\.password=<YOUR.*>''',
+  '''keystore\.key\.password=<.*>''',
+  '''KEYSTORE_PASSWORD''',
+  '''KEY_PASSWORD''',
+  '''KEY_ALIAS''',
+  '''KEYSTORE_FILE''',
+  '''password.*store.*securely''',
+  '''password.*manager''',
+  '''Store.*password''',
 ]
 
 [allowlist.stopwords]
