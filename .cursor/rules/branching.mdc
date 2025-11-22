@@ -14,13 +14,81 @@ Before making ANY changes to code.
 - ✅ **Run pre-work check**: `./scripts/pre-work-check.sh` (validates branch, coordination, tools)
 - ✅ **Use proper naming**: `feature/<description>`, `fix/<description>`, `refactor/<description>`, `docs/<description>`, `test/<description>`
 
+1. **Check current branch:**
+   ```bash
+   git status
+   # or
+   git branch
+   ```
+
+2. **If on `main` branch, IMMEDIATELY create isolated worktree:**
+   ```bash
+   # MANDATORY: Use git worktree for isolation
+   git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+   cd ../electric-sheep-<task-name>
+   # Now working in isolated directory
+   ```
+
+3. **Never commit directly to `main`** - All changes must go through feature branches.
+
+## Branch Naming Convention
+
+**Required format:** `<type>/<task-description>`
+
+**Types:**
+- `feature/` - New functionality
+- `fix/` - Bug fixes  
+- `refactor/` - Code refactoring
+- `docs/` - Documentation only
+- `test/` - Test improvements
+
+**Examples:**
+- ✅ `feature/test-helpers`
+- ✅ `feature/env-switch`
+- ✅ `fix/login-bug`
+- ✅ `refactor/component-cleanup`
+- ❌ `feature/my-feature` (too vague - be descriptive)
+- ❌ `test-helpers` (missing type prefix)
+
+**Note:** Agents are ephemeral - branch names should describe the task, not identify the agent.
+
+## File System Isolation (MANDATORY)
+
+**CRITICAL: Every agent MUST use git worktree for complete file system isolation.**
+
+**MANDATORY: Create isolated worktree before ANY work:**
+```bash
+# Create isolated worktree (MANDATORY for all agents)
+git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+cd ../electric-sheep-<task-name>
+# Work in complete isolation
+```
+
+**Why Mandatory:**
+- ✅ Complete file system isolation - prevents untracked file conflicts
+- ✅ No conflicts with other agents - each agent has own directory
+- ✅ Easy cleanup after merge - just remove worktree
+- ✅ Prevents workspace pollution - untracked files don't interfere
+- ✅ Eliminates branch switching errors - each worktree is on its own branch
+
+**Exception: Shared Files Requiring Coordination**
+- ⚠️ **ONLY exception**: When agent coordination explicitly requires working on shared files
+- ⚠️ **Must be documented**: Exception must be documented in `AGENT_COORDINATION.md`
+- ⚠️ **Coordination required**: Must coordinate with other agents before proceeding
+- ⚠️ **Still use worktree**: Even for shared files, use worktree unless coordination explicitly requires shared workspace
+
+**Default Rule: ALWAYS use worktree. Exception only when coordination requires shared files.**
+
 ### Branch Creation
 ```bash
-# Standard branch
+# Standard branch (if not using worktree)
 git checkout -b feature/<task-description>
 
-# For isolation (recommended for shared files)
+# For isolation (recommended for shared files, MANDATORY for all agents)
 ./scripts/create-worktree.sh <task-name>
+# OR
+git worktree add ../electric-sheep-<task-name> -b feature/<task-name>
+cd ../electric-sheep-<task-name>
 ```
 
 ### During Work
@@ -40,9 +108,24 @@ git checkout -b feature/<task-description>
 - `scripts/post-merge-cleanup.sh` - Cleans up after merge
 - `scripts/check-agent-coordination.sh` - Checks for file conflicts
 
-**Coordination:**
-- Check `docs/development/AGENT_COORDINATION.md` before modifying shared files
-- Update coordination doc when work status changes
+This script automatically verifies:
+1. ✅ **Not on main branch** - Prevents working on main
+2. ✅ **Latest main pulled** - Checks for remote updates
+3. ✅ **Coordination checked** - Runs `check-agent-coordination.sh`
+4. ✅ **Relevant rules discovered** - Suggests applicable cursor rules
+5. ✅ **Available tools identified** - Lists automation scripts
+6. ✅ **Working directory clean** - Checks for uncommitted changes
+
+**If the script reports errors, fix them before proceeding.**
+
+**Manual steps (if needed):**
+1. ✅ **Create isolated worktree** - `./scripts/create-worktree.sh <task-name>` (MANDATORY)
+2. ✅ **Work in worktree directory** - `cd ../electric-sheep-<task-name>`
+3. ✅ **Update coordination doc** - `docs/development/workflow/AGENT_COORDINATION.md`
+
+## File Coordination
+
+**Before modifying files, check coordination:**
 
 **Shared files (require coordination):**
 - `app/.../ui/screens/LandingScreen.kt`
@@ -51,10 +134,19 @@ git checkout -b feature/<task-description>
 - `app/build.gradle.kts`, `build.gradle.kts`
 
 **If modifying shared files:**
-1. Check `docs/development/AGENT_COORDINATION.md` for conflicts
-2. Document your changes in coordination doc
-3. Consider using git worktree for isolation
-4. Coordinate with other agents if needed
+1. **MANDATORY: Query for conflicts** - `./scripts/query-agent-coordination.sh check-file <file-path>`
+2. **MANDATORY: Check coordination doc** - `docs/development/workflow/AGENT_COORDINATION.md`
+3. **MANDATORY: Document your changes** - Add entry to coordination doc
+4. **STILL use git worktree** - Isolation is mandatory even for shared files
+5. **Exception**: Only if coordination explicitly requires shared workspace (must be documented)
+6. **Coordinate conflicts** - Use query script to find file owners and resolve conflicts
+
+**Communication Protocol (PRIORITY 1 ENHANCEMENT):**
+- ✅ **Query file ownership**: `./scripts/query-agent-coordination.sh who-owns <file>`
+- ✅ **Check for conflicts**: `./scripts/query-agent-coordination.sh check-conflicts <file>...`
+- ✅ **List active work**: `./scripts/query-agent-coordination.sh list-active`
+- ✅ **Document your work**: Add entry to `AGENT_COORDINATION.md` with role tags if applicable
+- ✅ **See**: `docs/development/workflow/AGENT_COMMUNICATION_PROTOCOL.md` for complete protocol
 
 ## Workflow Enforcement
 
@@ -71,11 +163,12 @@ git checkout -b feature/<task-description>
    - Discover relevant rules
    - Identify available tools
 
-2. **If on main, STOP and create branch:**
+2. **If on main, STOP and create isolated worktree:**
    ```bash
-   git checkout -b feature/<task-description>
-   # Or for file system isolation:
+   # MANDATORY: Use worktree for isolation
    ./scripts/create-worktree.sh <task-name>
+   cd ../electric-sheep-<task-name>
+   # Now working in isolated directory
    ```
 
 3. **Discover relevant rules:**
@@ -91,7 +184,7 @@ git checkout -b feature/<task-description>
    This will:
    - Check for shared file conflicts
    - Warn about high-risk files
-   - Suggest worktree usage if needed
+   - **Verify worktree is being used** (mandatory)
 
 5. **After work, update coordination doc:**
    - Mark work as "In Progress" or "Complete"
@@ -133,6 +226,23 @@ git checkout -b feature/<task-description>
 
 **See:** `.cursor/rules/frequent-commits.mdc` for complete frequent commit guidelines
 
+## Pre-PR Checklist (MANDATORY)
+
+**CRITICAL: Run automated pre-PR check before creating ANY Pull Request:**
+
+```bash
+./scripts/pre-pr-check.sh
+```
+
+This script automatically verifies:
+1. ✅ **Branch sync status** - Errors if behind main
+2. ✅ **No uncommitted changes** - Warns if present
+3. ✅ **No file conflicts** - Checks modified files against active work
+4. ✅ **Coordination checked** - Verifies branch is documented in `AGENT_COORDINATION.md`
+5. ✅ **Test readiness** - Reminds to run tests
+
+**If the script reports errors or warnings, address them before proceeding with PR creation.**
+
 ## Related Rules
 - `.cursor/rules/branch-synchronization.mdc` - **CRITICAL**: Branch sync and conflict prevention
 - `.cursor/rules/frequent-commits.mdc` - Commit frequency guidelines
@@ -141,11 +251,15 @@ git checkout -b feature/<task-description>
 
 ## Error Prevention
 
-**STOP and fix if:**
-- ❌ On `main` branch → Create feature branch
-- ❌ Tests failing → Fix before proceeding
-- ❌ Shared file conflict → Check coordination, use worktree
+**If you detect these conditions, STOP and fix:**
+
+- ❌ User is on `main` branch → Create isolated worktree immediately
+- ❌ Not using worktree → Create worktree before any work (MANDATORY)
 - ❌ Branch name doesn't follow convention → Rename branch
+- ❌ Modifying shared file without coordination → Check coordination doc first
+- ❌ Tests failing → Fix tests before proceeding
+- ❌ Uncommitted work on `main` → Move to worktree
+- ❌ File system conflicts → Use git worktree for isolation (should already be using it)
 
 ## Examples
 
@@ -155,5 +269,121 @@ git checkout -b feature/<task-description>
 - Cleanup automation: `scripts/post-merge-cleanup.sh`
 
 **See documentation:**
-- Multi-agent workflow: `docs/development/MULTI_AGENT_WORKFLOW.md`
-- Coordination: `docs/development/AGENT_COORDINATION.md`
+- Multi-agent workflow: `docs/development/workflow/MULTI_AGENT_WORKFLOW.md`
+- Coordination: `docs/development/workflow/AGENT_COORDINATION.md`
+
+```bash
+./scripts/post-merge-cleanup.sh <pr-number>
+```
+
+This script automatically:
+- Checks other active work (worktrees and branches)
+- Verifies PR merge status
+- Switches to main and pulls latest
+- Deletes merged branches
+- Removes associated worktrees
+- Cleans up temp branches
+- Prunes stale worktree references
+
+**Manual cleanup (if automation unavailable):**
+
+### Step 0: Check Other Agents and Worktrees (REQUIRED)
+
+**Before cleaning up, ALWAYS check and report on other active work:**
+
+1. **List all worktrees:**
+   ```bash
+   git worktree list
+   ```
+
+2. **List all branches (local and remote):**
+   ```bash
+   git branch -a
+   ```
+
+3. **Check for other active work:**
+   ```bash
+   # List all worktrees with their branches
+   git worktree list --porcelain | grep -E "^(worktree|HEAD|branch)" | paste - - -
+   
+   # List all feature branches
+   git branch | grep -E "^  (feature|fix|refactor|docs|test)/"
+   
+   # List remote branches
+   git branch -r | grep -E "(feature|fix|refactor|docs|test)/"
+   ```
+
+4. **Report status to user:**
+   - List all worktrees and their associated branches
+   - List all feature branches (local and remote)
+   - Describe the status of each (active, merged, stale)
+   - Ask user to verify before deleting anything
+
+**Example output format:**
+```
+Active Worktrees:
+  /path/to/electric-sheep-runtime-visual-evaluation [feature/runtime-visual-evaluation-architecture] - Active work
+  /path/to/electric-sheep-other-work [feature/other-task] - Active work
+
+Active Branches:
+  feature/runtime-visual-evaluation-architecture - Has unmerged commits
+  feature/other-task - Has unmerged commits
+  feature/aws-bedrock-security-goals - MERGED (ready to delete)
+
+Please verify these are correct before cleanup proceeds.
+```
+
+### Step 1: Switch to Main Branch
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+### Step 2: Delete Merged Feature Branch
+   ```bash
+   git branch -d feature/<branch-name>
+   # Use -D if branch has unmerged commits (shouldn't happen if PR merged)
+   ```
+
+### Step 3: Remove Worktree (if used)
+   ```bash
+   git worktree remove ../electric-sheep-<task-name>
+   # Or if worktree directory was deleted manually:
+   git worktree prune
+   ```
+
+### Step 4: Delete Duplicate/Old Branches
+   ```bash
+   # Check for duplicate branches (e.g., -rebased, -old, -backup)
+   git branch | grep <branch-name>
+   # Delete if duplicate: git branch -D <duplicate-branch>
+   ```
+
+### Step 5: Delete Temp/Test Branches
+   ```bash
+   # Delete branches starting with temp/, tmp/, test-merge, etc.
+   git branch | grep -E "^(temp|tmp|test-)" | xargs git branch -D
+   ```
+
+**Why this matters:**
+- Prevents branch clutter
+- Avoids confusion about which branch to use
+- Keeps repository state clean
+- Makes it easier to identify active work
+
+**Best Practice:**
+- Always start new work from a fresh `main` branch
+- Never continue work on a merged branch
+- Create a new feature branch for follow-up work
+
+## Multi-Agent Coordination
+
+**Always:**
+- Check `docs/development/workflow/AGENT_COORDINATION.md` before starting
+- **Use git worktree for isolation** - MANDATORY for all agents
+- Document your work in coordination doc
+- Update coordination doc when work status changes
+- Coordinate if files overlap with other agents
+- **Exception**: Only skip worktree if coordination explicitly requires shared workspace (must be documented)
+
+**See:** `docs/development/workflow/MULTI_AGENT_WORKFLOW.md` for complete guidelines

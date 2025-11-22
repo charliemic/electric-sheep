@@ -1,0 +1,132 @@
+name: Update Issue Labels
+
+# Automatically update issue status labels based on PR lifecycle
+# - When PR created: status:in-progress → status:review
+# - When PR merged: status:review → status:completed
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  update-on-pr-open:
+    name: Update Issue Status to Review
+    if: github.event.action == 'opened' || github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract issue numbers from PR
+        id: extract-issues
+        run: |
+          # Extract issue numbers from PR body and title
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          # Find issue references (e.g., "Fixes #52", "Closes #55", "#60")
+          ISSUES=$(echo -e "$PR_BODY\n$PR_TITLE" | grep -oE '#[0-9]+' | sed 's/#//' | sort -u | tr '\n' ' ' || echo "")
+          
+          if [ -z "$ISSUES" ]; then
+            echo "No issue numbers found in PR"
+            echo "issues=" >> $GITHUB_OUTPUT
+          else
+            echo "Found issues: $ISSUES"
+            echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update issue status to review
+        if: steps.extract-issues.outputs.issues != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for issue in ${{ steps.extract-issues.outputs.issues }}; do
+            echo "Updating issue #$issue to status:review..."
+            
+            # Get current labels (handle errors gracefully)
+            CURRENT_LABELS=$(gh issue view "$issue" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+            
+            if [ -z "$CURRENT_LABELS" ]; then
+              echo "  ⚠️  Issue #$issue not found or not accessible, skipping"
+              continue
+            fi
+            
+            # Check if issue has status:in-progress
+            if echo "$CURRENT_LABELS" | grep -q "status:in-progress"; then
+              # Update to status:review
+              gh issue edit "$issue" \
+                --remove-label "status:in-progress" \
+                --add-label "status:review" \
+                --body "+" 2>/dev/null || true
+              echo "  ✅ Issue #$issue updated to status:review"
+            elif echo "$CURRENT_LABELS" | grep -q "status:review"; then
+              echo "  ℹ️  Issue #$issue already in status:review"
+            else
+              echo "  ⚠️  Issue #$issue doesn't have status:in-progress, skipping"
+            fi
+          done
+
+  update-on-pr-merge:
+    name: Update Issue Status to Completed
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract issue numbers from PR
+        id: extract-issues
+        run: |
+          # Extract issue numbers from PR body and title
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          # Find issue references (e.g., "Fixes #52", "Closes #55", "#60")
+          ISSUES=$(echo -e "$PR_BODY\n$PR_TITLE" | grep -oE '#[0-9]+' | sed 's/#//' | sort -u | tr '\n' ' ' || echo "")
+          
+          if [ -z "$ISSUES" ]; then
+            echo "No issue numbers found in PR"
+            echo "issues=" >> $GITHUB_OUTPUT
+          else
+            echo "Found issues: $ISSUES"
+            echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update issue status to completed
+        if: steps.extract-issues.outputs.issues != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for issue in ${{ steps.extract-issues.outputs.issues }}; do
+            echo "Updating issue #$issue to status:completed..."
+            
+            # Get current labels (handle errors gracefully)
+            CURRENT_LABELS=$(gh issue view "$issue" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+            
+            if [ -z "$CURRENT_LABELS" ]; then
+              echo "  ⚠️  Issue #$issue not found or not accessible, skipping"
+              continue
+            fi
+            
+            # Remove any status label and add status:completed
+            STATUS_LABEL=$(echo "$CURRENT_LABELS" | grep -E "^status:" || echo "")
+            
+            if [ -n "$STATUS_LABEL" ]; then
+              gh issue edit "$issue" \
+                --remove-label "$STATUS_LABEL" \
+                --add-label "status:completed" \
+                --body "+" 2>/dev/null || true
+              echo "  ✅ Issue #$issue updated to status:completed"
+            else
+              # No status label, just add completed
+              gh issue edit "$issue" \
+                --add-label "status:completed" \
+                --body "+" 2>/dev/null || true
+              echo "  ✅ Issue #$issue marked as status:completed"
+            fi
+          done
+
