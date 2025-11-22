@@ -99,6 +99,16 @@ echo "3️⃣  Checking agent coordination..."
 if [ -f "$COORDINATION_DOC" ]; then
     echo "   ✅ Coordination doc found"
     
+    # Check for coordinator assignments (NEW - triggers agents)
+    if [ -f "docs/development/workflow/AGENT_COORDINATOR_ASSIGNMENTS.md" ]; then
+        echo "   📋 Coordinator Assignments Available:"
+        echo "   → Check: docs/development/workflow/AGENT_COORDINATOR_ASSIGNMENTS.md"
+        # Show available assignments
+        if grep -q "\[AVAILABLE\]\|\[ASSIGNED\]" "docs/development/workflow/AGENT_COORDINATOR_ASSIGNMENTS.md" 2>/dev/null; then
+            echo "   → Found new assignments - review before starting work"
+        fi
+    fi
+    
     # Run coordination check script if it exists
     if [ -f "scripts/check-agent-coordination.sh" ]; then
         echo "   → Running coordination check..."

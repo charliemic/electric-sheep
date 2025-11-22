@@ -17,7 +17,7 @@ import { execSync } from 'child_process';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { savePage, loadPage, listPages, generatePageHTML } from './content-author.js';
-import { requireAuth, requireAdmin, isValidEmail, validatePassword, sanitizeEmail, refreshToken } from './auth-middleware.js';
+import { requireAuth, requireAdmin, authenticate, isValidEmail, validatePassword, sanitizeEmail, refreshToken } from './auth-middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1619,10 +1619,9 @@ function setupAuthRoutes() {
 // Authoring routes (admin only)
 function setupAuthoringRoutes() {
     // Authoring interface (admin only)
+    // Note: requireAuth hook already called authenticate, but we need to check admin role
     fastify.get('/author', async (request, reply) => {
-        await authenticate(request, reply);
-        if (reply.statusCode === 401) return;
-        
+        // User is already authenticated by requireAuth hook
         requireAdmin(request, reply);
         if (reply.statusCode === 403) return;
         
@@ -1632,10 +1631,8 @@ function setupAuthoringRoutes() {
     });
     
     // New page editor (admin only)
+    // Note: requireAuth hook already called authenticate
     fastify.get('/author/new', async (request, reply) => {
-        await authenticate(request, reply);
-        if (reply.statusCode === 401) return;
-        
         requireAdmin(request, reply);
         if (reply.statusCode === 403) return;
         
@@ -1644,10 +1641,8 @@ function setupAuthoringRoutes() {
     });
     
     // Edit page (admin only)
+    // Note: requireAuth hook already called authenticate
     fastify.get('/author/edit/:id', async (request, reply) => {
-        await authenticate(request, reply);
-        if (reply.statusCode === 401) return;
-        
         requireAdmin(request, reply);
         if (reply.statusCode === 403) return;
         
@@ -1665,10 +1660,8 @@ function setupAuthoringRoutes() {
     });
     
     // Save page (admin only)
+    // Note: requireAuth hook already called authenticate
     fastify.post('/api/author/save', async (request, reply) => {
-        await authenticate(request, reply);
-        if (reply.statusCode === 401) return;
-        
         requireAdmin(request, reply);
         if (reply.statusCode === 403) return;
         
@@ -1698,10 +1691,8 @@ function setupAuthoringRoutes() {
     });
     
     // List pages (admin only)
+    // Note: requireAuth hook already called authenticate
     fastify.get('/api/author/pages', async (request, reply) => {
-        await authenticate(request, reply);
-        if (reply.statusCode === 401) return;
-        
         requireAdmin(request, reply);
         if (reply.statusCode === 403) return;
         

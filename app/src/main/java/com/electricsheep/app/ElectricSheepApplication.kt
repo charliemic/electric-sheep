@@ -32,6 +32,7 @@ class ElectricSheepApplication : Application() {
     private lateinit var environmentManager: EnvironmentManager
     private var moodRepository: MoodRepository? = null
     private var supabaseClient: SupabaseClient? = null
+    private var authProvider: AuthProvider? = null
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
@@ -118,8 +119,8 @@ class ElectricSheepApplication : Application() {
      */
     private fun initializeAuth(supabaseClient: SupabaseClient?): UserManager {
         Logger.debug("ElectricSheepApplication", "Initialising authentication")
-        val authProvider = AuthModule.createAuthProvider(this, supabaseClient)
-        val userManager = AuthModule.createUserManager(authProvider)
+        authProvider = AuthModule.createAuthProvider(this, supabaseClient)
+        val userManager = AuthModule.createUserManager(authProvider!!)
 
         // Initialise user manager (loads current user if authenticated)
         applicationScope.launch {
@@ -254,7 +255,9 @@ class ElectricSheepApplication : Application() {
      * Returns null if auth provider is not available.
      */
     fun getAuthProvider(): AuthProvider? {
-        return userManager.authProvider
+        // Note: UserManager doesn't expose authProvider directly
+        // Return the authProvider we stored during initialization
+        return authProvider
     }
 
     /**

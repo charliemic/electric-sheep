@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.electricsheep.app.ElectricSheepApplication
 import com.electricsheep.app.auth.MfaManager
 import com.electricsheep.app.auth.SupabaseAuthProvider
@@ -119,11 +121,11 @@ fun AppNavGraph(navController: NavHostController) {
         composable(
             route = Screen.MfaVerifyRoute,
             arguments = listOf(
-                androidx.navigation.NavArgument("challengeId") {
-                    type = androidx.navigation.NavType.StringType
+                navArgument("challengeId") {
+                    type = NavType.StringType
                 },
-                androidx.navigation.NavArgument("userId") {
-                    type = androidx.navigation.NavType.StringType
+                navArgument("userId") {
+                    type = NavType.StringType
                 }
             )
         ) { backStackEntry ->

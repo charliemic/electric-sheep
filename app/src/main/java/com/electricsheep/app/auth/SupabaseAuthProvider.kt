@@ -8,7 +8,6 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.user.UserSession
-import io.github.jan.supabase.gotrue.mfa
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -191,11 +190,20 @@ class SupabaseAuthProvider(
         return try {
             Logger.info("SupabaseAuthProvider", "Verifying MFA code for sign-in: challenge=$challengeId")
             
-            // Verify MFA code
-            // Note: Need to verify Supabase SDK API for MFA verification during sign-in
-            // May be different from enrollment verification
-            supabaseClient.auth.mfa.verify(
+            // Get factor ID from list of factors (should only be one TOTP factor)
+            val factors = supabaseClient.auth.mfa.retrieveFactorsForCurrentUser()
+            val totpFactor = factors.firstOrNull()
+            
+            if (totpFactor == null) {
+                Logger.error("SupabaseAuthProvider", "No MFA factor found for verification")
+                return Result.failure(AuthError.Generic("No MFA factor found. Please set up MFA first."))
+            }
+            
+            // Verify MFA code during sign-in
+            // Use verifyChallenge to verify the MFA challenge
+            supabaseClient.auth.mfa.verifyChallenge(
                 challengeId = challengeId,
+                factorId = totpFactor.id,
                 code = code
             )
             

@@ -2,10 +2,10 @@ package com.electricsheep.app.auth
 
 import com.electricsheep.app.util.Logger
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.mfa.MfaFactor
-import io.github.jan.supabase.gotrue.mfa.MfaResponse
-import io.github.jan.supabase.gotrue.mfa.TotpFactor
-import io.github.jan.supabase.gotrue.mfa
+import io.github.jan.supabase.gotrue.mfa.FactorType
+import io.github.jan.supabase.gotrue.user.UserMfaFactor
 
 /**
  * Manager for Multi-Factor Authentication (MFA) operations.
@@ -53,10 +53,10 @@ class MfaManager(
      * 
      * @return List of enrolled MFA factors
      */
-    suspend fun listFactors(): List<MfaFactor> {
+    suspend fun listFactors(): List<UserMfaFactor> {
         return try {
             Logger.debug("MfaManager", "Listing MFA factors")
-            val factors = supabaseClient.auth.mfa.listFactors()
+            val factors = supabaseClient.auth.mfa.retrieveFactorsForCurrentUser()
             Logger.info("MfaManager", "Found ${factors.size} MFA factor(s)")
             factors
         } catch (e: Exception) {
@@ -82,19 +82,22 @@ class MfaManager(
      * @param friendlyName Optional friendly name for the factor (e.g., "My Phone")
      * @return MfaResponse containing QR code data and challenge ID
      */
-    suspend fun startEnrollment(friendlyName: String? = null): Result<MfaResponse> {
+    suspend fun startEnrollment(friendlyName: String? = null): Result<MfaFactor<FactorType.TOTP.Response>> {
         return try {
             Logger.info("MfaManager", "Starting MFA enrollment${friendlyName?.let { " with name: $it" } ?: ""}")
             
-            val response = supabaseClient.auth.mfa.enroll(
-                factorType = TotpFactor,
+            val factor = supabaseClient.auth.mfa.enroll(
+                factorType = FactorType.TOTP,
                 friendlyName = friendlyName
             )
             
             Logger.info("MfaManager", "MFA enrollment started successfully")
-            Logger.debug("MfaManager", "Challenge ID: ${response.challengeId}, QR code available: ${response.qrCode != null}")
+            // Access qrCode and secret from the response data
+            // MfaFactor<FactorType.TOTP.Response> contains the response data in factor.data
+            val responseData = factor.data
+            Logger.debug("MfaManager", "QR code available: ${responseData.qrCode != null}, Secret available: ${responseData.secret != null}")
             
-            Result.success(response)
+            Result.success(factor)
         } catch (e: Exception) {
             Logger.error("MfaManager", "Failed to start MFA enrollment", e)
             Result.failure(MfaError.EnrollmentFailed(e))
@@ -107,21 +110,26 @@ class MfaManager(
      * After user scans QR code and gets a code from their authenticator app,
      * call this method to complete enrollment.
      * 
-     * @param challengeId Challenge ID from `startEnrollment()`
+     * Note: The enrollment response contains a factor `id`. We use `createChallengeAndVerify`
+     * to create a challenge and verify it in one call, or we may need to create a challenge
+     * first and then verify. The exact API may vary - check SDK docs.
+     * 
+     * @param response Enrollment response from `startEnrollment()` containing factor ID
      * @param code TOTP code from authenticator app (6 digits)
      * @return Result indicating success or failure
      */
-    suspend fun verifyEnrollment(challengeId: String, code: String): Result<Unit> {
+    suspend fun verifyEnrollment(factor: MfaFactor<FactorType.TOTP.Response>, code: String): Result<Unit> {
         return try {
-            Logger.info("MfaManager", "Verifying MFA enrollment with challenge: $challengeId")
+            Logger.info("MfaManager", "Verifying MFA enrollment with factor ID: ${factor.id}")
             
             if (code.length != 6 || !code.all { it.isDigit() }) {
                 Logger.warn("MfaManager", "Invalid TOTP code format: $code (expected 6 digits)")
                 return Result.failure(MfaError.InvalidCode("TOTP code must be 6 digits"))
             }
             
-            supabaseClient.auth.mfa.verify(
-                challengeId = challengeId,
+            // Use createChallengeAndVerify to verify enrollment
+            supabaseClient.auth.mfa.createChallengeAndVerify(
+                factorId = factor.id,
                 code = code
             )
             
@@ -143,17 +151,18 @@ class MfaManager(
      * @param code TOTP code from authenticator app (6 digits)
      * @return Result indicating success or failure
      */
-    suspend fun verifyLogin(challengeId: String, code: String): Result<Unit> {
+    suspend fun verifyLogin(challengeId: String, factorId: String, code: String): Result<Unit> {
         return try {
-            Logger.info("MfaManager", "Verifying MFA code for login with challenge: $challengeId")
+            Logger.info("MfaManager", "Verifying MFA code for login with challenge: $challengeId, factor: $factorId")
             
             if (code.length != 6 || !code.all { it.isDigit() }) {
                 Logger.warn("MfaManager", "Invalid TOTP code format: $code (expected 6 digits)")
                 return Result.failure(MfaError.InvalidCode("TOTP code must be 6 digits"))
             }
             
-            supabaseClient.auth.mfa.verify(
+            supabaseClient.auth.mfa.verifyChallenge(
                 challengeId = challengeId,
+                factorId = factorId,
                 code = code
             )
             

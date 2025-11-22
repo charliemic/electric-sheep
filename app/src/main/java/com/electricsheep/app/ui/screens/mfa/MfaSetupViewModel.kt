@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.electricsheep.app.auth.MfaError
 import com.electricsheep.app.auth.MfaManager
 import com.electricsheep.app.util.Logger
-import io.github.jan.supabase.gotrue.mfa.MfaResponse
+import io.github.jan.supabase.gotrue.mfa.FactorType
+import io.github.jan.supabase.gotrue.mfa.MfaFactor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,8 +21,8 @@ class MfaSetupViewModel(
 ) : ViewModel() {
     
     // Enrollment state
-    private val _enrollmentResponse = MutableStateFlow<MfaResponse?>(null)
-    val enrollmentResponse: StateFlow<MfaResponse?> = _enrollmentResponse.asStateFlow()
+    private val _enrollmentResponse = MutableStateFlow<MfaFactor<FactorType.TOTP.Response>?>(null)
+    val enrollmentResponse: StateFlow<MfaFactor<FactorType.TOTP.Response>?> = _enrollmentResponse.asStateFlow()
     
     // Verification code input
     private val _verificationCode = MutableStateFlow("")
@@ -47,9 +48,9 @@ class MfaSetupViewModel(
             _errorMessage.value = null
             
             mfaManager.startEnrollment()
-                .onSuccess { response: io.github.jan.supabase.gotrue.mfa.MfaResponse ->
+                .onSuccess { factor: MfaFactor<FactorType.TOTP.Response> ->
                     Logger.info("MfaSetupViewModel", "MFA enrollment started successfully")
-                    _enrollmentResponse.value = response
+                    _enrollmentResponse.value = factor
                 }
                 .onFailure { error: Throwable ->
                     Logger.error("MfaSetupViewModel", "MFA enrollment failed", error)
@@ -79,16 +80,13 @@ class MfaSetupViewModel(
     fun verifyEnrollment() {
         val code = _verificationCode.value
         val enrollmentResponse = _enrollmentResponse.value
-        // Note: MfaResponse structure from Supabase SDK may differ
-        // Update based on actual SDK response structure
-        val challengeId = enrollmentResponse?.challengeId
         
         if (code.length != 6) {
             _errorMessage.value = "Please enter a 6-digit code from your authenticator app."
             return
         }
         
-        if (challengeId == null) {
+        if (enrollmentResponse == null) {
             _errorMessage.value = "Enrollment not started. Please try again."
             return
         }
@@ -97,7 +95,7 @@ class MfaSetupViewModel(
             _isLoading.value = true
             _errorMessage.value = null
             
-            mfaManager.verifyEnrollment(challengeId, code)
+            mfaManager.verifyEnrollment(enrollmentResponse, code)
                 .onSuccess {
                     Logger.info("MfaSetupViewModel", "MFA enrollment verified successfully")
                     _isEnrollmentComplete.value = true

@@ -19,10 +19,16 @@ auth_admin_validate_env() {
         return 1
     fi
     
-    if [ -z "${SUPABASE_SECRET_KEY:-}" ]; then
-        echo -e "${RED}Error: SUPABASE_SECRET_KEY environment variable is not set${NC}" >&2
+    # Check for either SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY (for compatibility)
+    if [ -z "${SUPABASE_SECRET_KEY:-}" ] && [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+        echo -e "${RED}Error: SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY environment variable is not set${NC}" >&2
         echo -e "${YELLOW}Note: Use secret key (sb_secret_...) for Admin API access${NC}" >&2
         return 1
+    fi
+    
+    # Use SUPABASE_SECRET_KEY if set, otherwise fall back to SUPABASE_SERVICE_ROLE_KEY
+    if [ -z "${SUPABASE_SECRET_KEY:-}" ]; then
+        SUPABASE_SECRET_KEY="${SUPABASE_SERVICE_ROLE_KEY}"
     fi
     
     return 0
@@ -141,6 +147,121 @@ auth_admin_create_user() {
         echo -e "${RED}Error creating user ${email}: ${body}${NC}" >&2
         return 1  # Error
     fi
+}
+
+# Update user metadata (e.g., role, display_name)
+#
+# Arguments:
+#   $1: User ID (UUID string) or email
+#   $2: User metadata JSON object (as string, e.g., '{"role":"admin","display_name":"Admin User"}')
+#
+# Returns:
+#   0 on success, 1 on failure
+auth_admin_update_user_metadata() {
+    local user_identifier="$1"
+    local user_metadata="$2"
+    
+    if ! auth_admin_validate_env; then
+        return 1
+    fi
+    
+    if [ -z "$user_metadata" ]; then
+        echo -e "${RED}Error: User metadata is required${NC}" >&2
+        return 1
+    fi
+    
+    # First, get the user ID if email was provided
+    local user_id="$user_identifier"
+    if [[ "$user_identifier" == *"@"* ]]; then
+        # It's an email, need to get user ID first
+        local api_url="${SUPABASE_URL}/auth/v1/admin/users?email=eq.${user_identifier}"
+        local response=$(curl -s -w "\n%{http_code}" -X GET \
+            -H "apikey: ${SUPABASE_SECRET_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+            -H "Content-Type: application/json" \
+            "$api_url" 2>/dev/null || echo "ERROR")
+        
+        local http_code=$(echo "$response" | tail -n1)
+        local body=$(echo "$response" | sed '$d')
+        
+        if [ "$http_code" = "200" ]; then
+            user_id=$(echo "$body" | jq -r '.users[0].id' 2>/dev/null || echo "")
+            if [ -z "$user_id" ] || [ "$user_id" = "null" ]; then
+                echo -e "${RED}Error: User not found: ${user_identifier}${NC}" >&2
+                return 1
+            fi
+        else
+            echo -e "${RED}Error finding user ${user_identifier}: ${body}${NC}" >&2
+            return 1
+        fi
+    fi
+    
+    # Update user metadata
+    local api_url="${SUPABASE_URL}/auth/v1/admin/users/${user_id}"
+    
+    # Get existing user data to preserve current metadata
+    local get_response=$(curl -s -w "\n%{http_code}" -X GET \
+        -H "apikey: ${SUPABASE_SECRET_KEY}" \
+        -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+        -H "Content-Type: application/json" \
+        "$api_url" 2>/dev/null || echo "ERROR")
+    
+    local get_http_code=$(echo "$get_response" | tail -n1)
+    local get_body=$(echo "$get_response" | sed '$d')
+    
+    if [ "$get_http_code" != "200" ]; then
+        echo -e "${RED}Error fetching user: ${get_body}${NC}" >&2
+        return 1
+    fi
+    
+    # Extract existing metadata (response format: {"user_metadata": {...}} or {"user": {"user_metadata": {...}}})
+    local existing_metadata=$(echo "$get_body" | jq -r '.user_metadata // .user.user_metadata // {}' 2>/dev/null || echo "{}")
+    
+    # Merge metadata (new values override existing)
+    local merged_metadata=$(echo "$existing_metadata" | jq -c ". + ${user_metadata}" 2>/dev/null || echo "$user_metadata")
+    
+    local response=$(curl -s -w "\n%{http_code}" -X PUT \
+        -H "apikey: ${SUPABASE_SECRET_KEY}" \
+        -H "Authorization: Bearer ${SUPABASE_SECRET_KEY}" \
+        -H "Content-Type: application/json" \
+        -d "{\"user_metadata\":${merged_metadata}}" \
+        "$api_url" 2>/dev/null || echo "ERROR")
+    
+    local http_code=$(echo "$response" | tail -n1)
+    local body=$(echo "$response" | sed '$d')
+    
+    if [ "$http_code" = "200" ]; then
+        echo -e "${GREEN}User metadata updated successfully${NC}"
+        return 0  # Success
+    else
+        echo -e "${RED}Error updating user metadata: ${body}${NC}" >&2
+        return 1  # Error
+    fi
+}
+
+# Set user role (admin or user)
+#
+# Arguments:
+#   $1: User ID (UUID string) or email
+#   $2: Role ("admin" or "user")
+#
+# Returns:
+#   0 on success, 1 on failure
+auth_admin_set_user_role() {
+    local user_identifier="$1"
+    local role="$2"
+    
+    if [ -z "$role" ]; then
+        echo -e "${RED}Error: Role is required (admin or user)${NC}" >&2
+        return 1
+    fi
+    
+    if [ "$role" != "admin" ] && [ "$role" != "user" ]; then
+        echo -e "${RED}Error: Role must be 'admin' or 'user'${NC}" >&2
+        return 1
+    fi
+    
+    auth_admin_update_user_metadata "$user_identifier" "{\"role\":\"${role}\"}"
 }
 
 

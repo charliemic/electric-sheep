@@ -118,10 +118,11 @@ fun MfaSetupScreen(
             )
             
             // QR Code Display
-            enrollmentResponse?.let { response ->
-                // Note: MfaResponse structure from Supabase SDK may differ
-                // Update based on actual SDK response structure
-                val qrCodeData = response.qrCode ?: ""
+            enrollmentResponse?.let { factor ->
+                // Access response data from factor
+                // MfaFactor<FactorType.TOTP.Response> contains the response data in factor.data
+                val responseData = factor.data
+                val qrCodeData = responseData.qrCode ?: ""
                 if (qrCodeData.isNotEmpty()) {
                     val qrCodeBitmap = rememberQrCodeBitmap(qrCodeData, 256)
                     
@@ -165,7 +166,7 @@ fun MfaSetupScreen(
                 )
                 
                 // Secret key (for manual entry)
-                val secret = response.secret
+                val secret = responseData.secret
                 if (secret != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -174,7 +175,7 @@ fun MfaSetupScreen(
                         )
                     ) {
                         Text(
-                            text = secret,
+                            text = secret ?: "",
                             style = MaterialTheme.typography.bodyLarge,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                             modifier = Modifier

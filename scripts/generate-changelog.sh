@@ -135,16 +135,17 @@ generate_changelog_entry() {
         return
     fi
     
-    # Categorize commits
-    declare -A categories
+    # Categorize commits (using temp files for compatibility)
+    temp_dir=$(mktemp -d)
+    category_order=("Added" "Changed" "Fixed" "Performance" "Documentation" "Testing" "Breaking_Changes" "Miscellaneous")
+    
     while IFS= read -r commit; do
         local category=$(categorize_commit "$commit" "$component")
         local formatted=$(format_commit_message "$commit")
         
-        if [[ -z "${categories[$category]}" ]]; then
-            categories[$category]=""
-        fi
-        categories[$category]+="- $formatted"$'\n'
+        # Normalize category name for filename
+        local category_file="${category// /_}"
+        echo "- $formatted" >> "${temp_dir}/${category_file}.txt"
     done <<< "$commits"
     
     # Generate changelog entry
@@ -156,13 +157,18 @@ generate_changelog_entry() {
     entry+=$'\n'
     
     # Add categories in order
-    for category in "Added" "Changed" "Fixed" "Performance" "Documentation" "Testing" "Breaking Changes" "Miscellaneous"; do
-        if [[ -n "${categories[$category]}" ]]; then
-            entry+="### $category"$'\n'
-            entry+="${categories[$category]}"
+    for category in "${category_order[@]}"; do
+        local category_file="${temp_dir}/${category// /_}.txt"
+        if [[ -f "$category_file" ]]; then
+            local display_name="${category//_/ }"
+            entry+="### $display_name"$'\n'
+            entry+=$(cat "$category_file")
             entry+=$'\n'
         fi
     done
+    
+    # Cleanup
+    rm -rf "$temp_dir"
     
     echo "$entry"
 }
@@ -186,18 +192,26 @@ if [[ "$COMPONENT" == "all" ]]; then
     if [[ -n "$entry" ]]; then
         # Insert into CHANGELOG.md after [Unreleased] section
         if [[ -f "$CHANGELOG_FILE" ]]; then
-            local temp_file=$(mktemp)
-            awk -v entry="$entry" '
+            entry_file=$(mktemp)
+            echo "$entry" > "$entry_file"
+            
+            temp_file=$(mktemp)
+            awk '
                 /^## \[Unreleased\]/ {
                     print
                     getline
                     print
-                    print entry
+                    # Insert entry from file
+                    while ((getline line < entry_file) > 0) {
+                        print line
+                    }
+                    close(entry_file)
                     next
                 }
                 { print }
-            ' "$CHANGELOG_FILE" > "$temp_file"
+            ' entry_file="$entry_file" "$CHANGELOG_FILE" > "$temp_file"
             mv "$temp_file" "$CHANGELOG_FILE"
+            rm -f "$entry_file"
             echo -e "${GREEN}Changelog updated: $CHANGELOG_FILE${NC}"
         else
             echo "$entry" > "$CHANGELOG_FILE"
@@ -222,18 +236,26 @@ else
     if [[ -n "$entry" ]]; then
         # Insert into CHANGELOG.md after [Unreleased] section
         if [[ -f "$CHANGELOG_FILE" ]]; then
-            local temp_file=$(mktemp)
-            awk -v entry="$entry" '
+            entry_file=$(mktemp)
+            echo "$entry" > "$entry_file"
+            
+            temp_file=$(mktemp)
+            awk '
                 /^## \[Unreleased\]/ {
                     print
                     getline
                     print
-                    print entry
+                    # Insert entry from file
+                    while ((getline line < entry_file) > 0) {
+                        print line
+                    }
+                    close(entry_file)
                     next
                 }
                 { print }
-            ' "$CHANGELOG_FILE" > "$temp_file"
+            ' entry_file="$entry_file" "$CHANGELOG_FILE" > "$temp_file"
             mv "$temp_file" "$CHANGELOG_FILE"
+            rm -f "$entry_file"
             echo -e "${GREEN}Changelog updated: $CHANGELOG_FILE${NC}"
         else
             echo "$entry" > "$CHANGELOG_FILE"
