@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.electricsheep.app.auth.MfaError
 import com.electricsheep.app.auth.MfaManager
-import com.electricsheep.app.auth.MfaResponse
 import com.electricsheep.app.util.Logger
+import io.github.jan.supabase.gotrue.mfa.MfaResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,11 +47,11 @@ class MfaSetupViewModel(
             _errorMessage.value = null
             
             mfaManager.startEnrollment()
-                .onSuccess { response ->
+                .onSuccess { response: io.github.jan.supabase.gotrue.mfa.MfaResponse ->
                     Logger.info("MfaSetupViewModel", "MFA enrollment started successfully")
                     _enrollmentResponse.value = response
                 }
-                .onFailure { error ->
+                .onFailure { error: Throwable ->
                     Logger.error("MfaSetupViewModel", "MFA enrollment failed", error)
                     _errorMessage.value = when (error) {
                         is MfaError.EnrollmentFailed -> "Failed to start MFA setup. Please try again."
@@ -78,7 +78,8 @@ class MfaSetupViewModel(
      */
     fun verifyEnrollment() {
         val code = _verificationCode.value
-        val challengeId = _enrollmentResponse.value?.challengeId
+        val enrollmentResponse = _enrollmentResponse.value
+        val challengeId = enrollmentResponse?.challengeId
         
         if (code.length != 6) {
             _errorMessage.value = "Please enter a 6-digit code from your authenticator app."

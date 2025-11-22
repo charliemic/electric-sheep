@@ -23,11 +23,22 @@ if (!existsSync(PAGES_DIR)) {
 }
 
 /**
- * Save authored page
+ * Save authored page (with user scoping)
+ * 
+ * @param {string} pageId - Page identifier
+ * @param {string} content - Page content (markdown)
+ * @param {object} metadata - Page metadata (title, theme, etc.)
+ * @param {string} userId - User ID of the creator (required)
+ * @returns {object} Saved page data
  */
-export function savePage(pageId, content, metadata = {}) {
+export function savePage(pageId, content, metadata = {}, userId) {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+  
   const pageData = {
     id: pageId,
+    userId, // Add user ID for scoping
     content,
     metadata: {
       title: metadata.title || 'Untitled Page',
@@ -35,14 +46,19 @@ export function savePage(pageId, content, metadata = {}) {
       updatedAt: new Date().toISOString(),
       theme: metadata.theme || 'light',
       includeTOC: metadata.includeTOC !== false,
+      isPublic: metadata.isPublic || false, // Public/private flag
       ...metadata
     }
   };
   
-  // If updating existing page, preserve createdAt
-  const existing = loadPage(pageId);
+  // If updating existing page, preserve createdAt and verify ownership
+  const existing = loadPage(pageId, userId);
   if (existing) {
     pageData.metadata.createdAt = existing.metadata.createdAt;
+    // Verify ownership
+    if (existing.userId !== userId) {
+      throw new Error('Access denied: You can only edit your own pages');
+    }
   }
   
   const filePath = join(PAGES_DIR, `${pageId}.json`);
@@ -52,9 +68,13 @@ export function savePage(pageId, content, metadata = {}) {
 }
 
 /**
- * Load authored page
+ * Load authored page (with access control)
+ * 
+ * @param {string} pageId - Page identifier
+ * @param {string} userId - User ID (optional, for access control)
+ * @returns {object|null} Page data or null if not found/access denied
  */
-export function loadPage(pageId) {
+export function loadPage(pageId, userId = null) {
   const filePath = join(PAGES_DIR, `${pageId}.json`);
   
   if (!existsSync(filePath)) {
@@ -62,13 +82,23 @@ export function loadPage(pageId) {
   }
   
   const content = readFileSync(filePath, 'utf8');
-  return JSON.parse(content);
+  const page = JSON.parse(content);
+  
+  // Check access permissions
+  if (userId && page.userId !== userId && !page.metadata.isPublic) {
+    return null; // User doesn't have access
+  }
+  
+  return page;
 }
 
 /**
- * List all pages
+ * List pages (filtered by user and public pages)
+ * 
+ * @param {string} userId - User ID (optional, filters to user's pages + public pages)
+ * @returns {array} List of pages
  */
-export function listPages() {
+export function listPages(userId = null) {
   if (!existsSync(PAGES_DIR)) {
     return [];
   }
@@ -81,16 +111,29 @@ export function listPages() {
         const page = JSON.parse(content);
         return {
           id: page.id,
+          userId: page.userId,
           title: page.metadata.title,
           createdAt: page.metadata.createdAt,
-          updatedAt: page.metadata.updatedAt
+          updatedAt: page.metadata.updatedAt,
+          isPublic: page.metadata.isPublic || false
         };
       } catch (e) {
         console.error(`Error reading page ${f}:`, e);
         return null;
       }
     })
-    .filter(p => p !== null)
+    .filter(p => {
+      if (p === null) return false;
+      
+      // Filter by user access
+      if (userId) {
+        // Return user's pages + public pages
+        return p.userId === userId || p.isPublic;
+      } else {
+        // Return only public pages
+        return p.isPublic;
+      }
+    })
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   
   return files;

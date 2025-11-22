@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,15 +18,16 @@ android {
         
         // Read version from version.properties (managed by bump-version.sh)
         val versionPropertiesFile = rootProject.file("version.properties")
-        val versionProperties = java.util.Properties()
-        if (versionPropertiesFile.exists()) {
-            versionProperties.load(versionPropertiesFile.inputStream())
+        val versionProperties = Properties().apply {
+            if (versionPropertiesFile.exists()) {
+                versionPropertiesFile.inputStream().use { load(it) }
+            }
         }
-        val versionName = versionProperties.getProperty("app.versionName", "1.0.0")
-        val versionCode = versionProperties.getProperty("app.versionCode", "1").toInt()
+        val appVersionName = versionProperties.getProperty("app.versionName", "1.0.0")
+        val appVersionCode = versionProperties.getProperty("app.versionCode", "1").toInt()
         
-        versionCode = versionCode
-        versionName = versionName
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         

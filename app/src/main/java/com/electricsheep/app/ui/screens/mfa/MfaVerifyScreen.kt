@@ -109,7 +109,7 @@ fun MfaVerifyScreen(
                 isError = errorMessage != null,
                 errorMessage = errorMessage,
                 supportingText = "Enter the 6-digit code from your authenticator app",
-                imeAction = androidx.compose.foundation.text.KeyboardOptions.ImeAction.Done
+                imeAction = androidx.compose.ui.text.input.ImeAction.Done
             )
             
             AccessibleButton(

@@ -33,5 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Note**: This changelog tracks changes across all components (Android App, Test Framework, HTML Viewer, Metrics Dashboard). Component-specific changes are noted where relevant.
+**Note**: This changelog tracks changes across all components (Android App, Test Framework, Metrics Dashboard). Component-specific changes are noted where relevant.
+
+**Note**: HTML Viewer functionality has been merged into Metrics Dashboard (content authoring feature).
 

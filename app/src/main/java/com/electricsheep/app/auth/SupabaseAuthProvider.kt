@@ -58,6 +58,27 @@ class SupabaseAuthProvider(
         }
         return email?.substringBefore("@")
     }
+    
+    /**
+     * Extract user role from user metadata.
+     * Defaults to USER if role is not set or invalid.
+     */
+    private fun extractRole(metadata: JsonObject?): UserRole {
+        return try {
+            val roleString = metadata?.get("role")?.toString()?.trim('"')
+            when (roleString) {
+                "admin" -> UserRole.ADMIN
+                "user", null -> UserRole.USER
+                else -> {
+                    Logger.warn("SupabaseAuthProvider", "Unknown role: $roleString, defaulting to USER")
+                    UserRole.USER
+                }
+            }
+        } catch (e: Exception) {
+            Logger.warn("SupabaseAuthProvider", "Failed to extract role from metadata, defaulting to USER", e)
+            UserRole.USER
+        }
+    }
 
     override suspend fun getCurrentUser(): User? {
         return try {
@@ -66,11 +87,13 @@ class SupabaseAuthProvider(
             
             if (userInfo != null) {
                 val displayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
+                val role = extractRole(userInfo.userMetadata)
                 User(
                     id = userInfo.id,
                     email = userInfo.email ?: "",
                     displayName = displayName,
-                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis(),
+                    role = role
                 )
             } else {
                 null
@@ -124,7 +147,7 @@ class SupabaseAuthProvider(
             val user = getCurrentUser()
             
             if (user != null) {
-                Logger.info("SupabaseAuthProvider", "User signed in: ${user.id}")
+                Logger.info("SupabaseAuthProvider", "User signed in: ${user.id}, Role: ${user.role}")
                 SignInResult.Success(user)
             } else {
                 // Check if this is an MFA challenge
@@ -179,7 +202,7 @@ class SupabaseAuthProvider(
             // After verification, get the authenticated user
             val user = getCurrentUser()
             if (user != null) {
-                Logger.info("SupabaseAuthProvider", "MFA verification successful, user signed in: ${user.id}")
+                Logger.info("SupabaseAuthProvider", "MFA verification successful, user signed in: ${user.id}, Role: ${user.role}")
                 Result.success(user)
             } else {
                 Logger.error("SupabaseAuthProvider", "MFA verification succeeded but user is null")
@@ -236,13 +259,15 @@ class SupabaseAuthProvider(
             
             if (userInfo != null) {
                 val extractedDisplayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
+                val role = extractRole(userInfo.userMetadata)
                 val user = User(
                     id = userInfo.id,
                     email = userInfo.email ?: "",
                     displayName = extractedDisplayName,
-                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis(),
+                    role = role
                 )
-                Logger.info("SupabaseAuthProvider", "User signed up successfully - ID: ${user.id}, Email: ${user.email}")
+                Logger.info("SupabaseAuthProvider", "User signed up successfully - ID: ${user.id}, Email: ${user.email}, Role: ${user.role}")
                 Logger.debug("SupabaseAuthProvider", "User display name: ${user.displayName}, Created: ${user.createdAt}")
                 Result.success(user)
             } else {
@@ -373,13 +398,15 @@ class SupabaseAuthProvider(
             
             if (userInfo != null) {
                 val extractedDisplayName = extractDisplayName(userInfo.userMetadata, userInfo.email)
+                val role = extractRole(userInfo.userMetadata)
                 val user = User(
                     id = userInfo.id,
                     email = userInfo.email ?: "",
                     displayName = extractedDisplayName,
-                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+                    createdAt = userInfo.createdAt?.toEpochMilliseconds() ?: System.currentTimeMillis(),
+                    role = role
                 )
-                Logger.info("SupabaseAuthProvider", "OAuth callback handled successfully - User: ${user.id} (${user.email}), Display name: ${user.displayName}")
+                Logger.info("SupabaseAuthProvider", "OAuth callback handled successfully - User: ${user.id} (${user.email}), Role: ${user.role}")
                 Result.success(user)
             } else {
                 Logger.error("SupabaseAuthProvider", "OAuth callback succeeded but user is null in session")

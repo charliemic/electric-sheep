@@ -118,38 +118,40 @@ fun MfaSetupScreen(
             )
             
             // QR Code Display
-            if (enrollmentResponse != null && enrollmentResponse?.qrCode != null) {
-                val qrCodeBitmap = rememberQrCodeBitmap(
-                    enrollmentResponse?.qrCode ?: "",
-                    256
-                )
-                
-                Card(
-                    modifier = Modifier
-                        .size(256.dp)
-                        .semantics {
-                            contentDescription = "QR code for two-factor authentication setup. Scan with your authenticator app."
-                        },
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+            enrollmentResponse?.let { response ->
+                // Note: MfaResponse structure from Supabase SDK may differ
+                // Update based on actual SDK response structure
+                val qrCodeData = response.qrCode ?: ""
+                if (qrCodeData.isNotEmpty()) {
+                    val qrCodeBitmap = rememberQrCodeBitmap(qrCodeData, 256)
+                    
+                    Card(
+                        modifier = Modifier
+                            .size(256.dp)
+                            .semantics {
+                                contentDescription = "QR code for two-factor authentication setup. Scan with your authenticator app."
+                            },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        qrCodeBitmap?.let { bitmap ->
-                            Image(
-                                bitmap = bitmap,
-                                contentDescription = "QR code for authenticator app",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } ?: run {
-                            // Fallback if QR code generation fails
-                            Text(
-                                text = "QR Code\n(Generating...)",
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            qrCodeBitmap?.let { bitmap ->
+                                Image(
+                                    bitmap = bitmap,
+                                    contentDescription = "QR code for authenticator app",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } ?: run {
+                                // Fallback if QR code generation fails
+                                Text(
+                                    text = "QR Code\n(Generating...)",
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -163,7 +165,7 @@ fun MfaSetupScreen(
                 )
                 
                 // Secret key (for manual entry)
-                enrollmentResponse?.secret?.let { secret ->
+                response.secret?.let { secret ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -186,7 +188,7 @@ fun MfaSetupScreen(
             }
             
             // Verification Code Input
-            if (enrollmentResponse != null) {
+            enrollmentResponse?.let {
                 AccessibleTextField(
                     value = verificationCode,
                     onValueChange = { viewModel.updateVerificationCode(it) },

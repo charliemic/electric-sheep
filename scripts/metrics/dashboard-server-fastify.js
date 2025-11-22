@@ -11,11 +11,13 @@
  */
 
 import Fastify from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { execSync } from 'child_process';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { savePage, loadPage, listPages, generatePageHTML } from './content-author.js';
+import { requireAuth, requireAdmin, isValidEmail, validatePassword, sanitizeEmail, refreshToken } from './auth-middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,6 +29,10 @@ const PORT = 8080;
 const fastify = Fastify({
     logger: true
 });
+
+// Supabase configuration
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 // Helper functions
 function getLatestMetric(category, pattern) {
@@ -1139,160 +1145,11 @@ fastify.get('/', async (request, reply) => {
     return getDashboardHTML();
 });
 
-fastify.get('/agents', async (request, reply) => {
-    reply.type('text/html');
-    return getAgentsPageHTML();
-});
-
-fastify.get('/complexity', async (request, reply) => {
-    reply.type('text/html');
-    return getComplexityPageHTML();
-});
-
-fastify.get('/tests', async (request, reply) => {
-    reply.type('text/html');
-    return getTestsPageHTML();
-});
-
-fastify.get('/api/metrics', async (request, reply) => {
-    return getAllMetrics();
-});
-
-fastify.get('/api/agents', async (request, reply) => {
-    return {
-        agents: getAgentStatus(),
-        timestamp: new Date().toISOString()
-    };
-});
-
-fastify.get('/api/status', async (request, reply) => {
-    return {
-        metrics: getAllMetrics(),
-        agents: getAgentStatus(),
-        timestamp: new Date().toISOString()
-    };
-});
-
-// Content authoring routes
-fastify.get('/author', async (request, reply) => {
-    reply.type('text/html');
-    return getAuthoringInterfaceHTML();
-});
-
-fastify.get('/author/new', async (request, reply) => {
-    reply.type('text/html');
-    return getNewPageEditorHTML();
-});
-
-fastify.get('/author/edit/:id', async (request, reply) => {
-    const { id } = request.params;
-    const page = loadPage(id);
-    
-    if (!page) {
-        reply.code(404);
-        return { error: 'Page not found' };
-    }
-    
-    reply.type('text/html');
-    return getEditPageEditorHTML(page);
-});
-
-fastify.post('/api/author/save', async (request, reply) => {
-    const { id, content, metadata } = request.body;
-    
-    try {
-        const pageId = id || `page-${Date.now()}`;
-        const page = savePage(pageId, content, metadata);
-        return { success: true, page };
-    } catch (error) {
-        reply.code(400);
-        return { success: false, error: error.message };
-    }
-});
-
-fastify.get('/api/author/pages', async (request, reply) => {
-    return { pages: listPages() };
-});
-
-fastify.get('/pages/:id', async (request, reply) => {
-    const { id } = request.params;
-    const page = loadPage(id);
-    
-    if (!page) {
-        reply.code(404);
-        reply.type('text/html');
-        return '<h1>Page not found</h1><p>The requested page does not exist.</p>';
-    }
-    
-    const html = generatePageHTML(page, {
-        theme: page.metadata.theme || 'light',
-        includeTOC: page.metadata.includeTOC !== false
-    });
-    reply.type('text/html');
-    return html;
-});
-
-// API endpoint for live data in pages
-fastify.get('/api/author/data/:source', async (request, reply) => {
-    const { source } = request.params;
-    
-    try {
-        let data;
-        if (source === 'metrics:latest') {
-            data = getAllMetrics();
-        } else if (source === 'tests:latest') {
-            const testMetric = getLatestMetric('tests', 'test_.*\\.json');
-            data = testMetric;
-        } else if (source.startsWith('logs:')) {
-            // Log loading would be implemented here
-            reply.code(501);
-            return { success: false, error: 'Log loading not yet implemented' };
-        } else {
-            reply.code(404);
-            return { success: false, error: 'Unknown data source' };
-        }
-        
-        return { success: true, data };
-    } catch (error) {
-        reply.code(500);
-        return { success: false, error: error.message };
-    }
-});
-
-// API endpoint for chart data
-fastify.get('/api/author/chart/:type', async (request, reply) => {
-    const { type } = request.params;
-    
-    try {
-        // Generate chart config based on type
-        let config;
-        if (type === 'complexity-trend') {
-            // Would generate complexity trend chart config
-            config = {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Complexity',
-                        data: []
-                    }]
-                }
-            };
-        } else {
-            reply.code(404);
-            return { success: false, error: 'Unknown chart type' };
-        }
-        
-        return { success: true, config };
-    } catch (error) {
-        reply.code(500);
-        return { success: false, error: error.message };
-    }
-});
+// Routes are now set up in setupRoutes() function (called in setupServer)
 
 // Authoring interface HTML functions
-function getAuthoringInterfaceHTML() {
-    const pages = listPages();
+function getAuthoringInterfaceHTML(userId = null) {
+    const pages = listPages(userId);
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -1319,6 +1176,7 @@ function getAuthoringInterfaceHTML() {
     
     <div class="actions">
         <a href="/author/new" class="btn btn-primary">Create New Page</a>
+        <a href="/" class="btn btn-secondary">Back to Dashboard</a>
     </div>
     
     <h2>Your Pages</h2>
@@ -1329,6 +1187,7 @@ function getAuthoringInterfaceHTML() {
                 <h3>${escapeHtml(page.title)}</h3>
                 <div class="page-card-meta">
                     Updated: ${new Date(page.updatedAt).toLocaleString()}
+                    ${page.isPublic ? '<span style="color: green;">(Public)</span>' : '<span style="color: gray;">(Private)</span>'}
                 </div>
                 <div class="actions">
                     <a href="/pages/${page.id}" class="btn btn-primary">View</a>
@@ -1337,6 +1196,31 @@ function getAuthoringInterfaceHTML() {
             </div>
         `).join('')}
     </div>
+    
+    <script>
+        // Check authentication and admin role
+        const token = localStorage.getItem('auth_token');
+        const userRole = localStorage.getItem('user_role');
+        
+        if (!token) {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        } else if (userRole !== 'admin') {
+            window.location.href = '/?error=admin_required';
+        }
+        
+        // Include token in all API requests
+        document.addEventListener('DOMContentLoaded', () => {
+            // Override fetch to include auth token
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                if (url.startsWith('/api/')) {
+                    options.headers = options.headers || {};
+                    options.headers['Authorization'] = 'Bearer ' + token;
+                }
+                return originalFetch(url, options);
+            };
+        });
+    </script>
 </body>
 </html>`;
 }
@@ -1374,17 +1258,17 @@ function getPageEditorHTML(page) {
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
         .form-group input, .form-group select { width: 100%; padding: 0.5rem; }
         .actions { display: flex; gap: 1rem; margin-top: 2rem; }
-        .btn { padding: 0.75rem 1.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 1em; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 1em; text-decoration: none; display: inline-block; }
         .btn-primary { background: #3b82f6; color: white; }
         .btn-secondary { background: #6b7280; color: white; }
     </style>
 </head>
 <body>
-    <h1>${isEdit ? 'Edit' : 'Create New'} Page</h1>
+    <h1>${isEdit ? 'Edit' : 'Create'} Page</h1>
     
     <form id="page-form">
         <div class="form-group">
-            <label for="page-title">Page Title</label>
+            <label for="page-title">Title</label>
             <input type="text" id="page-title" value="${escapeHtml(title)}" required>
         </div>
         
@@ -1403,9 +1287,23 @@ function getPageEditorHTML(page) {
             </label>
         </div>
         
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="is-public" ${page?.metadata.isPublic ? 'checked' : ''}>
+                Make page public (anyone can view)
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="is-public" ${page?.metadata.isPublic ? 'checked' : ''}>
+                Make page public (anyone can view)
+            </label>
+        </div>
+        
         <div class="editor-container">
             <div class="editor-panel">
-                <h3>Markdown Editor</h3>
+                <h3>Content (Markdown)</h3>
                 <textarea id="page-content" placeholder="Write your content in Markdown...&#10;&#10;You can use data blocks:&#10;{{metrics:latest}} - Latest metrics&#10;{{tests:latest}} - Latest test results&#10;{{logs:path/to/log.log}} - Log file&#10;{{chart:complexity-trend}} - Interactive chart">${escapeHtml(content)}</textarea>
             </div>
             <div class="editor-panel preview-panel">
@@ -1444,7 +1342,8 @@ function getPageEditorHTML(page) {
                 metadata: {
                     title: document.getElementById('page-title').value,
                     theme: document.getElementById('page-theme').value,
-                    includeTOC: document.getElementById('include-toc').checked
+                    includeTOC: document.getElementById('include-toc').checked,
+                    isPublic: document.getElementById('is-public').checked
                 }
             };
             
@@ -1485,13 +1384,448 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
+// Register plugins and middleware
+async function setupServer() {
+    // Register rate limiting plugin
+    await fastify.register(rateLimit, {
+        max: 100, // 100 requests
+        timeWindow: '1 minute' // per minute
+    });
+    
+    // Add auth middleware
+    requireAuth(fastify);
+    
+    // Add routes
+    setupRoutes();
+}
+
+// Setup all routes
+function setupRoutes() {
+    // Public routes (no auth required)
+    setupPublicRoutes();
+    
+    // Auth routes
+    setupAuthRoutes();
+    
+    // Authoring routes (admin only)
+    setupAuthoringRoutes();
+    
+    // Existing routes
+    setupExistingRoutes();
+}
+
+// Public routes
+function setupPublicRoutes() {
+    // Main dashboard (public)
+    fastify.get('/', async (request, reply) => {
+        reply.type('text/html');
+        return getDashboardHTML();
+    });
+    
+    // Public API endpoints
+    fastify.get('/api/metrics', async (request, reply) => {
+        return getAllMetrics();
+    });
+    
+    fastify.get('/api/status', async (request, reply) => {
+        return {
+            metrics: getAllMetrics(),
+            agents: getAgentStatus(),
+            timestamp: new Date().toISOString()
+        };
+    });
+    
+    // Public pages (if isPublic: true)
+    fastify.get('/pages/:id', async (request, reply) => {
+        const { id } = request.params;
+        const userId = request.user?.id; // Optional - for private pages
+        
+        const page = loadPage(id, userId);
+        
+        if (!page) {
+            reply.code(404);
+            reply.type('text/html');
+            return '<h1>Page not found</h1><p>The requested page does not exist or you do not have access.</p>';
+        }
+        
+        const html = generatePageHTML(page, {
+            theme: page.metadata.theme || 'light',
+            includeTOC: page.metadata.includeTOC !== false
+        });
+        reply.type('text/html');
+        return html;
+    });
+    
+    // Public data endpoints (for live data in pages)
+    fastify.get('/api/author/data/:source', async (request, reply) => {
+        const { source } = request.params;
+        
+        try {
+            let data;
+            if (source === 'metrics:latest') {
+                data = getAllMetrics();
+            } else if (source === 'tests:latest') {
+                const testMetric = getLatestMetric('tests', 'test_.*\\.json');
+                data = testMetric;
+            } else if (source.startsWith('logs:')) {
+                reply.code(501);
+                return { success: false, error: 'Log loading not yet implemented' };
+            } else {
+                reply.code(404);
+                return { success: false, error: 'Unknown data source' };
+            }
+            
+            return { success: true, data };
+        } catch (error) {
+            reply.code(500);
+            return { success: false, error: 'Internal server error' };
+        }
+    });
+    
+    fastify.get('/api/author/chart/:type', async (request, reply) => {
+        const { type } = request.params;
+        
+        try {
+            let config;
+            if (type === 'complexity-trend') {
+                config = {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Complexity',
+                            data: []
+                        }]
+                    }
+                };
+            } else {
+                reply.code(404);
+                return { success: false, error: 'Unknown chart type' };
+            }
+            
+            return { success: true, config };
+        } catch (error) {
+            reply.code(500);
+            return { success: false, error: 'Internal server error' };
+        }
+    });
+}
+
+// Auth routes
+function setupAuthRoutes() {
+    // Login page
+    fastify.get('/login', async (request, reply) => {
+        reply.type('text/html');
+        return getLoginPageHTML();
+    });
+    
+    // Login API endpoint (with rate limiting)
+    fastify.post('/api/auth/login', {
+        config: {
+            rateLimit: {
+                max: 5, // 5 login attempts
+                timeWindow: '15 minutes' // per 15 minutes
+            }
+        }
+    }, async (request, reply) => {
+        const { email, password } = request.body;
+        
+        // Validate input
+        if (!email || !isValidEmail(email)) {
+            reply.code(400);
+            return { success: false, error: 'Invalid email format' };
+        }
+        
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
+            reply.code(400);
+            return { success: false, error: passwordValidation.error };
+        }
+        
+        const sanitizedEmail = sanitizeEmail(email);
+        
+        try {
+            // Sign in via Supabase Auth API
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    email: sanitizedEmail, 
+                    password: password 
+                })
+            });
+            
+            if (response.ok) {
+                const { access_token, refresh_token, user } = await response.json();
+                
+                // Extract role from user metadata
+                const role = user.user_metadata?.role || 'user';
+                
+                // Log successful login (without sensitive data)
+                fastify.log.info({ email: sanitizedEmail, role }, 'User logged in');
+                
+                return { 
+                    success: true, 
+                    token: access_token,
+                    refresh_token: refresh_token,
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        displayName: user.user_metadata?.display_name,
+                        role: role
+                    }
+                };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                // Don't expose specific error details
+                fastify.log.warn({ email: sanitizedEmail }, 'Login failed');
+                reply.code(401);
+                return { success: false, error: 'Invalid email or password' };
+            }
+        } catch (error) {
+            fastify.log.error({ email: sanitizedEmail, error: error.message }, 'Login error');
+            reply.code(500);
+            return { success: false, error: 'Authentication service error' };
+        }
+    });
+    
+    // Token refresh endpoint
+    fastify.post('/api/auth/refresh', async (request, reply) => {
+        const { refresh_token } = request.body;
+        
+        if (!refresh_token) {
+            reply.code(400);
+            return { success: false, error: 'Refresh token required' };
+        }
+        
+        const result = await refreshToken(refresh_token);
+        
+        if (result.success) {
+            return {
+                success: true,
+                token: result.access_token,
+                refresh_token: result.refresh_token
+            };
+        } else {
+            reply.code(401);
+            return { success: false, error: result.error || 'Token refresh failed' };
+        }
+    });
+}
+
+// Authoring routes (admin only)
+function setupAuthoringRoutes() {
+    // Authoring interface (admin only)
+    fastify.get('/author', async (request, reply) => {
+        await authenticate(request, reply);
+        if (reply.statusCode === 401) return;
+        
+        requireAdmin(request, reply);
+        if (reply.statusCode === 403) return;
+        
+        const userId = request.user.id;
+        reply.type('text/html');
+        return getAuthoringInterfaceHTML(userId);
+    });
+    
+    // New page editor (admin only)
+    fastify.get('/author/new', async (request, reply) => {
+        await authenticate(request, reply);
+        if (reply.statusCode === 401) return;
+        
+        requireAdmin(request, reply);
+        if (reply.statusCode === 403) return;
+        
+        reply.type('text/html');
+        return getNewPageEditorHTML();
+    });
+    
+    // Edit page (admin only)
+    fastify.get('/author/edit/:id', async (request, reply) => {
+        await authenticate(request, reply);
+        if (reply.statusCode === 401) return;
+        
+        requireAdmin(request, reply);
+        if (reply.statusCode === 403) return;
+        
+        const { id } = request.params;
+        const userId = request.user.id;
+        const page = loadPage(id, userId);
+        
+        if (!page) {
+            reply.code(404);
+            return { error: 'Page not found or access denied' };
+        }
+        
+        reply.type('text/html');
+        return getEditPageEditorHTML(page);
+    });
+    
+    // Save page (admin only)
+    fastify.post('/api/author/save', async (request, reply) => {
+        await authenticate(request, reply);
+        if (reply.statusCode === 401) return;
+        
+        requireAdmin(request, reply);
+        if (reply.statusCode === 403) return;
+        
+        const { id, content, metadata } = request.body;
+        const userId = request.user.id;
+        
+        // Validate input
+        if (!content || typeof content !== 'string') {
+            reply.code(400);
+            return { success: false, error: 'Content is required' };
+        }
+        
+        if (!metadata || !metadata.title || typeof metadata.title !== 'string') {
+            reply.code(400);
+            return { success: false, error: 'Page title is required' };
+        }
+        
+        try {
+            const pageId = id || `page-${Date.now()}`;
+            const page = savePage(pageId, content, metadata, userId);
+            return { success: true, page };
+        } catch (error) {
+            fastify.log.error({ error: error.message }, 'Error saving page');
+            reply.code(400);
+            return { success: false, error: 'Failed to save page' };
+        }
+    });
+    
+    // List pages (admin only)
+    fastify.get('/api/author/pages', async (request, reply) => {
+        await authenticate(request, reply);
+        if (reply.statusCode === 401) return;
+        
+        requireAdmin(request, reply);
+        if (reply.statusCode === 403) return;
+        
+        const userId = request.user.id;
+        return { pages: listPages(userId) };
+    });
+}
+
+// Existing routes (keep for backward compatibility)
+function setupExistingRoutes() {
+    fastify.get('/agents', async (request, reply) => {
+        reply.type('text/html');
+        return getDashboardHTML();
+    });
+    
+    fastify.get('/complexity', async (request, reply) => {
+        reply.type('text/html');
+        return getDashboardHTML();
+    });
+    
+    fastify.get('/tests', async (request, reply) => {
+        reply.type('text/html');
+        return getDashboardHTML();
+    });
+    
+    fastify.get('/api/agents', async (request, reply) => {
+        return {
+            agents: getAgentStatus(),
+            timestamp: new Date().toISOString()
+        };
+    });
+}
+
+// Login page HTML
+function getLoginPageHTML() {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Electric Sheep Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 400px; margin: 4rem auto; padding: 2rem; }
+        .error { color: #dc3545; margin-top: 0.5rem; }
+        .success { color: #28a745; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+    <p>Sign in to access dashboard features</p>
+    
+    <form id="login-form">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email">
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+        
+        <button type="submit">Sign In</button>
+        
+        <div id="error" class="error" style="display: none;"></div>
+    </form>
+    
+    <script>
+        const form = document.getElementById('login-form');
+        const errorDiv = document.getElementById('error');
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect') || '/';
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Store token and user info
+                    localStorage.setItem('auth_token', result.token);
+                    localStorage.setItem('refresh_token', result.refresh_token);
+                    localStorage.setItem('user_role', result.user.role);
+                    localStorage.setItem('user_id', result.user.id);
+                    
+                    // Redirect
+                    window.location.href = redirect;
+                } else {
+                    errorDiv.textContent = result.error || 'Login failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        });
+        
+        // Check if already logged in
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            window.location.href = redirect;
+        }
+    </script>
+</body>
+</html>`;
+}
+
 // Start server
 const start = async () => {
     try {
+        await setupServer();
         await fastify.listen({ port: PORT, host: '0.0.0.0' });
         console.log(`🚀 Dashboard server running on http://localhost:${PORT}`);
         console.log(`📊 Dashboard: http://localhost:${PORT}/`);
-        console.log(`📝 Author: http://localhost:${PORT}/author`);
+        console.log(`🔐 Login: http://localhost:${PORT}/login`);
+        console.log(`📝 Author: http://localhost:${PORT}/author (admin only)`);
         console.log(`📡 API: http://localhost:${PORT}/api/status`);
         console.log('\nPress Ctrl+C to stop\n');
     } catch (err) {

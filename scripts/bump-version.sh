@@ -30,7 +30,7 @@ if [[ -z "$COMPONENT" ]] || [[ -z "$VERSION_TYPE" ]]; then
     echo -e "${RED}Error: Missing arguments${NC}"
     echo "Usage: $0 <component> <type> [--dry-run]"
     echo ""
-    echo "Components: app, test-framework, html-viewer, metrics-dashboard, all"
+    echo "Components: app, test-framework, metrics-dashboard, all"
     echo "Types: patch, minor, major"
     echo ""
     echo "Examples:"
@@ -46,9 +46,9 @@ if [[ ! "$VERSION_TYPE" =~ ^(patch|minor|major)$ ]]; then
     exit 1
 fi
 
-if [[ ! "$COMPONENT" =~ ^(app|test-framework|html-viewer|metrics-dashboard|all)$ ]]; then
+if [[ ! "$COMPONENT" =~ ^(app|test-framework|metrics-dashboard|all)$ ]]; then
     echo -e "${RED}Error: Invalid component '$COMPONENT'${NC}"
-    echo "Valid components: app, test-framework, html-viewer, metrics-dashboard, all"
+    echo "Valid components: app, test-framework, metrics-dashboard, all"
     exit 1
 fi
 
@@ -97,9 +97,6 @@ read_version() {
         test-framework)
             grep "^test-framework.version=" "$properties_file" | cut -d'=' -f2
             ;;
-        html-viewer)
-            grep "^html-viewer.version=" "$properties_file" | cut -d'=' -f2
-            ;;
         metrics-dashboard)
             grep "^metrics-dashboard.version=" "$properties_file" | cut -d'=' -f2
             ;;
@@ -126,9 +123,6 @@ update_version_properties() {
         test-framework)
             sed "s/^test-framework.version=.*/test-framework.version=$new_version/" "$properties_file" > "$temp_file"
             ;;
-        html-viewer)
-            sed "s/^html-viewer.version=.*/html-viewer.version=$new_version/" "$properties_file" > "$temp_file"
-            ;;
         metrics-dashboard)
             sed "s/^metrics-dashboard.version=.*/metrics-dashboard.version=$new_version/" "$properties_file" > "$temp_file"
             ;;
@@ -144,9 +138,6 @@ update_package_json() {
     local package_file=""
     
     case $component in
-        html-viewer)
-            package_file="html-viewer/package.json"
-            ;;
         metrics-dashboard)
             package_file="scripts/metrics/package.json"
             ;;
@@ -231,7 +222,7 @@ echo ""
 
 # Determine components to bump
 if [[ "$COMPONENT" == "all" ]]; then
-    COMPONENTS=("app" "test-framework" "html-viewer" "metrics-dashboard")
+    COMPONENTS=("app" "test-framework" "metrics-dashboard")
 else
     COMPONENTS=("$COMPONENT")
 fi
@@ -262,7 +253,7 @@ for comp in "${COMPONENTS[@]}"; do
     fi
     
     # Update package.json for npm components
-    if [[ "$comp" == "html-viewer" ]] || [[ "$comp" == "metrics-dashboard" ]]; then
+    if [[ "$comp" == "metrics-dashboard" ]]; then
         update_package_json "$comp" "$new_version"
     fi
     

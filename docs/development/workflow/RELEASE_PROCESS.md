@@ -9,8 +9,7 @@ Electric Sheep consists of multiple components that can be released independentl
 
 - **Android App** (`app/`) - Main application
 - **Test Framework** (`test-automation/`) - Test automation framework
-- **HTML Viewer** (`html-viewer/`) - Markdown/HTML converter tool
-- **Metrics Dashboard** (`scripts/metrics/`) - Development metrics dashboard
+- **Metrics Dashboard** (`scripts/metrics/`) - Development metrics dashboard (includes content authoring)
 
 ## Release Types
 
@@ -18,7 +17,6 @@ Electric Sheep consists of multiple components that can be released independentl
 
 Each component can be released independently:
 - Test Framework updates don't require app releases
-- HTML Viewer updates are separate from app releases
 - Components use component-specific git tags: `app-v1.0.0`, `test-framework-v1.0.0`, etc.
 
 ### Coordinated Releases (Major Versions)
@@ -89,7 +87,6 @@ Before releasing any component, complete this checklist:
 ./scripts/bump-version.sh test-framework minor
 
 # Bump major version (1.0.0 → 2.0.0)
-./scripts/bump-version.sh html-viewer major
 ```
 
 **For all components (coordinated release)**:
@@ -194,26 +191,6 @@ git push --tags
 
 **Artifacts**:
 - JAR file
-- Release notes
-
-### HTML Viewer Release
-
-**Trigger**: Git tag `html-viewer-v*` (e.g., `html-viewer-v0.1.0`)
-
-**Workflow**: `.github/workflows/release-html-viewer.yml`
-
-**Steps**:
-1. Checkout code
-2. Set up Node.js
-3. Install dependencies
-4. Build static site
-5. Deploy to GitHub Pages (or other hosting)
-6. Create GitHub release
-7. Upload build artifacts
-8. Publish release notes
-
-**Artifacts**:
-- Built static site
 - Release notes
 
 ### Metrics Dashboard Release
@@ -328,11 +305,6 @@ All components use [Semantic Versioning](https://semver.org/):
 - **Patch**: As needed (bug fixes)
 - **Minor**: When new test capabilities added
 - **Major**: When framework architecture changes
-
-### HTML Viewer
-- **Patch**: As needed (bug fixes)
-- **Minor**: When new features added
-- **Major**: When architecture changes
 
 ### Metrics Dashboard
 - **Patch**: As needed (bug fixes)

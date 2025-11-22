@@ -12,7 +12,7 @@ As Release Manager, I propose implementing a **comprehensive multi-component rel
 **Components Identified**:
 - **A) Android App** (`app/`) - Gradle, version 1.0
 - **B) Test Framework** (`test-automation/`) - Gradle, version 1.0.0
-- **C) HTML Viewer/Dashboard** (`html-viewer/`) - Astro/Node.js, version 0.1.0
+- **C) Metrics Dashboard** (`scripts/metrics/`) - Node.js/Fastify, version 1.0.0 (includes content authoring)
 - **D) Metrics Dashboard** (`scripts/metrics/`) - Node.js/Fastify, no versioning
 - **E) Scripts** (`scripts/`) - Shell/Python scripts, no versioning
 - **F) Supabase** (`supabase/`) - Database migrations, versioned via timestamps
@@ -41,7 +41,6 @@ As Release Manager, I propose implementing a **comprehensive multi-component rel
 
 **Independent Releases**: Components can be released independently
 - Test Framework updates don't require app releases
-- HTML Viewer updates are separate from app releases
 - Scripts can be updated without affecting other components
 
 **Coordinated Releases**: Major releases can coordinate multiple components
@@ -51,7 +50,6 @@ As Release Manager, I propose implementing a **comprehensive multi-component rel
 **Versioning Strategy**:
 - **Android App**: Semantic versioning (1.0.0) + versionCode (integer)
 - **Test Framework**: Semantic versioning (1.0.0)
-- **HTML Viewer**: Semantic versioning (0.1.0) - currently pre-1.0
 - **Metrics Dashboard**: Semantic versioning (start at 0.1.0)
 - **Scripts**: Optional versioning (version file or git tags)
 - **Supabase**: Migration-based (timestamps, no semantic versioning)
@@ -62,7 +60,6 @@ As Release Manager, I propose implementing a **comprehensive multi-component rel
 **Component-Specific Tags**:
 - `app-v1.0.0` - Android app releases
 - `test-framework-v1.0.0` - Test framework releases
-- `html-viewer-v0.1.0` - HTML viewer releases
 - `metrics-dashboard-v0.1.0` - Metrics dashboard releases
 - `v1.0.0` - Coordinated releases (all components)
 
@@ -139,10 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # Bump test framework (minor: 1.0.0 → 1.1.0)
 ./scripts/bump-version.sh test-framework minor
 
-# Bump HTML viewer (patch: 0.1.0 → 0.1.1)
-./scripts/bump-version.sh html-viewer patch
-
-# Bump metrics dashboard (patch: 0.1.0 → 0.1.1)
+# Bump metrics dashboard (patch: 1.0.0 → 1.0.1)
 ./scripts/bump-version.sh metrics-dashboard patch
 
 # Coordinated release (all components to 2.0.0)
@@ -155,7 +149,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Component Support**:
 - `app` - Android app (updates `app/build.gradle.kts`, increments versionCode)
 - `test-framework` - Test framework (updates `test-automation/build.gradle.kts`)
-- `html-viewer` - HTML viewer (updates `html-viewer/package.json`)
 - `metrics-dashboard` - Metrics dashboard (updates `scripts/metrics/package.json`)
 - `all` - All components (coordinated release)
 
@@ -163,7 +156,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/bump-version.sh` (new)
 - `app/build.gradle.kts` (update - read version from file)
 - `test-automation/build.gradle.kts` (update - read version from file)
-- `html-viewer/package.json` (update - read version from file)
 - `scripts/metrics/package.json` (create if doesn't exist)
 - `version.properties` (new - unified version file)
 
@@ -190,8 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 app.versionName=1.0.0
 app.versionCode=1
 test-framework.version=1.0.0
-html-viewer.version=0.1.0
-metrics-dashboard.version=0.1.0
+metrics-dashboard.version=1.0.0
 ```
 
 **Android App** (`app/build.gradle.kts`):
@@ -224,8 +215,6 @@ if (versionPropertiesFile.exists()) {
 version = versionProperties.getProperty("test-framework.version", "1.0.0")
 ```
 
-**HTML Viewer** (`html-viewer/package.json`):
-- Script updates `package.json` directly (npm versioning)
 
 **Metrics Dashboard** (`scripts/metrics/package.json`):
 - Script updates `package.json` directly (npm versioning)
@@ -358,18 +347,6 @@ version = versionProperties.getProperty("test-framework.version", "1.0.0")
   5. Upload JAR
   6. Publish release notes
 
-**HTML Viewer Release** (`.github/workflows/release-html-viewer.yml`):
-- Triggered by: `html-viewer-v*` tags (e.g., `html-viewer-v0.1.0`)
-- Steps:
-  1. Checkout code
-  2. Set up Node.js
-  3. Install dependencies
-  4. Build static site
-  5. Deploy to GitHub Pages (or other hosting)
-  6. Create GitHub release
-  7. Upload build artifacts
-  8. Publish release notes
-
 **Metrics Dashboard Release** (`.github/workflows/release-metrics-dashboard.yml`):
 - Triggered by: `metrics-dashboard-v*` tags (e.g., `metrics-dashboard-v0.1.0`)
 - Steps:
@@ -383,7 +360,6 @@ version = versionProperties.getProperty("test-framework.version", "1.0.0")
 **Files**:
 - `.github/workflows/release-app.yml` (new)
 - `.github/workflows/release-test-framework.yml` (new)
-- `.github/workflows/release-html-viewer.yml` (new)
 - `.github/workflows/release-metrics-dashboard.yml` (new)
 
 ---
@@ -467,18 +443,15 @@ app.versionCode=1
 # Test Framework
 test-framework.version=1.0.0
 
-# HTML Viewer
-html-viewer.version=0.1.0
 
-# Metrics Dashboard
-metrics-dashboard.version=0.1.0
+# Metrics Dashboard (includes content authoring from html-viewer)
+metrics-dashboard.version=1.0.0
 ```
 
 **Updated by**: `bump-version.sh`  
 **Read by**: 
 - `app/build.gradle.kts`
 - `test-automation/build.gradle.kts`
-- `html-viewer/package.json` (updated directly)
 - `scripts/metrics/package.json` (updated directly)
 
 ### Git Tagging Strategy
@@ -488,7 +461,6 @@ metrics-dashboard.version=0.1.0
 - Examples: 
   - `app-v1.0.0` - Android app release
   - `test-framework-v1.0.0` - Test framework release
-  - `html-viewer-v0.1.0` - HTML viewer release
   - `metrics-dashboard-v0.1.0` - Metrics dashboard release
 
 **Unified Tags** (Coordinated Releases):
@@ -538,13 +510,11 @@ metrics-dashboard.version=0.1.0
 - `scripts/generate-changelog.sh` - Changelog generation (component-aware)
 - `.github/workflows/release-app.yml` - Android app release workflow
 - `.github/workflows/release-test-framework.yml` - Test framework release workflow
-- `.github/workflows/release-html-viewer.yml` - HTML viewer release workflow
 - `docs/development/workflow/RELEASE_PROCESS.md` - Release process docs (all components)
 
 ### Modified Files
 - `app/build.gradle.kts` - Read version from version.properties
 - `test-automation/build.gradle.kts` - Read version from version.properties
-- `html-viewer/package.json` - Version updated by script
 - `scripts/metrics/package.json` - Create if doesn't exist, version updated by script
 - `README.md` - Add release process link (optional)
 
@@ -637,11 +607,6 @@ metrics-dashboard.version=0.1.0
 - Minor: When new test capabilities added
 - Major: When framework architecture changes
 
-**HTML Viewer**:
-- Patch: As needed (bug fixes)
-- Minor: When new features added
-- Major: When architecture changes
-
 **Metrics Dashboard**:
 - Patch: As needed (bug fixes)
 - Minor: When new metrics added
@@ -659,7 +624,6 @@ Track component versions in a single place:
 |-----------|----------------|--------------|--------------|
 | Android App | 1.0.0 | 2025-01-22 | TBD |
 | Test Framework | 1.0.0 | 2025-01-22 | TBD |
-| HTML Viewer | 0.1.0 | 2025-01-22 | TBD |
 | Metrics Dashboard | 0.1.0 | TBD | TBD |
 
 **Location**: `docs/development/workflow/COMPONENT_VERSIONS.md` (new)
