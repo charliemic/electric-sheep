@@ -14,6 +14,8 @@ paths = [
   '''scripts/generate-keystore\.sh''',
   '''scripts/.*\.sh$''',
   '''\.gitleaks\.toml''',
+  '''\.github/workflows/.*\.yml$''',
+  '''\.github/workflows/.*\.yaml$''',
 ]
 regexes = [
   '''example.*key''',
@@ -43,6 +45,9 @@ regexes = [
   '''password.*store.*securely''',
   '''password.*manager''',
   '''Store.*password''',
+  '''postgresql://.*aws-0-.*\.pool''',
+  '''DB_URL=.*postgresql://''',
+  '''postgresql://.*\$\{.*\}''',
 ]
 stopwords = [
   "example",
