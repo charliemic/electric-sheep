@@ -68,6 +68,32 @@ else
 fi
 echo ""
 
+# 2.5. Check for rule/workflow updates (REAL-TIME COLLABORATION)
+echo "2️⃣.5️⃣  Checking for rule/workflow updates (real-time collaboration)..."
+if [ -f "scripts/check-rule-updates.sh" ]; then
+    # Run update check and capture output
+    UPDATE_CHECK_OUTPUT=$(./scripts/check-rule-updates.sh 2>&1)
+    UPDATE_CHECK_EXIT=$?
+    
+    # Check output for key indicators
+    if echo "$UPDATE_CHECK_OUTPUT" | grep -q "ACTION REQUIRED"; then
+        echo "   ⚠️  WARNING: Rule/workflow updates detected"
+        echo "   → Pull latest main: git checkout main && git pull origin main"
+        echo "   → Review updated rules/workflow files"
+        echo "   → See docs/development/workflow/REAL_TIME_COLLABORATION.md"
+        WARNINGS=$((WARNINGS + 1))
+    elif echo "$UPDATE_CHECK_OUTPUT" | grep -q "up to date"; then
+        echo "   ✅ Rule/workflow are up to date"
+    else
+        echo "   ✅ Rule/workflow update check completed"
+    fi
+else
+    echo "   ⚠️  Rule update check script not found"
+    echo "   💡 Tip: Check for rule/workflow updates manually"
+    echo "   → See docs/development/workflow/REAL_TIME_COLLABORATION.md"
+fi
+echo ""
+
 # 3. Check coordination
 echo "3️⃣  Checking agent coordination..."
 if [ -f "$COORDINATION_DOC" ]; then
@@ -210,6 +236,29 @@ else
 fi
 echo ""
 
+# 8.5. Update issue status (if working on issue)
+echo "8️⃣.5️⃣  Updating issue status (if applicable)..."
+if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "main" ]; then
+    # Try to detect issue number from branch name (format: feature/52-description or fix/55-description)
+    ISSUE_NUMBER=$(echo "$CURRENT_BRANCH" | grep -oE '^[^/]+/([0-9]+)-' | grep -oE '[0-9]+' | head -1)
+    
+    if [ -n "$ISSUE_NUMBER" ] && [ -f "scripts/update-issue-status.sh" ]; then
+        echo "   → Detected issue #$ISSUE_NUMBER from branch name"
+        echo "   → Updating status to 'in-progress'..."
+        if ./scripts/update-issue-status.sh "$ISSUE_NUMBER" in-progress 2>/dev/null; then
+            echo "   ✅ Issue #$ISSUE_NUMBER status updated"
+        else
+            echo "   ⚠️  Could not update issue status (issue may not exist or not accessible)"
+        fi
+    else
+        echo "   💡 Tip: Use branch format 'feature/52-<description>' to auto-update issue status"
+        echo "   → Or manually update: ./scripts/update-issue-status.sh <issue-number> in-progress"
+    fi
+else
+    echo "   💡 Tip: When working on an issue, update status: ./scripts/update-issue-status.sh <issue-number> in-progress"
+fi
+echo ""
+
 # Summary
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║                    SUMMARY                                  ║"
@@ -220,12 +269,14 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All checks passed! You're ready to start work."
     echo ""
     echo "💡 Next steps:"
-    echo "   1. Search for existing artifacts before creating new ones"
-    echo "   2. Update coordination doc if needed: $COORDINATION_DOC"
-    echo "   3. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
-    echo "   4. Reference relevant rules: .cursor/rules/"
-    echo "   5. Track session scope: ./scripts/track-session-scope.sh start \"<task>\""
-    echo "   6. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
+    echo "   1. Check for rule/workflow updates: ./scripts/check-rule-updates.sh"
+    echo "   2. Search for existing artifacts before creating new ones"
+    echo "   3. Update coordination doc if needed: $COORDINATION_DOC"
+    echo "   4. Use worktree if modifying shared files: ./scripts/create-worktree.sh"
+    echo "   5. Reference relevant rules: .cursor/rules/"
+    echo "   6. Track session scope: ./scripts/track-session-scope.sh start \"<task>\""
+    echo "   7. Update issue status: ./scripts/update-issue-status.sh <issue-number> in-progress"
+    echo "   8. 💡 REMINDER: Commit frequently (every 15-30 min) to prevent work loss"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s) found. Review above and proceed with caution."
