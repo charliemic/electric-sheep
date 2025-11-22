@@ -13,8 +13,18 @@ android {
         applicationId = "com.electricsheep.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        
+        // Read version from version.properties (managed by bump-version.sh)
+        val versionPropertiesFile = rootProject.file("version.properties")
+        val versionProperties = java.util.Properties()
+        if (versionPropertiesFile.exists()) {
+            versionProperties.load(versionPropertiesFile.inputStream())
+        }
+        val versionName = versionProperties.getProperty("app.versionName", "1.0.0")
+        val versionCode = versionProperties.getProperty("app.versionCode", "1").toInt()
+        
+        versionCode = versionCode
+        versionName = versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
