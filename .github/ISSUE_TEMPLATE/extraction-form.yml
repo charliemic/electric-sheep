@@ -1,0 +1,177 @@
+name: Template/Library Extraction (Form)
+description: Extract a component into a reusable template or library
+title: "[Extraction] Extract [Component Name]"
+labels: ["type:technical", "phase:analysis"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Component to Extract
+        
+        Fill out the form below to create an extraction issue.
+
+  - type: input
+    id: component_name
+    attributes:
+      label: Component Name
+      description: Name of the component to extract (e.g., "Cursor Rules Template")
+      placeholder: "Cursor Rules Template"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component_type
+    attributes:
+      label: Component Type
+      description: What type of component is this?
+      options:
+        - Template Repository
+        - Code Library
+        - Documentation Template
+    validations:
+      required: true
+
+  - type: dropdown
+    id: extraction_type
+    attributes:
+      label: Extraction Type
+      description: Which extraction type label should be applied?
+      options:
+        - cursor-rules
+        - workflow-scripts
+        - android-utilities
+        - compose-accessibility
+        - architecture
+        - supabase-tools
+        - metrics
+        - test-automation
+        - documentation
+        - ci-cd
+    validations:
+      required: true
+
+  - type: input
+    id: source_location
+    attributes:
+      label: Source Location
+      description: Where is the component currently located? (e.g., `.cursor/rules/`)
+      placeholder: ".cursor/rules/"
+    validations:
+      required: true
+
+  - type: input
+    id: target_location
+    attributes:
+      label: Target Location
+      description: Where will the extracted component live? (e.g., new repository name)
+      placeholder: "cursor-rules-template"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: What is the priority of this extraction?
+      options:
+        - priority-1
+        - priority-2
+        - priority-3
+        - priority-4
+        - priority-5
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Estimated Effort
+      description: How much effort is required?
+      options:
+        - effort:small
+        - effort:medium
+        - effort:large
+        - effort:xlarge
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current State
+      description: Describe the current implementation
+      placeholder: |
+        - Current implementation details
+        - Files/components involved
+        - App-specific references
+    validations:
+      required: true
+
+  - type: textarea
+    id: generalization_needed
+    attributes:
+      label: Generalization Needed
+      description: What needs to be parameterized or generalized?
+      placeholder: |
+        - App-specific references to parameterize
+        - Dependencies
+        - Breaking changes
+    validations:
+      required: true
+
+  - type: textarea
+    id: reusability_assessment
+    attributes:
+      label: Reusability Assessment
+      description: Who would use this and what's the value?
+      placeholder: |
+        - Who would use this?
+        - What projects would benefit?
+        - What's the value?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Check all that apply
+      options:
+        - label: Component extracted successfully
+        - label: App-specific references parameterized
+        - label: Documentation complete
+        - label: Tests pass
+        - label: Electric Sheep uses extracted component
+        - label: Component is usable in other projects
+        - label: Migration guide available
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any blocking or blocked issues
+      placeholder: |
+        Blocks: #123, #124
+        Blocked By: #125
+    validations:
+      required: false
+
+  - type: input
+    id: estimated_effort_weeks
+    attributes:
+      label: Estimated Effort (Weeks)
+      description: Total estimated effort in weeks
+      type: number
+      placeholder: "2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any additional notes, considerations, or risks
+      placeholder: "Additional notes..."
+    validations:
+      required: false
+

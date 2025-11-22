@@ -32,6 +32,23 @@
 
 ## Active Work
 
+### Task: App Specificity Analysis
+- **Branch**: `feature/app-specificity-analysis`
+- **Worktree**: `../electric-sheep-app-specificity-analysis` ✅ **Using worktree for isolation**
+- **Status**: Complete ✅
+- **Files Created**: 
+  - `docs/development/analysis/APP_SPECIFICITY_ANALYSIS.md` (comprehensive analysis)
+  - `docs/development/analysis/TEMPLATE_EXTRACTION_AND_TICKETING.md` (extraction strategy)
+  - `docs/development/analysis/GITHUB_SUB_ISSUES_AND_TEMPLATES.md` (GitHub features & templates)
+  - `docs/development/analysis/RELATIONSHIPS_QUICK_REFERENCE.md` (quick reference)
+  - `.github/ISSUE_TEMPLATE/epic.md` (epic template)
+  - `.github/ISSUE_TEMPLATE/extraction.md` (extraction template - Markdown)
+  - `.github/ISSUE_TEMPLATE/extraction-form.yml` (extraction template - YAML form)
+- **Isolation Strategy**: ✅ **Git worktree** - Complete file system isolation
+- **Conflicts**: None - working in isolated worktree, analysis only (no code changes)
+- **Purpose**: Identify which parts of the app are specific vs generalizable, and team vs individual-oriented
+- **Completed**: 2025-01-20
+
 ### Task: Emulator Management Architecture
 - **Branch**: `feature/emulator-management-architecture`
 - **Worktree**: `../electric-sheep-emulator-management` ✅ **Using worktree for isolation**
