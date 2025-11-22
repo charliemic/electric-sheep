@@ -51,6 +51,9 @@ class UserManager(
      * @param email User's email
      * @param password User's password
      * @return Result containing the authenticated user or error
+     * 
+     * Note: If MFA is enabled, this will return an error with MfaRequired.
+     * Use signInWithMfa() to get MfaChallenge and handle MFA verification.
      */
     suspend fun signIn(email: String, password: String): Result<User> {
         Logger.info("UserManager", "Signing in user: $email")
@@ -61,6 +64,70 @@ class UserManager(
             }.onFailure { error ->
                 Logger.error("UserManager", "Sign in failed", error)
             }
+        }
+    }
+    
+    /**
+     * Sign in with MFA support.
+     * 
+     * Returns SignInResult which can be:
+     * - Success: User authenticated (no MFA or MFA already verified)
+     * - MfaChallenge: MFA verification required
+     * - Error: Sign-in failed
+     * 
+     * @param email User's email
+     * @param password User's password
+     * @return SignInResult indicating success, MFA challenge, or error
+     */
+    suspend fun signInWithMfa(email: String, password: String): SignInResult {
+        Logger.info("UserManager", "Signing in user with MFA support: $email")
+        return if (authProvider is SupabaseAuthProvider) {
+            authProvider.signInWithMfa(email, password).also { result ->
+                when (result) {
+                    is SignInResult.Success -> {
+                        _currentUser.value = result.user
+                        Logger.info("UserManager", "User signed in: ${result.user.id}")
+                    }
+                    is SignInResult.MfaChallenge -> {
+                        Logger.info("UserManager", "MFA challenge required: challengeId=${result.challengeId}, userId=${result.userId}")
+                    }
+                    is SignInResult.Error -> {
+                        Logger.error("UserManager", "Sign in failed: ${result.error.message}")
+                    }
+                }
+            }
+        } else {
+            // Fallback to regular sign-in for non-Supabase providers
+            signIn(email, password).fold(
+                onSuccess = { user -> SignInResult.Success(user) },
+                onFailure = { error -> SignInResult.Error(error as? AuthError ?: AuthError.Generic(error.message ?: "Sign in failed")) }
+            )
+        }
+    }
+    
+    /**
+     * Complete MFA verification during sign-in.
+     * 
+     * After receiving MfaChallenge from signInWithMfa(), call this method
+     * with the TOTP code from the user's authenticator app.
+     * 
+     * @param challengeId Challenge ID from MfaChallenge
+     * @param code TOTP code from authenticator app (6 digits)
+     * @return Result containing authenticated user or error
+     */
+    suspend fun verifyMfaSignIn(challengeId: String, code: String): Result<User> {
+        Logger.info("UserManager", "Verifying MFA code for sign-in")
+        return if (authProvider is SupabaseAuthProvider) {
+            authProvider.verifyMfaSignIn(challengeId, code).also { result ->
+                result.onSuccess { user ->
+                    _currentUser.value = user
+                    Logger.info("UserManager", "MFA verification successful, user signed in: ${user.id}")
+                }.onFailure { error ->
+                    Logger.error("UserManager", "MFA verification failed", error)
+                }
+            }
+        } else {
+            Result.failure(AuthError.Generic("MFA verification not supported with current auth provider"))
         }
     }
     

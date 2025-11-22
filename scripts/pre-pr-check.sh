@@ -110,6 +110,22 @@ echo ""
 echo "5️⃣  Checking coordination documentation..."
 COORDINATION_DOC="docs/development/workflow/AGENT_COORDINATION.md"
 if [ -f "$COORDINATION_DOC" ]; then
+    # Check if coordination doc has conflicts (INCIDENT PREVENTION)
+    git fetch origin main --quiet 2>/dev/null || true
+    
+    # Check if coordination doc has remote updates
+    LOCAL_COORD=$(git rev-parse HEAD:"$COORDINATION_DOC" 2>/dev/null || echo "")
+    REMOTE_COORD=$(git rev-parse origin/main:"$COORDINATION_DOC" 2>/dev/null || echo "")
+    
+    if [ -n "$LOCAL_COORD" ] && [ -n "$REMOTE_COORD" ] && [ "$LOCAL_COORD" != "$REMOTE_COORD" ]; then
+        echo "   ⚠️  WARNING: Coordination doc has remote updates"
+        echo "   → Pull latest before creating PR: git pull origin main"
+        echo "   → This prevents merge conflicts in coordination doc"
+        echo "   → See: docs/development/reports/AGENT_COORDINATION_CONFLICT_INCIDENT_REVIEW.md"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+    
+    # Check if branch is documented
     if grep -q "$CURRENT_BRANCH" "$COORDINATION_DOC" 2>/dev/null; then
         echo "   ✅ Branch is documented in coordination doc"
     else

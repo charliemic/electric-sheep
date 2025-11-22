@@ -149,13 +149,24 @@ Available for Analysis
 
 ### Running the Migration
 
-```bash
-# Apply migration
-supabase db push
+**CRITICAL: Migrations are applied via CI/CD, NOT locally.**
 
-# Or via migration script
-supabase migration up
+```bash
+# ✅ CORRECT: Just commit and push
+git add supabase/migrations/20251122000000_create_prompts_table.sql
+git commit -m "feat: Add prompts table migration"
+git push origin main  # or develop
+
+# CI/CD automatically applies migration via GitHub Actions
+# See: .github/workflows/supabase-schema-deploy.yml
 ```
+
+**❌ DON'T try locally:**
+```bash
+supabase db push  # Will fail with migration history mismatches
+```
+
+**See**: `docs/development/setup/SUPABASE_MIGRATIONS_GUIDE.md` for complete guide
 
 ### Verifying
 

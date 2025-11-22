@@ -2,6 +2,9 @@ package com.electricsheep.app
 
 import android.app.Application
 import com.electricsheep.app.auth.AuthModule
+import com.electricsheep.app.auth.AuthProvider
+import com.electricsheep.app.auth.MfaManager
+import com.electricsheep.app.auth.SupabaseAuthProvider
 import com.electricsheep.app.auth.UserManager
 import com.electricsheep.app.config.EnvironmentManager
 import com.electricsheep.app.config.FeatureFlagManager
@@ -237,6 +240,22 @@ class ElectricSheepApplication : Application() {
      * Get environment manager instance (for environment switching in debug builds)
      */
     fun getEnvironmentManager(): EnvironmentManager = environmentManager
+    
+    /**
+     * Get MFA manager instance (for MFA operations).
+     * Returns null if Supabase client is not available (offline mode).
+     */
+    fun getMfaManager(): MfaManager? {
+        return supabaseClient?.let { MfaManager(it) }
+    }
+    
+    /**
+     * Get authentication provider instance.
+     * Returns null if auth provider is not available.
+     */
+    fun getAuthProvider(): AuthProvider? {
+        return userManager.authProvider
+    }
 
     /**
      * Reinitialize Supabase client with new environment.

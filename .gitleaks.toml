@@ -24,6 +24,10 @@ regexes = [
   '''test-.*-password''',
   '''sb_secret_.*example''',
   '''sbp_.*example''',
+  '''<YOUR.*PASSWORD>''',
+  '''<your-.*-password>''',
+  '''keystore\.password=.*<.*>''',
+  '''keystore\.key\.password=.*<.*>''',
 ]
 
 [allowlist.stopwords]

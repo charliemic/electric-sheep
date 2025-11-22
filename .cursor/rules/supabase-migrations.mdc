@@ -1,0 +1,118 @@
+---
+alwaysApply: true
+---
+
+# Supabase Migrations - CI/CD Only
+
+## CRITICAL: Never Run Migrations Locally
+
+**When creating or applying Supabase migrations:**
+
+1. ✅ **Create migration file** in `supabase/migrations/`
+2. ✅ **Commit and push** to `main` or `develop`
+3. ✅ **CI/CD applies automatically** via GitHub Actions
+4. ❌ **NEVER run `supabase db push` locally** - Will fail with history mismatches
+
+## The Problem
+
+**Local migration execution fails because:**
+- Migration history mismatches (remote has migrations not in local)
+- Authentication complexity (requires tokens and passwords)
+- Docker requirements (local Supabase needs Docker)
+- **Dead end that wastes time**
+
+## The Solution
+
+**Migrations are applied via CI/CD (GitHub Actions):**
+
+1. **Workflow**: `.github/workflows/supabase-schema-deploy.yml`
+2. **Trigger**: Push to `main` or `develop` with changes to `supabase/migrations/`
+3. **Process**: 
+   - Validates migration syntax
+   - Links to Supabase project (with proper auth)
+   - Applies migration via `supabase db push` (in CI/CD environment)
+   - Verifies deployment
+
+**No local execution needed!**
+
+## Correct Workflow
+
+### Step 1: Create Migration File
+
+```bash
+# Create migration file
+# Format: YYYYMMDDHHMMSS_description.sql
+# Example: supabase/migrations/20251122000000_create_prompts_table.sql
+```
+
+### Step 2: Commit and Push
+
+```bash
+git add supabase/migrations/20251122000000_create_prompts_table.sql
+git commit -m "feat: Add prompts table migration"
+git push origin main  # or develop
+```
+
+### Step 3: CI/CD Applies Automatically
+
+- GitHub Actions detects the migration
+- Validates and applies it
+- No local execution needed
+
+### Step 4: Verify
+
+- Check GitHub Actions workflow logs
+- Verify in Supabase dashboard (Table Editor)
+
+## What NOT to Do
+
+**❌ DON'T:**
+```bash
+# Don't try to run locally - will fail
+supabase db push  # ❌ Migration history mismatches
+supabase migration up  # ❌ Requires local Docker
+psql $SUPABASE_DB_URL -f migration.sql  # ❌ Complex, requires DB URL
+supabase migration repair  # ❌ Doesn't actually apply migration
+```
+
+**✅ DO:**
+```bash
+# Just commit and push - CI/CD handles it
+git add supabase/migrations/
+git commit -m "Add migration"
+git push origin main
+```
+
+## If Migration History is Mismatched
+
+**Don't try to fix locally!**
+
+**Instead:**
+1. Commit migration file
+2. Push to `main` or `develop`
+3. CI/CD will apply it (handles history automatically)
+
+**The workflow uses proper authentication and handles history mismatches.**
+
+## Verification
+
+**After pushing:**
+1. Check GitHub Actions: https://github.com/[REPO]/actions
+2. Find "Deploy Supabase Database Schema" workflow
+3. Check deployment logs
+4. Verify in Supabase dashboard
+
+## Key Principle
+
+**Migrations = Code Changes**
+
+- Migrations are code (SQL files)
+- Code changes go through CI/CD
+- Migrations are no different
+- **Never execute migrations locally**
+
+## Related Documentation
+
+- `docs/development/setup/SUPABASE_MIGRATIONS_GUIDE.md` - Complete guide
+- `.github/workflows/supabase-schema-deploy.yml` - CI/CD workflow
+- `docs/development/ci-cd/CI_CD_MIGRATION_SETUP.md` - Setup guide

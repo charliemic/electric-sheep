@@ -105,23 +105,23 @@ Add these lines to `local.properties`:
 ```properties
 # Keystore Configuration (for local release builds)
 keystore.file=keystore/release.jks
-keystore.password=<your-keystore-password>
+keystore.password=<YOUR_KEYSTORE_PASSWORD>
 keystore.key.alias=release_key
 keystore.key.password=<your-key-password>
 ```
 
 **Replace**:
-- `<your-keystore-password>` with the password you entered when generating the keystore
+- `<YOUR_KEYSTORE_PASSWORD>` with the password you entered when generating the keystore
 - `<your-key-password>` with the key password you entered
 - `release_key` with your key alias if you used a different one
 
-**Example**:
+**Example** (replace with your actual passwords):
 ```properties
 # Keystore Configuration (for local release builds)
 keystore.file=keystore/release.jks
-keystore.password=MySecurePassword123!
+keystore.password=<YOUR_KEYSTORE_PASSWORD>
 keystore.key.alias=release_key
-keystore.key.password=MySecurePassword123!
+keystore.key.password=<YOUR_KEY_PASSWORD>
 ```
 
 ### 2.3 Verify local.properties is Gitignored
