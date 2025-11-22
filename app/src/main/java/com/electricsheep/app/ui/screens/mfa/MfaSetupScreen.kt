@@ -16,7 +16,18 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import com.electricsheep.app.ui.components.AccessibleButton
 import com.electricsheep.app.ui.components.AccessibleScreen
 import com.electricsheep.app.ui.components.AccessibleTextField
@@ -108,6 +119,11 @@ fun MfaSetupScreen(
             
             // QR Code Display
             if (enrollmentResponse != null && enrollmentResponse?.qrCode != null) {
+                val qrCodeBitmap = rememberQrCodeBitmap(
+                    enrollmentResponse?.qrCode ?: "",
+                    256
+                )
+                
                 Card(
                     modifier = Modifier
                         .size(256.dp)
@@ -120,15 +136,21 @@ fun MfaSetupScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        // TODO: Display QR code image
-                        // For now, show placeholder
-                        // Need to add QR code library (e.g., zxing-android-embedded)
-                        Text(
-                            text = "QR Code\n(Image to be displayed)",
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        qrCodeBitmap?.let { bitmap ->
+                            Image(
+                                bitmap = bitmap,
+                                contentDescription = "QR code for authenticator app",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } ?: run {
+                            // Fallback if QR code generation fails
+                            Text(
+                                text = "QR Code\n(Generating...)",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 
@@ -207,6 +229,51 @@ fun MfaSetupScreen(
                 LoadingIndicator(message = "Setting up two-factor authentication...")
             }
         }
+    }
+}
+
+/**
+ * Generate QR code bitmap from data string.
+ * 
+ * @param data The data to encode in the QR code
+ * @param size The size of the QR code in pixels
+ * @return ImageBitmap of the QR code, or null if generation fails
+ */
+@Composable
+private fun rememberQrCodeBitmap(data: String, size: Int): ImageBitmap? {
+    return remember(data, size) {
+        generateQrCodeBitmap(data, size)
+    }
+}
+
+/**
+ * Generate QR code bitmap from data string.
+ */
+private fun generateQrCodeBitmap(data: String, size: Int): ImageBitmap? {
+    return try {
+        val hints = hashMapOf<EncodeHintType, Any>().apply {
+            put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H)
+            put(EncodeHintType.CHARACTER_SET, "UTF-8")
+            put(EncodeHintType.MARGIN, 1)
+        }
+        
+        val writer = QRCodeWriter()
+        val bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, size, size, hints)
+        
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+        for (x in 0 until size) {
+            for (y in 0 until size) {
+                bitmap.setPixel(
+                    x, y,
+                    if (bitMatrix.get(x, y)) AndroidColor.BLACK else AndroidColor.WHITE
+                )
+            }
+        }
+        
+        bitmap.asImageBitmap()
+    } catch (e: Exception) {
+        android.util.Log.e("MfaSetupScreen", "Failed to generate QR code", e)
+        null
     }
 }
 
