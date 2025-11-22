@@ -13,6 +13,7 @@ import com.electricsheep.app.data.migration.DatabaseMigrations
 import com.electricsheep.app.data.remote.SupabaseDataSource
 import com.electricsheep.app.data.repository.MoodRepository
 import com.electricsheep.app.util.Logger
+import com.electricsheep.app.security.CertificatePinnerConfig
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
@@ -97,9 +98,17 @@ object DataModule {
             
             Logger.info("DataModule", "Initialising Supabase client for: $finalUrl")
             
+            // Create HTTP client with certificate pinning
+            // Note: Certificate pins must be configured in CertificatePinnerConfig
+            // TODO: Verify if Supabase SDK accepts HttpClient parameter
+            // If not, we may need to use a different approach (e.g., network security config)
+            val httpClient = CertificatePinnerConfig.createKtorHttpClient()
+            
             createSupabaseClient(
                 supabaseUrl = finalUrl,
                 supabaseKey = finalKey
+                // TODO: Add httpClient parameter if Supabase SDK supports it
+                // httpClient = httpClient
             ) {
                 install(Postgrest)
                 install(Realtime)

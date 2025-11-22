@@ -52,6 +52,43 @@ android {
         buildConfigField("String", "SUPABASE_STAGING_ANON_KEY", if (supabaseStagingAnonKey.isNotEmpty()) "\"$supabaseStagingAnonKey\"" else "\"\"")
     }
 
+    signingConfigs {
+        create("release") {
+            // Read keystore configuration from environment variables or local.properties
+            val localPropertiesFile = rootProject.file("local.properties")
+            fun readProperty(key: String, defaultValue: String): String {
+                // First check environment variables (for CI/CD)
+                // Support both KEYSTORE_FILE (CI/CD convention) and keystore.file (local) formats
+                val envKey = key.uppercase().replace(".", "_")
+                val envValue = System.getenv(envKey) ?: System.getenv(key)
+                if (envValue != null) return envValue
+                
+                // Fall back to local.properties (for local development)
+                if (!localPropertiesFile.exists()) return defaultValue
+                return localPropertiesFile.readLines()
+                    .find { it.startsWith("$key=") }
+                    ?.substringAfter("=")
+                    ?.trim()
+                    ?: defaultValue
+            }
+            
+            val keystoreFile = readProperty("keystore.file", "")
+            val keystorePassword = readProperty("keystore.password", "")
+            val keyAlias = readProperty("keystore.key.alias", "")
+            val keyPassword = readProperty("keystore.key.password", "")
+            
+            // Only apply signing config if all required values are present
+            // file() handles both absolute paths (CI/CD) and relative paths (local dev)
+            if (keystoreFile.isNotEmpty() && keystorePassword.isNotEmpty() && 
+                keyAlias.isNotEmpty() && keyPassword.isNotEmpty()) {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Enable offline-only mode for debug builds (can be toggled)
@@ -62,6 +99,8 @@ android {
             buildConfigField("boolean", "ENABLE_TRIVIA_APP_MODE", "true")
         }
         release {
+            // Use release signing config if available
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -144,6 +183,10 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:gotrue-kt") // Auth support
     // HTTP client engine for Supabase (required)
     implementation("io.ktor:ktor-client-android:2.3.5")
+    // OkHttp engine for certificate pinning
+    implementation("io.ktor:ktor-client-okhttp:2.3.5")
+    // OkHttp for certificate pinning (Ktor Android uses OkHttp engine)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
     // Kotlinx Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")

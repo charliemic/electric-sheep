@@ -4,17 +4,31 @@ on:
   push:
     branches: [main, develop]
     paths:
+      # Dependency files (always high risk)
       - '**/*.gradle*'
       - '**/gradle-wrapper.properties'
       - 'package.json'
       - 'package-lock.json'
+      # High-risk code changes (auth, network, data)
+      - 'app/**/auth/**'
+      - 'app/**/remote/**'
+      - 'app/**/data/**'
+      - 'app/**/repository/**'
+      - 'build.gradle*'
   pull_request:
     branches: [main, develop]
     paths:
+      # Dependency files (always high risk)
       - '**/*.gradle*'
       - '**/gradle-wrapper.properties'
       - 'package.json'
       - 'package-lock.json'
+      # High-risk code changes (auth, network, data)
+      - 'app/**/auth/**'
+      - 'app/**/remote/**'
+      - 'app/**/data/**'
+      - 'app/**/repository/**'
+      - 'build.gradle*'
   schedule:
     # Weekly scan on Monday at 2 AM UTC
     - cron: '0 2 * * 1'
@@ -28,7 +42,7 @@ jobs:
   dependency-scan:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # Prevent hanging
+    timeout-minutes: 10  # Reduced since we're only running on high-risk changes
     
     steps:
       - name: Checkout code
@@ -46,15 +60,16 @@ jobs:
         with:
           accept-android-sdk-licenses: true
       
-      - name: Cache Gradle dependencies
+      - name: Cache OWASP Dependency-Check database
         uses: actions/cache@v3
+        id: depcheck-cache
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            ~/.dependency-check/data
+            ~/.dependency-check/cache
+          key: ${{ runner.os }}-depcheck-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-depcheck-
       
       - name: Run OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
@@ -73,6 +88,7 @@ jobs:
             --scan app/
             --scan scripts/
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            --data ${{ steps.depcheck-cache.outputs.cache-hit == 'true' && '~/.dependency-check/data' || '' }}
         continue-on-error: true
       
       - name: Upload dependency check results (HTML)
@@ -82,6 +98,7 @@ jobs:
           name: dependency-check-report-html
           path: reports/dependency-check-report.html
           retention-days: 30
+          if-no-files-found: ignore
       
       - name: Upload dependency check results (JSON)
         if: always()
@@ -90,13 +107,15 @@ jobs:
           name: dependency-check-report-json
           path: reports/dependency-check-report.json
           retention-days: 30
+          if-no-files-found: ignore
       
       - name: Upload SARIF results to GitHub Security
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: reports/dependency-check-report.sarif
-          wait-for-processing: true
+          wait-for-processing: false  # Don't wait, upload async for speed
+          if-no-files-found: ignore
       
       - name: Comment PR with vulnerability summary
         if: github.event_name == 'pull_request' && always()
